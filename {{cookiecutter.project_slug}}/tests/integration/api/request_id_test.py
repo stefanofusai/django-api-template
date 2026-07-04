@@ -16,10 +16,13 @@ def test_failure_response_includes_request_id_from_context() -> None:
     response = HttpResponse(status=HTTPStatus.INTERNAL_SERVER_ERROR)
     structlog.contextvars.bind_contextvars(request_id="failed-request")
 
-    add_request_id_to_failure_response(object(), logger, response)
+    try:
+        add_request_id_to_failure_response(object(), logger, response)
 
-    assert response.headers["X-Request-ID"] == "failed-request"
-    structlog.contextvars.clear_contextvars()
+        assert response.headers["X-Request-ID"] == "failed-request"
+
+    finally:
+        structlog.contextvars.clear_contextvars()
 
 
 def test_response_includes_generated_request_id(client: Client) -> None:

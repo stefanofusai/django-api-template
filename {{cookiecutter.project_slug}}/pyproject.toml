@@ -69,13 +69,17 @@ prod = [
 
 [tool.coverage.run]
 branch = true
+omit = [
+    "src/config/settings/environments/dev.py",
+    "src/config/settings/environments/prod.py",
+]
 
 [tool.django-stubs]
 django_settings_module = "config.settings"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
-addopts = "--cov --cov-fail-under=100 --cov-report=term-missing:skip-covered --numprocesses=auto"
+addopts = "--cov=src --cov-fail-under=100 --cov-report=term-missing:skip-covered --numprocesses=auto"
 env = [
     "ALLOWED_HOSTS=localhost,127.0.0.1,testserver",
     "CACHE_URL=locmemcache://",

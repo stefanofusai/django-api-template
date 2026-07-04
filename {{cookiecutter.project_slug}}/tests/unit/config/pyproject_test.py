@@ -19,25 +19,29 @@ def test_pyproject_loads_project_metadata_with_parser() -> None:
 def test_pyproject_raises_when_project_metadata_is_missing() -> None:
     parsed_pyproject = SimpleNamespace(project=None)
 
-    with patch("pyproject_parser.PyProject.load", return_value=parsed_pyproject):
-        sys.modules.pop("config.pyproject", None)
+    try:
+        with patch("pyproject_parser.PyProject.load", return_value=parsed_pyproject):
+            sys.modules.pop("config.pyproject", None)
 
-        with pytest.raises(RuntimeError, match=r"\[project\] metadata"):
-            importlib.import_module("config.pyproject")
+            with pytest.raises(RuntimeError, match=r"\[project\] metadata"):
+                importlib.import_module("config.pyproject")
 
-    _restore_pyproject_module()
+    finally:
+        _restore_pyproject_module()
 
 
 def test_pyproject_raises_when_project_version_is_missing() -> None:
     parsed_pyproject = SimpleNamespace(project={"name": "example", "version": None})
 
-    with patch("pyproject_parser.PyProject.load", return_value=parsed_pyproject):
-        sys.modules.pop("config.pyproject", None)
+    try:
+        with patch("pyproject_parser.PyProject.load", return_value=parsed_pyproject):
+            sys.modules.pop("config.pyproject", None)
 
-        with pytest.raises(RuntimeError, match=r"project\.version"):
-            importlib.import_module("config.pyproject")
+            with pytest.raises(RuntimeError, match=r"project\.version"):
+                importlib.import_module("config.pyproject")
 
-    _restore_pyproject_module()
+    finally:
+        _restore_pyproject_module()
 
 
 # Utils
