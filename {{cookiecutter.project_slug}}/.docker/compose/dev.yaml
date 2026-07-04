@@ -7,8 +7,10 @@ services:
         UV_DEPENDENCY_GROUP: dev
     command: /app/.docker/scripts/dev.sh
     depends_on:
-      migrations:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - ../../.env
     environment:
@@ -26,30 +28,13 @@ services:
       retries: 5
     ports:
       - "8000:8000"
+    pre_start:
+      - command:
+          - /app/.docker/scripts/migrations.sh
     volumes:
       - ../../manage.py:/app/manage.py
       - ../../src:/app/src
       - media_data:/app/media
-  migrations:
-    build:
-      context: ../..
-      dockerfile: .docker/Dockerfile
-      args:
-        UV_DEPENDENCY_GROUP: dev
-    command: /app/.docker/scripts/migrations.sh
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    env_file:
-      - ../../.env
-    environment:
-      DJANGO_ENV: dev
-    restart: no
-    volumes:
-      - ../../manage.py:/app/manage.py
-      - ../../src:/app/src
   postgres:
     env_file:
       - ../../.env
@@ -83,8 +68,8 @@ services:
         UV_DEPENDENCY_GROUP: dev
     command: /app/.docker/scripts/worker.sh
     depends_on:
-      migrations:
-        condition: service_completed_successfully
+      api:
+        condition: service_healthy
     env_file:
       - ../../.env
     environment:

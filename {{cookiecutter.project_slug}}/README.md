@@ -32,7 +32,7 @@ overlays:
 
 Requirements:
 
-- Docker with Compose
+- Docker with Compose lifecycle hook support
 - Python 3.14
 - [uv](https://docs.astral.sh/uv/)
 
@@ -50,8 +50,8 @@ Start the local stack:
 docker compose -f .docker/compose/dev.yaml up --build
 ```
 
-The `migrations` service runs first, then the API and worker start. When the API
-is healthy, open:
+The API runs migrations with a Compose `pre_start` step before the service
+starts. When the API is healthy, the worker starts and you can open:
 
 - readiness: <http://localhost:8000/api/ready>
 - API docs: <http://localhost:8000/api/docs>
@@ -83,9 +83,9 @@ target local PostgreSQL and Redis containers:
 - Optional AWS variables are commented, while `AWS_STORAGE_BUCKET_NAME` is
   required in production.
 
-The development Compose file starts `api`, `worker`, `migrations`, `postgres`,
-and `redis`. It bind-mounts `manage.py` and `src/` for local code changes, and
-stores media files in a Docker volume.
+The development Compose file starts `api`, `worker`, `postgres`, and `redis`.
+It bind-mounts `manage.py` and `src/` for local code changes, and stores media
+files in a Docker volume.
 
 ## Usage
 

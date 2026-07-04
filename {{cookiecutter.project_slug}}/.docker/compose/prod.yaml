@@ -6,8 +6,10 @@ services:
       args:
         UV_DEPENDENCY_GROUP: prod
     depends_on:
-      migrations:
-        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - ../../.env
     environment:
@@ -23,24 +25,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    pre_start:
+      - command:
+          - /app/.docker/scripts/migrations.sh
     restart: unless-stopped
-  migrations:
-    build:
-      context: ../..
-      dockerfile: .docker/Dockerfile
-      args:
-        UV_DEPENDENCY_GROUP: prod
-    command: /app/.docker/scripts/migrations.sh
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    env_file:
-      - ../../.env
-    environment:
-      DJANGO_ENV: prod
-    restart: no
   postgres:
     env_file:
       - ../../.env
@@ -76,8 +64,8 @@ services:
         UV_DEPENDENCY_GROUP: prod
     command: /app/.docker/scripts/worker.sh
     depends_on:
-      migrations:
-        condition: service_completed_successfully
+      api:
+        condition: service_healthy
     env_file:
       - ../../.env
     environment:
