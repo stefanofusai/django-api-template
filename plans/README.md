@@ -23,7 +23,7 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 004 | Pagination max-limit knob fix | P2 | S | — | DONE |
 | 005 | tomllib project metadata (drop pyproject-parser, CWD fix) | P2 | S | — | DONE |
 | 006 | Drop dead error schemas; document Celery result policy; eager task test | P3 | S | — | DONE |
-| 007 | Sentry error tracking, required in prod | P2 | S–M | 002 (soft) | TODO |
+| 007 | Sentry error tracking, required in prod | P2 | S–M | 002 (soft) | DONE |
 | 008 | django-celery-beat + beat service | P2 | M | 002 | TODO |
 | 009 | Email via Anymail (Resend) + project-owned send task | P2 | M | 001, 007 (pattern) | TODO |
 | 010 | Dependency & image cleanup (prod group, pyupgrade, skills-lock, apt stages) | P3 | S | 007, 009 (ordering only) | TODO |

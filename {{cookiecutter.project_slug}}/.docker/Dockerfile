@@ -35,6 +35,7 @@ RUN ALLOWED_HOSTS=localhost \
     DATABASE_URL=sqlite:///:memory: \
     DJANGO_ENV=prod \
     SECRET_KEY=$(uuidgen) \
+    SENTRY_DSN=https://00000000000000000000000000000000@sentry.example.com/1 \
     .venv/bin/python manage.py collectstatic --no-input
 
 FROM base AS runtime

@@ -11,7 +11,7 @@ environ.Env.read_env(env_file=BASE_DIR / ".env")
 
 DJANGO_ENV = env("DJANGO_ENV")
 
-include(
+settings_files = [
     "components/core.py",
     "components/apps.py",
     "components/middleware.py",
@@ -24,7 +24,12 @@ include(
     "components/storage.py",
     "components/checks.py",
     f"environments/{DJANGO_ENV}.py",
-)
+]
+
+if DJANGO_ENV == "prod":  # pragma: no cover
+    settings_files.append("components/sentry.py")
+
+include(*settings_files)
 
 # See: https://github.com/typeddjango/django-stubs?tab=readme-ov-file#i-cannot-use-queryset-or-manager-with-type-annotations
 django_stubs_ext.monkeypatch()

@@ -31,6 +31,7 @@ jobs:
           CSRF_TRUSTED_ORIGINS=https://example.com \
           DATABASE_URL=sqlite:///:memory: \
           SECRET_KEY=ci-secret-for-deploy-checks-0123456789-abcdefghijklmnopqrstuvwxyz \
+          SENTRY_DSN=https://00000000000000000000000000000000@sentry.example.com/1 \
           uv run --group=ci --locked --no-default-groups \
           python manage.py check --deploy --fail-level=WARNING --tag=security
       - name: Run tests

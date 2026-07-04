@@ -53,6 +53,10 @@
 ## Django And Configuration
 
 - Respect `django-extra-checks`: models need `__str__`, `Meta.ordering`, admin registration, gettext verbose/help text, explicit FK `related_name` and `db_index`, choice constraints, and `UniqueConstraint` instead of `unique_together`.
+- In settings modules, put declarations and settings mutations before function
+  calls or similar side effects. For example, initialize integrations such as
+  `sentry_sdk.init(...)` after the settings values they depend on have been
+  declared.
 - Add environment variables only for secrets, deployment topology, or resource sizing.
 - Celery results are opt-in per task: use `@shared_task(ignore_result=False)`
   when a task's result must be persisted; tasks are at-least-once

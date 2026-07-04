@@ -132,6 +132,11 @@ Use the generated value for `SECRET_KEY`, set a strong `POSTGRES_PASSWORD`, and
 keep `127.0.0.1` in `ALLOWED_HOSTS` alongside your domain because the container
 healthcheck probes over localhost. The production stack reads the same `.env`
 file as development, and production boot refuses `django-insecure-` keys.
+Set `SENTRY_DSN` from your Sentry project settings; production boot fails if it
+is missing or blank. Sentry release names use the package version from
+`pyproject.toml`; tune `SENTRY_ENABLE_LOGS`,
+`SENTRY_PROFILE_SESSION_SAMPLE_RATE`, and `SENTRY_TRACES_SAMPLE_RATE` from the
+environment.
 
 Use `/api/health` as liveness: it checks that the process is up and backs the
 container healthcheck. Use `/api/ready` as readiness: it checks that the

@@ -23,6 +23,7 @@ dependencies = [
     "django-structlog[celery]==10.1.0",
     "django-unfold==0.96.0",
     "psycopg[binary]==3.3.4",
+    "sentry-sdk==2.64.0",
     "structlog==25.5.0",
     "whitenoise==6.12.0",
 ]
@@ -69,6 +70,7 @@ prod = [
 [tool.coverage.run]
 branch = true
 omit = [
+    "src/config/settings/components/sentry.py",
     "src/config/settings/environments/dev.py",
     "src/config/settings/environments/prod.py",
 ]
