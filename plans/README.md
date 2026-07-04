@@ -20,7 +20,7 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 001 | Coverage gate measures all of src/; test-isolation fixes | P1 | S | — | DONE |
 | 002 | Prod deploy-path hardening (health/ready split, boot guards, proxy contract) | P1 | M | — | DONE |
 | 003 | Custom user model + tests/factories.py | P1 | M | 001 | TODO |
-| 004 | Pagination max-limit knob fix | P2 | S | — | TODO |
+| 004 | Pagination max-limit knob fix | P2 | S | — | DONE |
 | 005 | tomllib project metadata (drop pyproject-parser, CWD fix) | P2 | S | — | TODO |
 | 006 | Drop dead error schemas; document Celery result policy; eager task test | P3 | S | — | TODO |
 | 007 | Sentry error tracking, required in prod | P2 | S–M | 002 (soft) | TODO |
