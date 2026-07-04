@@ -34,6 +34,8 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 016 | Persistent DB connections (CONN_MAX_AGE + CONN_HEALTH_CHECKS) | P2 | S | — (serialize on .env.example) | TODO |
 | 017 | Staff-gated API docs in prod + documented auth decision point | P2 | S–M | 015 preferred first; serialize on prod.py | TODO |
 | 018 | Traefik in prod.yaml + docker-rollout zero-downtime deploys | P2 | M | 002; serialize on .env.example; adapts to 008/013 | TODO |
+| 019 | Quirk/decision comments at trap points + AGENTS.md comment policy | P3 | S | cleanest after 005/006; serialize with shared files | TODO |
+| 020 | .env.example blocks + dependency-group rationalization | P2 | S–M | supersedes 010 Step 1; serialize on .env.example/pyproject | TODO |
 | 014 | LICENSE, README truthfulness, optional rtk | P3 | S | all others (run last) | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
@@ -51,7 +53,15 @@ REJECTED (with one-line rationale).
   RUN and the tests.yaml deploy-check env). Any plan adding a prod-required
   var must touch those same three places — and 013's env-prep step.
 - **010 after 007/009**: purely to avoid pyproject.toml merge friction; no
-  semantic dependency.
+  semantic dependency. **010's Step 1 (whitenoise/storages → prod group) is
+  superseded by plan 020** — 010's remaining scope is the pyupgrade hook
+  removal, the skills-lock reconcile, and the Dockerfile apt-stage split.
+- **020 (env blocks + dependency groups)**: releases `.env.example` from the
+  `file-contents-sorter` hook and restructures it into documented blocks;
+  rationalizes dependency groups (django-stubs-ext → main deps because
+  settings import it unconditionally; whitenoise/storages → prod;
+  `dev = { include-group = "ci" }` plus tooling). AFTER 020, plans that add
+  env vars place them in the appropriate block, alphabetized within it.
 - **011 before 012**: 012's root pre-commit lints the hook files 011 rewrites.
 - **013 late**: the smoke test asserts the FINAL stack (health endpoint, beat
   service, all required env vars). Its steps enumerate the per-plan variants.
@@ -68,6 +78,10 @@ REJECTED (with one-line rationale).
   `README.md`, but ONLY after its tomllib swap (pyproject-parser reads the
   readme file at import — verified empirically; tomllib does not, and uv
   never installs the project since there is no `[build-system]`).
+- **015 drift flag (post-007)**: `components/sentry.py` now consumes
+  `project_version` for Sentry release tagging, so 015 must keep the
+  `project_version` export in `config/pyproject.py` and remove only the
+  `api.py` usage.
 - **016 anywhere**, but it edits `.env.example` — serialize with 007/009/018.
 - **017 after 015** (gates docs on both API instances in one pass) and
   serialized with 007/009 on `prod.py`. Its Step 4 empirically verifies
