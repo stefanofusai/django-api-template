@@ -32,7 +32,7 @@ overlays:
 
 Requirements:
 
-- Docker with Compose lifecycle hook support
+- Docker Compose >= 2.30 (lifecycle hooks and start_interval)
 - Python 3.14
 - [uv](https://docs.astral.sh/uv/)
 
@@ -106,6 +106,44 @@ Use Django Admin:
 ```shell
 open http://localhost:8000/admin/
 ```
+
+## Production
+
+Start the production stack:
+
+```shell
+docker compose -f .docker/compose/prod.yaml up -d --wait
+```
+
+The `api` service publishes no ports. Put your own ingress or reverse proxy in
+front of it. The proxy must terminate TLS, set `X-Forwarded-Proto: https` on
+forwarded requests, and strip or overwrite any client-supplied
+`X-Forwarded-Proto` value. Set `FORWARDED_ALLOW_IPS` to the proxy address so
+Gunicorn trusts it. Without that proxy contract, `SECURE_PROXY_SSL_HEADER` is
+unsafe and `SECURE_SSL_REDIRECT` will loop.
+
+Before deploying, generate real secrets:
+
+```shell
+uv run python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+Use the generated value for `SECRET_KEY`, set a strong `POSTGRES_PASSWORD`, and
+keep `127.0.0.1` in `ALLOWED_HOSTS` alongside your domain because the container
+healthcheck probes over localhost. The production stack reads the same `.env`
+file as development, and production boot refuses `django-insecure-` keys.
+
+Use `/api/health` as liveness: it checks that the process is up and backs the
+container healthcheck. Use `/api/ready` as readiness: it checks that the
+database and cache are reachable for load-balancer routing.
+
+Redis runs append-only for broker durability. Cache and broker share one Redis
+instance on databases 0 and 1. Under memory pressure, Redis's default
+`noeviction` policy rejects writes instead of evicting keys, which also blocks
+task enqueues. Split Redis instances if cache volume grows.
+
+The admin at `/admin/` is exposed wherever the API is routed. Restrict it at
+the proxy with an IP allowlist or route only `/api/` publicly.
 
 ## Testing
 

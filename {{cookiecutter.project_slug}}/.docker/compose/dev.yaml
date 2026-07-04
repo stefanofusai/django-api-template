@@ -22,10 +22,12 @@ services:
         - -fsS
         - -o
         - /dev/null
-        - http://127.0.0.1:8000/api/ready
-      interval: 5s
+        - http://127.0.0.1:8000/api/health
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 30s
+      start_interval: 2s
     ports:
       - "8000:8000"
     pre_start:
@@ -42,21 +44,29 @@ services:
       test:
         - CMD-SHELL
         - pg_isready --dbname="$${POSTGRES_DB}" --username="$${POSTGRES_USER}"
-      interval: 5s
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 10s
+      start_interval: 2s
     image: postgres:18.4
     volumes:
       - postgres_data:/var/lib/postgresql
   redis:
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
     healthcheck:
       test:
         - CMD
         - redis-cli
         - ping
-      interval: 5s
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 10s
+      start_interval: 2s
     image: redis:8.8.0
     volumes:
       - redis_data:/data
@@ -78,9 +88,11 @@ services:
       test:
         - CMD-SHELL
         - celery -A config inspect ping --destination=worker@$$HOSTNAME --timeout=5
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+      start_interval: 5s
     volumes:
       - ../../manage.py:/app/manage.py
       - ../../src:/app/src

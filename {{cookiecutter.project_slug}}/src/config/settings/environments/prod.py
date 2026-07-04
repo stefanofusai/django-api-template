@@ -1,4 +1,10 @@
+from django.core.exceptions import ImproperlyConfigured
+
 from config.settings import env
+
+if SECRET_KEY.startswith("django-insecure-"):  # noqa: F821  # ty: ignore[unresolved-reference]
+    msg = "SECRET_KEY must be replaced with a securely generated value in production."
+    raise ImproperlyConfigured(msg)
 
 CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
@@ -13,7 +19,7 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_HSTS_SECONDS = 31536000
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SECURE_REDIRECT_EXEMPT = [r"^api/ready$"]
+SECURE_REDIRECT_EXEMPT = [r"^api/health$", r"^api/ready$"]
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 STORAGES["default"] = {  # noqa: F821  # ty: ignore[unresolved-reference]
