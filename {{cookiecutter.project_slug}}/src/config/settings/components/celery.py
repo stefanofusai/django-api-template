@@ -3,6 +3,10 @@ from config.settings import env
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/1")
+# Results are opt-in per task: CELERY_TASK_IGNORE_RESULT discards results by
+# default; pass ignore_result=False to @shared_task to persist that task's
+# result (and its STARTED state, per CELERY_TASK_TRACK_STARTED) to
+# django-celery-results.
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_RESULT_EXTENDED = True
 CELERY_RESULT_SERIALIZER = "json"

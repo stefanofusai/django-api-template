@@ -54,6 +54,9 @@
 
 - Respect `django-extra-checks`: models need `__str__`, `Meta.ordering`, admin registration, gettext verbose/help text, explicit FK `related_name` and `db_index`, choice constraints, and `UniqueConstraint` instead of `unique_together`.
 - Add environment variables only for secrets, deployment topology, or resource sizing.
+- Celery results are opt-in per task: use `@shared_task(ignore_result=False)`
+  when a task's result must be persisted; tasks are at-least-once
+  (`acks_late` + `reject_on_worker_lost`), so keep them idempotent.
 - Do not add empty optional values to `.env.example`; document optional AWS variables as commented examples.
 - Keep operational constants fixed in code unless there is a real deployment need to configure them.
 - Keep Django Ninja routers resource-oriented. Mount resource routers at their resource prefix and keep route-local paths relative.
