@@ -30,7 +30,10 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 011 | Cookiecutter hooks hardening + negative-bake CI | P2 | M | — | TODO |
 | 012 | Template repo self-checks (root pre-commit, cached CI docker build) | P3 | S–M | 011 (ordering) | TODO |
 | 013 | CI compose smoke test of the baked prod stack | P1 | M | 002; adapts to 003/007/008/009 | TODO |
-| 015 | /api/v1 versioning split (unversioned ops API + v1 mount) | P2 | S–M | 002; before 014 | TODO |
+| 015 | /api/v1 versioning split (unversioned ops API + v1 mount); retires `project_version` | P2 | S–M | 002; before 014/017 | TODO |
+| 016 | Persistent DB connections (CONN_MAX_AGE + CONN_HEALTH_CHECKS) | P2 | S | — (serialize on .env.example) | TODO |
+| 017 | Staff-gated API docs in prod + documented auth decision point | P2 | S–M | 015 preferred first; serialize on prod.py | TODO |
+| 018 | Traefik in prod.yaml + docker-rollout zero-downtime deploys | P2 | M | 002; serialize on .env.example; adapts to 008/013 | TODO |
 | 014 | LICENSE, README truthfulness, optional rtk | P3 | S | all others (run last) | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
@@ -58,10 +61,31 @@ REJECTED (with one-line rationale).
   with `ready_router` only and leave a note for 002's executor that the
   mount target is now `ops_api`. Design per
   <https://django-ninja.dev/guides/versioning/>.
+- **015 ↔ 005 coordination**: 015 retires `project_version` (maintainer
+  decision — the API contract version is an explicit literal); whichever of
+  015/005 runs second must account for the other's changes to
+  `config/pyproject.py` and its tests. 005 may also dockerignore
+  `README.md`, but ONLY after its tomllib swap (pyproject-parser reads the
+  readme file at import — verified empirically; tomllib does not, and uv
+  never installs the project since there is no `[build-system]`).
+- **016 anywhere**, but it edits `.env.example` — serialize with 007/009/018.
+- **017 after 015** (gates docs on both API instances in one pass) and
+  serialized with 007/009 on `prod.py`. Its Step 4 empirically verifies
+  ninja's `docs_decorator` covers `/openapi.json` — a STOP if not.
+- **018 REVERSES the "bring your own ingress" tradeoff** (maintainer
+  decision, 2026-07-04): prod.yaml ships Traefik (v3.x) and deploys
+  standardize on docker-rollout (scale → health-gate → drain). It requires
+  local Docker to execute (live rollout rehearsal is the acceptance gate),
+  introduces the `--env-file .env` convention for all prod compose commands
+  (compose interpolation reads `.env` from the compose-file directory, not
+  the project root), and rewrites the Production README section that 002
+  wrote. Optional follow-up (not planned): a CI rollout rehearsal in the
+  compose-smoke job.
 - **014 last**: documents the final state of everything.
 - 004, 005, 006 are independent and can run in any gap.
-- Plans 002/007/009 all edit `prod.py` and `.env.example`; run them
-  sequentially, never in parallel worktrees, or the drift checks will fire.
+- Plans 002/007/009/016/017/018 share `prod.py` and/or `.env.example`; run
+  them sequentially, never in parallel worktrees, or the drift checks will
+  fire.
 
 ## Findings considered and rejected (do not re-audit)
 
@@ -100,6 +124,10 @@ REJECTED (with one-line rationale).
   scaffolding; standard low-cost mixins. Keep.
 - **DEBUG re-assignments in `ci.py`/`prod.py`** (already `False` in
   `core.py`) — harmless explicitness; not worth a change.
+- **"Prod compose deliberately ships no reverse proxy (bring your own
+  ingress)"** — was a settled tradeoff during the audit; REVERSED by the
+  maintainer on 2026-07-04 in favor of a standardized deploy story (plan
+  018: Traefik + docker-rollout). Do not treat the old stance as current.
 
 ## Deferred direction (recorded, no plan written)
 
