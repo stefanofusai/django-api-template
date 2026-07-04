@@ -1,0 +1,12 @@
+{
+    "project_name": "My Project",
+    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '-').replace('_', '-') }}",
+    "description": "A Django Ninja API service.",
+    "author_name": "Stefano Fusai",
+    "author_email": "stefanofusai@gmail.com",
+    "github_username": "stefanofusai",
+    "_copy_without_render": [
+        ".github/workflows/*",
+        ".agents/*"
+    ]
+}

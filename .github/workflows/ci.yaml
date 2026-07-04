@@ -1,0 +1,65 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  bake:
+    name: Bake ${{ matrix.project_name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project_name: My Project
+            extra-args: ""
+            slug: my-project
+          - project_name: My API Server 2
+            extra-args: project_name="My API Server 2"
+            slug: my-api-server-2
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.3
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.14"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.2.0
+      - name: Bake project
+        run: uvx cookiecutter . --no-input -o /tmp/bake ${{ matrix.extra-args }}
+      - name: Assert lockfile exists
+        working-directory: /tmp/bake/${{ matrix.slug }}
+        run: test -f uv.lock
+      - name: Install dependencies
+        working-directory: /tmp/bake/${{ matrix.slug }}
+        run: uv sync --locked
+      - name: Run tests
+        working-directory: /tmp/bake/${{ matrix.slug }}
+        run: uv run pytest
+      - name: Run pre-commit
+        working-directory: /tmp/bake/${{ matrix.slug }}
+        run: |
+          git add -A
+          uv run pre-commit run --all-files
+  docker-build:
+    name: Docker build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.3
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.14"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.2.0
+      - name: Bake project
+        run: uvx cookiecutter . --no-input -o /tmp/bake
+      - name: Build image
+        working-directory: /tmp/bake/my-project
+        run: docker build -f .docker/Dockerfile --build-arg UV_DEPENDENCY_GROUP=prod .

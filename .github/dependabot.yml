@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    assignees:
+      - stefanofusai
+    groups:
+      actions:
+        patterns:
+          - "*"
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+    assignees:
+      - stefanofusai
+    groups:
+      pre-commit-hooks:
+        patterns:
+          - "*"

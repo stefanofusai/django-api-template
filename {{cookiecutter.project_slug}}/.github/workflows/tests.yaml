@@ -1,0 +1,37 @@
+name: Tests
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  pytest:
+    name: Pytest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.3
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version-file: pyproject.toml
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.2.0
+      - name: Install dependencies
+        run: uv sync --group=ci --locked --no-default-groups
+      - name: Run deploy checks
+        run: |
+          DJANGO_ENV=prod \
+          ALLOWED_HOSTS=example.com \
+          AWS_STORAGE_BUCKET_NAME=ci \
+          CACHE_URL=locmemcache:// \
+          CSRF_TRUSTED_ORIGINS=https://example.com \
+          DATABASE_URL=sqlite:///:memory: \
+          SECRET_KEY=ci-secret-for-deploy-checks-0123456789-abcdefghijklmnopqrstuvwxyz \
+          uv run --group=ci --locked --no-default-groups \
+          python manage.py check --deploy --fail-level=WARNING --tag=security
+      - name: Run tests
+        run: uv run --group=ci --locked --no-default-groups pytest

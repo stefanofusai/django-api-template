@@ -1,0 +1,45 @@
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: /.docker
+    schedule:
+      interval: weekly
+    assignees:
+      - "{{ cookiecutter.github_username }}"
+  - package-ecosystem: docker-compose
+    directory: /.docker/compose
+    schedule:
+      interval: weekly
+    assignees:
+      - "{{ cookiecutter.github_username }}"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    assignees:
+      - "{{ cookiecutter.github_username }}"
+    groups:
+      actions:
+        patterns:
+          - "*"
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: weekly
+    assignees:
+      - "{{ cookiecutter.github_username }}"
+    groups:
+      pre-commit-hooks:
+        patterns:
+          - "*"
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    assignees:
+      - "{{ cookiecutter.github_username }}"
+    groups:
+      python-minor-patch:
+        update-types:
+          - minor
+          - patch

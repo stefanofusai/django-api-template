@@ -1,0 +1,135 @@
+[project]
+name = "{{ cookiecutter.project_slug }}"
+version = "1.0.0"
+description = "{{ cookiecutter.description }}"
+readme = "README.md"
+authors = [
+    { name = "{{ cookiecutter.author_name }}", email = "{{ cookiecutter.author_email }}" }
+]
+maintainers = [
+    { name = "{{ cookiecutter.author_name }}", email = "{{ cookiecutter.author_email }}" }
+]
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "celery[redis]==5.6.3",
+    "django[argon2]==6.0.6",
+    "django-celery-results==2.6.0",
+    "django-environ==0.13.0",
+    "django-extra-checks==0.17.0",
+    "django-ninja==1.6.2",
+    "django-redis==7.0.0",
+    "django-split-settings==1.3.2",
+    "django-storages[s3]==1.14.6",
+    "django-structlog[celery]==10.1.0",
+    "django-unfold==0.96.0",
+    "psycopg[binary]==3.3.4",
+    "pyproject-parser==0.14.0",
+    "structlog==25.5.0",
+    "whitenoise==6.12.0",
+]
+
+[dependency-groups]
+ci = [
+    "django-stubs==6.0.5",
+    "factory-boy==3.3.3",
+    "hypothesis==6.155.7",
+    "pytest==9.0.3",
+    "pytest-cov==7.1.0",
+    "pytest-django==4.12.0",
+    "pytest-env==1.6.0",
+    "pytest-factoryboy==2.8.1",
+    "pytest-mock==3.15.1",
+    "pytest-randomly==4.1.0",
+    "pytest-sugar==1.1.1",
+    "pytest-xdist==3.8.0",
+    "schemathesis==4.21.10",
+]
+dev = [
+    "django-extensions==4.1",
+    "django-stubs==6.0.5",
+    "factory-boy==3.3.3",
+    "hypothesis==6.155.7",
+    "pre-commit==4.6.0",
+    "pytest==9.0.3",
+    "pytest-cov==7.1.0",
+    "pytest-django==4.12.0",
+    "pytest-env==1.6.0",
+    "pytest-factoryboy==2.8.1",
+    "pytest-mock==3.15.1",
+    "pytest-randomly==4.1.0",
+    "pytest-sugar==1.1.1",
+    "pytest-xdist==3.8.0",
+    "schemathesis==4.21.10",
+    "werkzeug==3.1.8",
+]
+prod = [
+    "django-stubs-ext==6.0.5",
+    "gunicorn==26.0.0",
+]
+
+[tool.coverage.run]
+branch = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+addopts = "--cov --cov-fail-under=100 --cov-report=term-missing:skip-covered --numprocesses=auto"
+env = [
+    "ALLOWED_HOSTS=localhost,127.0.0.1,testserver",
+    "CACHE_URL=locmemcache://",
+    "DATABASE_URL=sqlite:///:memory:",
+    "DJANGO_ENV=ci",
+    "SECRET_KEY=test-secret-key",
+]
+markers = [
+    "integration: tests that exercise integrated framework behavior",
+    "unit: tests that exercise isolated units",
+]
+python_files = ["*_test.py"]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812",
+    "D1",
+    "D203",
+    "D212",
+    "E501",
+    "FIX001",
+    "FIX002",
+    "TC001",
+    "TC003",
+    "TD001",
+    "TD002",
+    "TD003",
+]
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-decorators = [
+    "ninja.NinjaAPI.delete",
+    "ninja.NinjaAPI.get",
+    "ninja.NinjaAPI.patch",
+    "ninja.NinjaAPI.post",
+    "ninja.NinjaAPI.put",
+    "ninja.Router.delete",
+    "ninja.Router.get",
+    "ninja.Router.patch",
+    "ninja.Router.post",
+    "ninja.Router.put",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.ty.environment]
+python = ".venv"
+
+[tool.ty.src]
+exclude = [".agents"]
+
+[tool.uv]
+default-groups = ["dev"]
