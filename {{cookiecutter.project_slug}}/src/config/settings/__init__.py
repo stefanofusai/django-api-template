@@ -20,6 +20,7 @@ settings_files = [
     "components/database.py",
     "components/cache.py",
     "components/celery.py",
+    "components/email.py",
     "components/logging.py",
     "components/storage.py",
     "components/checks.py",

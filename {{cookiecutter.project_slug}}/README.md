@@ -87,6 +87,11 @@ The development Compose file starts `api`, `celery-beat`, `celery-worker`,
 `postgres`, and `redis`. It bind-mounts `manage.py` and `src/` for local code
 changes, and stores media files in a Docker volume.
 
+Development prints email to the console, tests keep email in memory, and
+production sends through Resend via django-anymail. Set `RESEND_API_KEY` in
+production, set `DEFAULT_FROM_EMAIL` once the sending domain is known, and send
+messages asynchronously with `apps.core.tasks.send_email.delay(...)`.
+
 Periodic task schedules are managed in Django Admin through
 django-celery-beat's `DatabaseScheduler`. Run exactly one `celery-beat`
 instance for a deployment. The `celery-beat` service has no healthcheck and

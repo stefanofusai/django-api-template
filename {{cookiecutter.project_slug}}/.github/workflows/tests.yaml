@@ -24,14 +24,15 @@ jobs:
         run: uv sync --group=ci --locked --no-default-groups
       - name: Run deploy checks
         run: |
-          DJANGO_ENV=prod \
-          ALLOWED_HOSTS=example.com \
-          AWS_STORAGE_BUCKET_NAME=ci \
+          ALLOWED_HOSTS=localhost \
+          AWS_STORAGE_BUCKET_NAME=$(uuidgen) \
           CACHE_URL=locmemcache:// \
-          CSRF_TRUSTED_ORIGINS=https://example.com \
+          CSRF_TRUSTED_ORIGINS=https://localhost \
           DATABASE_URL=sqlite:///:memory: \
-          SECRET_KEY=ci-secret-for-deploy-checks-0123456789-abcdefghijklmnopqrstuvwxyz \
-          SENTRY_DSN=https://00000000000000000000000000000000@sentry.example.com/1 \
+          DJANGO_ENV=prod \
+          RESEND_API_KEY=$(uuidgen) \
+          SECRET_KEY=$(uuidgen)$(uuidgen) \
+          SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1 \
           uv run --group=ci --locked --no-default-groups \
           python manage.py check --deploy --fail-level=WARNING --tag=security
       - name: Run tests

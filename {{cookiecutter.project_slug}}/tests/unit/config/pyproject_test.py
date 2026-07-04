@@ -1,10 +1,14 @@
 import importlib
 import sys
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
 
 from config.pyproject import project_metadata, project_name, project_version, pyproject
+
+if TYPE_CHECKING:
+    from faker import Faker
 
 
 def test_pyproject_loads_project_metadata_with_tomllib() -> None:
@@ -26,9 +30,9 @@ def test_pyproject_raises_when_project_metadata_is_missing() -> None:
         _restore_pyproject_module()
 
 
-def test_pyproject_raises_when_project_version_is_missing() -> None:
+def test_pyproject_raises_when_project_version_is_missing(faker: Faker) -> None:
     try:
-        with patch("tomllib.load", return_value={"project": {"name": "example"}}):
+        with patch("tomllib.load", return_value={"project": {"name": faker.slug()}}):
             sys.modules.pop("config.pyproject", None)
 
             with pytest.raises(RuntimeError, match=r"project\.version"):
