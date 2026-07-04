@@ -136,9 +136,11 @@ mount target is now `ops_api` in `api.py`).
 
 **In scope**:
 - `{{cookiecutter.project_slug}}/src/apps/api/api.py`
+- `{{cookiecutter.project_slug}}/src/config/pyproject.py` (remove `project_version`)
 - `{{cookiecutter.project_slug}}/src/config/urls.py`
 - `{{cookiecutter.project_slug}}/tests/conftest.py`
 - `{{cookiecutter.project_slug}}/tests/unit/api/api_test.py`
+- `{{cookiecutter.project_slug}}/tests/unit/config/pyproject_test.py`
 - `{{cookiecutter.project_slug}}/tests/integration/api/schema_test.py`
 - `{{cookiecutter.project_slug}}/tests/integration/api/versioning_test.py` (create)
 - `{{cookiecutter.project_slug}}/README.md`
@@ -161,21 +163,20 @@ mount target is now `ops_api` in `api.py`).
 
 ## Steps
 
-### Step 1: Split the API objects
+### Step 1: Split the API objects and retire `project_version`
 
 Rewrite `src/apps/api/api.py`:
 
 ```python
 from ninja import NinjaAPI
 
-from config.pyproject import project_name, project_version
+from config.pyproject import project_name
 
 from .routes import health_router, ready_router
 
 ops_api = NinjaAPI(
     title=f"{project_name} (operations)",
     urls_namespace="ops",
-    version=str(project_version),
 )
 ops_api.add_router("", health_router)
 ops_api.add_router("", ready_router)
@@ -189,9 +190,38 @@ v1_api = NinjaAPI(
 
 Notes: alphabetical constants order would put `ops_api` before `v1_api`
 anyway; drop `health_router` if 002 hasn't run. `v1_api.version` is the API
-contract version ("1.0.0"), intentionally decoupled from the package version
-that `ops_api` carries — this is the one place the two concepts diverge, and
-the point of the plan.
+contract version ("1.0.0") — explicitly NOT the package version; API
+contracts and package releases move on different clocks. `ops_api` takes
+ninja's default version ("1.0.0"), which is meaningless-but-harmless for an
+ops surface. **The maintainer decided `project_version` is not needed once
+this lands** — Step 1b removes it at the source.
+
+### Step 1b: Remove `project_version` from config.pyproject
+
+`api.py` was the only non-test consumer
+(`grep -rn "project_version" '{{cookiecutter.project_slug}}/src'` — confirm
+only `config/pyproject.py` itself remains). In
+`src/config/pyproject.py`, delete the `project_version` assignment and its
+missing-version `RuntimeError` guard, keeping `project_name` (and the
+`project_metadata` presence guard). The file's shape depends on whether Plan
+005 (tomllib) has landed — apply the deletion to whichever form is live:
+
+- pre-005 (pyproject-parser): delete
+  `project_version = project_metadata["version"]` and the
+  `if project_version is None: ... raise RuntimeError(msg)` block.
+- post-005 (tomllib): delete `project_version = project_metadata.get("version")`
+  and the same guard.
+
+Then update the tests:
+
+- `tests/unit/config/pyproject_test.py`: delete
+  `test_pyproject_raises_when_project_version_is_missing` and remove
+  `project_version` from the imports/assertions of the happy-path test.
+- `tests/unit/api/api_test.py`: rewritten in Step 3 anyway — it must not
+  reference `project_version`.
+
+(`[project].version` stays in `pyproject.toml` itself — it is required
+package metadata; only the runtime plumbing goes.)
 
 ### Step 2: Mount both
 
@@ -233,10 +263,10 @@ collision would surface here as ninja errors).
   (Fixtures alphabetized; `v1_client` is consumed by Step 4's test so the
   fixture — and thus the import — is exercised, keeping coverage at 100%.)
 - `tests/unit/api/api_test.py`: update to the split objects — assert
-  `ops_api.title` embeds `project_name` and `ops_api.version ==
-  str(project_version)`; assert `v1_api.title == project_name` and
-  `v1_api.version == "1.0.0"`. (These remain structural assertions on the
-  objects the app builds, matching the file's existing pattern.)
+  `ops_api.title` embeds `project_name`, `v1_api.title == project_name`, and
+  `v1_api.version == "1.0.0"`. No `project_version` references (removed in
+  Step 1b). (These remain structural assertions on the objects the app
+  builds, matching the file's existing pattern.)
 - `tests/integration/api/schema_test.py`: the schemathesis fixture stays on
   `"/api/openapi.json"` (ops schema — where all real operations live today).
   No change needed; confirm it still collects and passes.
@@ -317,6 +347,7 @@ testing starts when the first endpoint lands (the ops schema test remains).
 
 - [ ] `grep -n "api/v1/" '{{cookiecutter.project_slug}}/src/config/urls.py'` → one mount
 - [ ] `grep -n "urls_namespace" '{{cookiecutter.project_slug}}/src/apps/api/api.py'` → two distinct namespaces
+- [ ] `grep -rn "project_version" '{{cookiecutter.project_slug}}/src' '{{cookiecutter.project_slug}}/tests'` → no matches
 - [ ] Baked project: `/api/ready` (and `/api/health` if 002 ran) still served at UNVERSIONED paths (existing integration tests pass unchanged)
 - [ ] Baked project: `curl`-equivalent test proves `/api/v1/openapi.json` → 200 with `info.version == "1.0.0"`
 - [ ] `uv run pytest` → all pass, 100%; `pre-commit run --all-files` → all pass

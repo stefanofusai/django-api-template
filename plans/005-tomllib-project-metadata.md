@@ -34,6 +34,24 @@ import with `FileNotFoundError`, cascading into a failed URLconf. Python 3.14's
 stdlib `tomllib` reads the same two fields with zero dependencies, and an
 absolute path anchored to the file removes the CWD trap.
 
+A second win, empirically verified during planning: with pyproject-parser,
+importing `config.pyproject` **reads `README.md` from disk** (its PEP 621
+parser resolves the `readme = "README.md"` field; the import raises
+`FileNotFoundError` when the file is absent). That is the only reason
+`README.md` must ship in the Docker image today — `tomllib` just parses the
+TOML string, and since `pyproject.toml` declares no `[build-system]`, uv
+treats the project as virtual and never builds/installs it (also verified:
+no distribution is installed in the venv). So once this plan lands,
+`README.md` becomes dead weight in the runtime image and gets dockerignored
+(Step 4).
+
+**Coordination with Plan 015**: 015 retires `project_version` entirely (the
+API contract version becomes an explicit literal). Check `plans/README.md`:
+if 015 is DONE, `config/pyproject.py` no longer has version handling — write
+the Step 1 rewrite WITHOUT the `project_version` lines and the version guard,
+and skip the version test in Step 2. If 015 is still TODO, keep them as
+written here; 015 will remove them later.
+
 ## Important context: this is a cookiecutter template
 
 - Project code lives under the literal `{{cookiecutter.project_slug}}/` dir —
@@ -92,6 +110,7 @@ absolute path anchored to the file removes the CWD trap.
 - `{{cookiecutter.project_slug}}/src/config/pyproject.py`
 - `{{cookiecutter.project_slug}}/tests/unit/config/pyproject_test.py`
 - `{{cookiecutter.project_slug}}/pyproject.toml` (remove one dependency line)
+- `{{cookiecutter.project_slug}}/.docker/Dockerfile.dockerignore` (add README.md)
 
 **Out of scope**:
 - `src/apps/api/api.py` and `tests/unit/api/api_test.py` — the exported names
@@ -170,7 +189,38 @@ Remove the `"pyproject-parser==0.14.0",` line from
 `grep -rn pyproject_parser $BAKE/my-project/src $BAKE/my-project/tests` → no
 matches; `grep -n pyproject-parser $BAKE/my-project/uv.lock` → no matches.
 
-### Step 4: Full verification loop + CWD regression check
+### Step 4: Drop README.md from the Docker image
+
+Add `README.md` to `{{cookiecutter.project_slug}}/.docker/Dockerfile.dockerignore`.
+This file is kept byte-sorted by the `file-contents-sorter` pre-commit hook —
+insert in sorted position (between `.vscode/` and `TODO.md`; capital letters
+sort before lowercase, so run the hook to confirm placement).
+
+This is safe ONLY because of this plan's rewrite: the old pyproject-parser
+code read `README.md` at import time inside the container (verified —
+`FileNotFoundError` without it), while `tomllib` does not, and the image
+build never installs the project as a distribution (no `[build-system]`).
+
+**Verify** (needs Docker): in a fresh bake,
+`docker build -f .docker/Dockerfile --build-arg UV_DEPENDENCY_GROUP=prod -t t005 .`
+→ exit 0 (the build's `collectstatic` loads full prod settings). Then prove
+the runtime import path works without the README in the image:
+
+```
+docker run --rm -e DJANGO_ENV=prod -e ALLOWED_HOSTS=example.com \
+  -e AWS_STORAGE_BUCKET_NAME=b -e CACHE_URL=locmemcache:// \
+  -e CSRF_TRUSTED_ORIGINS=https://example.com -e DATABASE_URL=sqlite:///:memory: \
+  -e SECRET_KEY=some-long-random-value t005 \
+  python -c "import config.pyproject; print(config.pyproject.project_name)"
+```
+
+→ prints `my-project`. (Add `-e SENTRY_DSN=... -e RESEND_API_KEY=...` dummies
+if plans 007/009 have landed.) Also confirm the file is really absent:
+`docker run --rm --entrypoint sh t005 -c "test ! -f README.md"` → exit 0.
+If Docker is unavailable, state so in the PR and rely on the CI docker-build
+job — but do not skip the dockerignore sorting verification.
+
+### Step 5: Full verification loop + CWD regression check
 
 **Verify**:
 - Fresh bake → `uv run pytest` → all pass, 100%
@@ -189,6 +239,7 @@ old code with `FileNotFoundError`.
 - [ ] `grep -rn "pyproject_parser\|pyproject-parser" '{{cookiecutter.project_slug}}'` → no matches (excluding this plans/ directory)
 - [ ] Baked project: `uv run pytest` → all pass, 100%
 - [ ] Baked project: import `config.pyproject` with CWD=/ succeeds
+- [ ] `README.md` listed in `.docker/Dockerfile.dockerignore` (sorted); prod image builds and imports `config.pyproject` without it
 - [ ] Baked project: `uv run pre-commit run --all-files` → all pass
 - [ ] No files outside the in-scope list modified (`git status`)
 - [ ] `plans/README.md` status row updated

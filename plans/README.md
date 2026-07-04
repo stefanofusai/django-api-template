@@ -17,8 +17,8 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 001 | Coverage gate measures all of src/; test-isolation fixes | P1 | S | — | TODO |
-| 002 | Prod deploy-path hardening (health/ready split, boot guards, proxy contract) | P1 | M | — | TODO |
+| 001 | Coverage gate measures all of src/; test-isolation fixes | P1 | S | — | DONE |
+| 002 | Prod deploy-path hardening (health/ready split, boot guards, proxy contract) | P1 | M | — | DONE |
 | 003 | Custom user model + tests/factories.py | P1 | M | 001 | TODO |
 | 004 | Pagination max-limit knob fix | P2 | S | — | TODO |
 | 005 | tomllib project metadata (drop pyproject-parser, CWD fix) | P2 | S | — | TODO |
@@ -30,6 +30,7 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 011 | Cookiecutter hooks hardening + negative-bake CI | P2 | M | — | TODO |
 | 012 | Template repo self-checks (root pre-commit, cached CI docker build) | P3 | S–M | 011 (ordering) | TODO |
 | 013 | CI compose smoke test of the baked prod stack | P1 | M | 002; adapts to 003/007/008/009 | TODO |
+| 015 | /api/v1 versioning split (unversioned ops API + v1 mount) | P2 | S–M | 002; before 014 | TODO |
 | 014 | LICENSE, README truthfulness, optional rtk | P3 | S | all others (run last) | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
@@ -51,6 +52,12 @@ REJECTED (with one-line rationale).
 - **011 before 012**: 012's root pre-commit lints the hook files 011 rewrites.
 - **013 late**: the smoke test asserts the FINAL stack (health endpoint, beat
   service, all required env vars). Its steps enumerate the per-plan variants.
+- **015 after 002, before 014**: it splits `api.py` into an unversioned
+  `ops_api` (health/ready stay at `/api/…` — compose/settings/workflows
+  untouched) and a `v1_api` at `/api/v1/`. If executed BEFORE 002, run it
+  with `ready_router` only and leave a note for 002's executor that the
+  mount target is now `ops_api`. Design per
+  <https://django-ninja.dev/guides/versioning/>.
 - **014 last**: documents the final state of everything.
 - 004, 005, 006 are independent and can run in any gap.
 - Plans 002/007/009 all edit `prod.py` and `.env.example`; run them
