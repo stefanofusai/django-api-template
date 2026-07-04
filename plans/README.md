@@ -36,7 +36,8 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 018 | Traefik in prod.yaml + docker-rollout zero-downtime deploys | P2 | M | 002; serialize on .env.example; adapts to 008/013 | TODO |
 | 019 | Quirk/decision comments at trap points + AGENTS.md comment policy | P3 | S | cleanest after 005/006; serialize with shared files | TODO |
 | 020 | .env.example blocks + dependency-group rationalization | P2 | S–M | supersedes 010 Step 1; serialize on .env.example/pyproject | TODO |
-| 014 | LICENSE, README truthfulness, optional rtk | P3 | S | all others (run last) | TODO |
+| 021 | Open-source readiness (neutral defaults, front-door README, LICENSE, community files) | P2 | M | all others (run last); absorbs 014 | TODO |
+| 014 | LICENSE, README truthfulness, optional rtk | P3 | S | — | SUPERSEDED (absorbed into 021) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale).
@@ -83,6 +84,13 @@ REJECTED (with one-line rationale).
   `project_version` export in `config/pyproject.py` and remove only the
   `api.py` usage.
 - **016 anywhere**, but it edits `.env.example` — serialize with 007/009/018.
+- **021 replaces 014 as the run-last plan** (open-source readiness: John Doe
+  cookiecutter defaults, root README with Design Decisions + Required
+  Configuration sections, LICENSE root+baked, CONTRIBUTING/SECURITY,
+  rtk made optional, vendored-skill license verification). It documents the
+  FINAL state — execute after everything else. Its maintenance notes carry
+  the manual publishing checklist, including deciding the fate of this
+  `plans/` directory before the repo goes public.
 - **017 after 015** (gates docs on both API instances in one pass) and
   serialized with 007/009 on `prod.py`. Its Step 4 empirically verifies
   ninja's `docs_decorator` covers `/openapi.json` — a STOP if not.
