@@ -11,6 +11,7 @@
 .ty/
 .venv/
 .vscode/
+README.md
 TODO.md
 __pycache__/
 dist/

@@ -23,7 +23,6 @@ dependencies = [
     "django-structlog[celery]==10.1.0",
     "django-unfold==0.96.0",
     "psycopg[binary]==3.3.4",
-    "pyproject-parser==0.14.0",
     "structlog==25.5.0",
     "whitenoise==6.12.0",
 ]
