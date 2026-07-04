@@ -15,12 +15,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - project_name: My Project
-            extra-args: ""
-            slug: my-project
           - project_name: My API Server 2
             extra-args: project_name="My API Server 2"
             slug: my-api-server-2
+          - project_name: My Project
+            extra-args: ""
+            slug: my-project
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.3

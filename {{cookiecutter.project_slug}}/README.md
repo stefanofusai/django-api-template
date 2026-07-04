@@ -53,9 +53,9 @@ docker compose -f .docker/compose/dev.yaml up --build
 The API runs migrations with a Compose `pre_start` step before the service
 starts. When the API is healthy, the worker starts and you can open:
 
-- readiness: <http://localhost:8000/api/ready>
 - API docs: <http://localhost:8000/api/docs>
 - Django Admin: <http://localhost:8000/admin/>
+- readiness: <http://localhost:8000/api/ready>
 
 Create a staff user inside the running API container:
 
@@ -74,14 +74,14 @@ docker compose -f .docker/compose/dev.yaml down
 `.env.example` contains the variables needed by the Compose stack. The defaults
 target local PostgreSQL and Redis containers:
 
-- `DATABASE_URL` points Django at the `postgres` service.
+- `AWS_STORAGE_BUCKET_NAME` is required in production; optional AWS variables
+  are commented.
 - `CACHE_URL` uses Redis database 0.
 - `CELERY_BROKER_URL` uses Redis database 1.
 - `CELERY_WORKER_CONCURRENCY` and `CELERY_WORKER_MAX_TASKS_PER_CHILD` size the
   worker process.
+- `DATABASE_URL` points Django at the `postgres` service.
 - `GUNICORN_*` values are required by the production web entrypoint.
-- Optional AWS variables are commented, while `AWS_STORAGE_BUCKET_NAME` is
-  required in production.
 
 The development Compose file starts `api`, `worker`, `postgres`, and `redis`.
 It bind-mounts `manage.py` and `src/` for local code changes, and stores media

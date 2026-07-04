@@ -4,16 +4,16 @@ A Cookiecutter template for a modern Django Ninja API service.
 
 ## What You Get
 
-- Django 6 and Django Ninja in a `src/` layout
 - Celery and Redis included by default
-- PostgreSQL for local and production Compose stacks
-- `django-split-settings` with `ci`, `dev`, and `prod` overlays
-- uv-managed Python 3.14 dependencies
-- pytest with 100% coverage, Schemathesis, and Hypothesis
-- Ruff, Ty, uv-audit, actionlint, yamllint, yamlfmt, markdownlint, gitlint, and
-  other pre-commit checks
+- Dependabot for Compose, Docker, GitHub Actions, pre-commit hooks, and uv
+- Django 6 and Django Ninja in a `src/` layout
 - Dockerfile and Docker Compose definitions
-- Dependabot for GitHub Actions, Docker, Compose, pre-commit hooks, and uv
+- `django-split-settings` with `ci`, `dev`, and `prod` overlays
+- PostgreSQL for local and production Compose stacks
+- pytest with 100% coverage, Hypothesis, and Schemathesis
+- actionlint, gitlint, markdownlint, Ruff, Ty, uv-audit, yamlfmt, yamllint, and
+  other pre-commit checks
+- uv-managed Python 3.14 dependencies
 - Vendored `.agents/` skills and `AGENTS.md` guidance
 
 ## Usage

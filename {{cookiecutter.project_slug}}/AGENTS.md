@@ -30,6 +30,13 @@
 - Prefer clear, explicit code over clever compression.
 - Use extended YAML block style instead of compact flow style, for example
   `branches:` followed by `- main` instead of `branches: [main]`.
+- Order unordered list items alphabetically when dependency order does not
+  matter. This includes Markdown inventory bullets, YAML lists of pre-commit
+  hook ids, Docker Compose volume entries, GitHub Actions matrix entries,
+  Dependabot update entries, environment-variable documentation, and command
+  argument lists. For example, put `check-dependabot` before
+  `check-github-workflows`, `CACHE_URL` before `DATABASE_URL`,
+  `/app/media` before `/app/src`, and `docker` before `github-actions`.
 - Put blank lines around control-flow blocks and between their branches. Apply this to `if`/`elif`/`else`, `try`/`except`/`else`/`finally`, `for`, `while`, `with` context managers, and other multi-line control blocks.
 - At module scope, order declaration blocks as call-style markers such as
   `pytestmark`, then constants, then variables. Separate each block with a
