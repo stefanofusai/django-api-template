@@ -6,8 +6,8 @@
 {{ cookiecutter.description }}
 
 The project is built on Django, Django Ninja, PostgreSQL, Redis, Celery,
-django-celery-results, django-structlog, django-storages, Docker Compose,
-pytest, Ruff, Ty, and uv.
+django-celery-beat, django-celery-results, django-structlog,
+django-storages, Docker Compose, pytest, Ruff, Ty, and uv.
 
 ## Architecture
 
@@ -83,9 +83,14 @@ target local PostgreSQL and Redis containers:
 - `DATABASE_URL` points Django at the `postgres` service.
 - `GUNICORN_*` values are required by the production web entrypoint.
 
-The development Compose file starts `api`, `worker`, `postgres`, and `redis`.
-It bind-mounts `manage.py` and `src/` for local code changes, and stores media
-files in a Docker volume.
+The development Compose file starts `api`, `beat`, `postgres`, `redis`, and
+`worker`. It bind-mounts `manage.py` and `src/` for local code changes, and
+stores media files in a Docker volume.
+
+Periodic task schedules are managed in Django Admin through
+django-celery-beat's `DatabaseScheduler`. Run exactly one `beat` instance for a
+deployment. The `beat` service has no healthcheck and relies on the Compose
+restart policy.
 
 ## Usage
 

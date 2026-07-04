@@ -31,6 +31,21 @@ services:
       - command:
           - /app/.docker/scripts/migrations.sh
     restart: unless-stopped
+  beat:
+    build:
+      context: ../..
+      dockerfile: .docker/Dockerfile
+      args:
+        UV_DEPENDENCY_GROUP: prod
+    command: /app/.docker/scripts/beat.sh
+    depends_on:
+      api:
+        condition: service_healthy
+    env_file:
+      - ../../.env
+    environment:
+      DJANGO_ENV: prod
+    restart: unless-stopped
   postgres:
     env_file:
       - ../../.env

@@ -57,6 +57,9 @@
   calls or similar side effects. For example, initialize integrations such as
   `sentry_sdk.init(...)` after the settings values they depend on have been
   declared.
+- Order `sentry_sdk.init(...)` keyword arguments according to Sentry's
+  documented options order:
+  <https://docs.sentry.io/platforms/python/configuration/options/#available-options>.
 - Add environment variables only for secrets, deployment topology, or resource sizing.
 - Celery results are opt-in per task: use `@shared_task(ignore_result=False)`
   when a task's result must be persisted; tasks are at-least-once

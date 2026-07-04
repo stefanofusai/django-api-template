@@ -9,6 +9,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Third-party
+    "django_celery_beat",
     "django_celery_results",
     "django_structlog",
     "extra_checks",
