@@ -1,12 +1,16 @@
 import pytest
 from ninja.testing import TestClient
+from pytest_factoryboy import register
 
 from apps.api.api import api
+from tests.factories import UserFactory
 
 TEST_TYPE_MARKERS = {
     "tests/integration/": pytest.mark.integration,
     "tests/unit/": pytest.mark.unit,
 }
+
+register(UserFactory)
 
 
 # Fixtures

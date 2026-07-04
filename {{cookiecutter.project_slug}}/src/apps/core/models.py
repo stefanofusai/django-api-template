@@ -1,5 +1,6 @@
 import uuid
 
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
@@ -15,6 +16,13 @@ class CreatedAtUpdatedAtModel(CreatedAtModel):
 
     class Meta:
         abstract = True
+
+
+class User(AbstractUser):
+    class Meta:
+        ordering = ("username",)
+        verbose_name = AbstractUser.Meta.verbose_name
+        verbose_name_plural = AbstractUser.Meta.verbose_name_plural
 
 
 class UUIDModel(models.Model):

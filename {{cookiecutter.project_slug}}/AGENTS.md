@@ -66,7 +66,8 @@
   - `rtk uv run pre-commit run ty --all-files`
   - `rtk uv run pytest`
   - `rtk uv run pre-commit run --all-files` for broad changes
-- Register factories in `tests/factories.py` when adding concrete models.
+- Register factories in `tests/factories.py` when adding concrete models
+  (see `UserFactory`).
 - Use pytest-factoryboy model fixtures directly and prefer attribute
   parametrization for factory-backed model setup.
 - Avoid direct `Model.objects.create(...)` and direct Django model construction in tests unless the test specifically needs an invalid unsaved object; use factory `.build(...)` for those invalid cases.
