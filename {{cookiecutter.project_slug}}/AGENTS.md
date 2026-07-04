@@ -70,6 +70,9 @@
   (see `UserFactory`).
 - Use pytest-factoryboy model fixtures directly and prefer attribute
   parametrization for factory-backed model setup.
+- Use Django's `@override_settings(...)` or `@modify_settings(...)` for tests
+  that change Django settings; do not mock or patch `django.conf.settings` or
+  derived settings objects directly.
 - Avoid direct `Model.objects.create(...)` and direct Django model construction in tests unless the test specifically needs an invalid unsaved object; use factory `.build(...)` for those invalid cases.
 - Use Faker/factory values for incidental names, URLs, UUIDs, and response metadata.
 - Keep fixed literals only when they are the behavior under test.
