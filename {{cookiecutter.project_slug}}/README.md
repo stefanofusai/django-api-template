@@ -51,7 +51,7 @@ docker compose -f .docker/compose/dev.yaml up --build
 ```
 
 The API runs migrations with a Compose `pre_start` step before the service
-starts. When the API is healthy, the worker starts and you can open:
+starts. When the API is healthy, the Celery services start and you can open:
 
 - API docs: <http://localhost:8000/api/docs>
 - Django Admin: <http://localhost:8000/admin/>
@@ -83,14 +83,14 @@ target local PostgreSQL and Redis containers:
 - `DATABASE_URL` points Django at the `postgres` service.
 - `GUNICORN_*` values are required by the production web entrypoint.
 
-The development Compose file starts `api`, `beat`, `postgres`, `redis`, and
-`worker`. It bind-mounts `manage.py` and `src/` for local code changes, and
-stores media files in a Docker volume.
+The development Compose file starts `api`, `celery-beat`, `celery-worker`,
+`postgres`, and `redis`. It bind-mounts `manage.py` and `src/` for local code
+changes, and stores media files in a Docker volume.
 
 Periodic task schedules are managed in Django Admin through
-django-celery-beat's `DatabaseScheduler`. Run exactly one `beat` instance for a
-deployment. The `beat` service has no healthcheck and relies on the Compose
-restart policy.
+django-celery-beat's `DatabaseScheduler`. Run exactly one `celery-beat`
+instance for a deployment. The `celery-beat` service has no healthcheck and
+relies on the Compose restart policy.
 
 ## Usage
 

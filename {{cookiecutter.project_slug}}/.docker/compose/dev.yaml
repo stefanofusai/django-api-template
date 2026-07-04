@@ -37,13 +37,13 @@ services:
       - ../../manage.py:/app/manage.py
       - ../../src:/app/src
       - media_data:/app/media
-  beat:
+  celery-beat:
     build:
       context: ../..
       dockerfile: .docker/Dockerfile
       args:
         UV_DEPENDENCY_GROUP: dev
-    command: /app/.docker/scripts/beat.sh
+    command: /app/.docker/scripts/celery-beat.sh
     depends_on:
       api:
         condition: service_healthy
@@ -51,6 +51,33 @@ services:
       - ../../.env
     environment:
       DJANGO_ENV: dev
+    volumes:
+      - ../../manage.py:/app/manage.py
+      - ../../src:/app/src
+      - media_data:/app/media
+  celery-worker:
+    build:
+      context: ../..
+      dockerfile: .docker/Dockerfile
+      args:
+        UV_DEPENDENCY_GROUP: dev
+    command: /app/.docker/scripts/celery-worker.sh
+    depends_on:
+      api:
+        condition: service_healthy
+    env_file:
+      - ../../.env
+    environment:
+      DJANGO_ENV: dev
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - celery -A config inspect ping --destination=celery-worker@$$HOSTNAME --timeout=5
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+      start_interval: 5s
     volumes:
       - ../../manage.py:/app/manage.py
       - ../../src:/app/src
@@ -88,33 +115,6 @@ services:
     image: redis:8.8.0
     volumes:
       - redis_data:/data
-  worker:
-    build:
-      context: ../..
-      dockerfile: .docker/Dockerfile
-      args:
-        UV_DEPENDENCY_GROUP: dev
-    command: /app/.docker/scripts/worker.sh
-    depends_on:
-      api:
-        condition: service_healthy
-    env_file:
-      - ../../.env
-    environment:
-      DJANGO_ENV: dev
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - celery -A config inspect ping --destination=worker@$$HOSTNAME --timeout=5
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-      start_interval: 5s
-    volumes:
-      - ../../manage.py:/app/manage.py
-      - ../../src:/app/src
-      - media_data:/app/media
 volumes:
   media_data:
   postgres_data:

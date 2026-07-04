@@ -31,13 +31,13 @@ services:
       - command:
           - /app/.docker/scripts/migrations.sh
     restart: unless-stopped
-  beat:
+  celery-beat:
     build:
       context: ../..
       dockerfile: .docker/Dockerfile
       args:
         UV_DEPENDENCY_GROUP: prod
-    command: /app/.docker/scripts/beat.sh
+    command: /app/.docker/scripts/celery-beat.sh
     depends_on:
       api:
         condition: service_healthy
@@ -45,6 +45,30 @@ services:
       - ../../.env
     environment:
       DJANGO_ENV: prod
+    restart: unless-stopped
+  celery-worker:
+    build:
+      context: ../..
+      dockerfile: .docker/Dockerfile
+      args:
+        UV_DEPENDENCY_GROUP: prod
+    command: /app/.docker/scripts/celery-worker.sh
+    depends_on:
+      api:
+        condition: service_healthy
+    env_file:
+      - ../../.env
+    environment:
+      DJANGO_ENV: prod
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - celery -A config inspect ping --destination=celery-worker@$$HOSTNAME --timeout=5
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+      start_interval: 5s
     restart: unless-stopped
   postgres:
     env_file:
@@ -81,30 +105,6 @@ services:
     restart: unless-stopped
     volumes:
       - redis_data:/data
-  worker:
-    build:
-      context: ../..
-      dockerfile: .docker/Dockerfile
-      args:
-        UV_DEPENDENCY_GROUP: prod
-    command: /app/.docker/scripts/worker.sh
-    depends_on:
-      api:
-        condition: service_healthy
-    env_file:
-      - ../../.env
-    environment:
-      DJANGO_ENV: prod
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - celery -A config inspect ping --destination=worker@$$HOSTNAME --timeout=5
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-      start_interval: 5s
-    restart: unless-stopped
 volumes:
   postgres_data:
   redis_data:

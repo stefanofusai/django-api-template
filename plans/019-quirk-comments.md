@@ -225,9 +225,9 @@ blocks still exist — place the comments on the live lines. If plans 007/009
 landed, the env block also contains SENTRY_DSN/RESEND_API_KEY dummies — the
 comment covers them unchanged.
 
-### Site 8 — `.docker/compose/dev.yaml` AND `prod.yaml` (worker gate)
+### Site 8 — `.docker/compose/dev.yaml` AND `prod.yaml` (Celery service gate)
 
-Live anchor in both files: the worker service's
+Live anchor in both files: the `celery-worker` service's
 
 ```yaml
     depends_on:
@@ -238,7 +238,7 @@ Live anchor in both files: the worker service's
 Misreading prevented: the worker does not talk to the api over HTTP, so this
 dependency looks wrong/removable — but api "healthy" is the proxy for
 "migrations completed" (api's `pre_start` blocks its start on
-`migrations.sh`). Add above `depends_on:` in the worker service of BOTH
+`migrations.sh`). Add above `depends_on:` in the `celery-worker` service of BOTH
 files (yamllint needs a space after `#`):
 
 ```yaml
@@ -247,7 +247,7 @@ files (yamllint needs a space after `#`):
     depends_on:
 ```
 
-If plan 008 landed, the beat service has the same dependency for the same
+If plan 008 landed, the `celery-beat` service has the same dependency for the same
 reason — add the same comment there too.
 
 ## Codify the policy (AGENTS.md)
