@@ -7,7 +7,9 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat 28d30e8..HEAD -- README.md cookiecutter.json '{{cookiecutter.project_slug}}/README.md' '{{cookiecutter.project_slug}}/AGENTS.md' '{{cookiecutter.project_slug}}/pyproject.toml'`
+> **Drift check (run first)**: `git diff --stat 28d30e8..HEAD -- README.md AGENTS.md cookiecutter.json '{{cookiecutter.project_slug}}/README.md' '{{cookiecutter.project_slug}}/AGENTS.md' '{{cookiecutter.project_slug}}/pyproject.toml'`
+> (root `AGENTS.md` did not exist at `28d30e8` — it will show as new; that
+> is expected.)
 > This plan runs LAST and documents the LIVE state — READMEs are expected to
 > have drifted via other plans; re-read every target file fully before
 > editing. In `cookiecutter.json`, plan 022's six knob entries
@@ -31,8 +33,9 @@ The template is about to be published as open source
 still shaped like a personal tool: the cookiecutter defaults bake the
 maintainer's real name/email into every generated project, there is no
 LICENSE anywhere (all-rights-reserved by default — recipients technically
-have no usage grant), the baked AGENTS.md hard-requires `rtk` (a personal
-CLI wrapper that fails with "command not found" for everyone else), the
+have no usage grant), both AGENTS.md files (root and baked) hard-require
+`rtk` (a personal CLI wrapper that fails with "command not found" for
+everyone else), the
 root README documents neither the template's opinionated choices nor the
 configuration a new user must supply, and the vendored `.agents/` skills
 are redistributed without verified upstream licenses. This plan makes the
@@ -99,6 +102,12 @@ redistribution check. It also adds a `domain_name` variable (folded in on
 - Baked `AGENTS.md:5`: "Always prefix shell commands with `rtk`." and the
   Testing section lists `rtk uv run ...` commands — `rtk` is not part of
   the template's toolchain.
+- Root `AGENTS.md` (added at `b7200cf`, after this plan was written) has
+  the same problem: its Command Workflow section opens with "Always prefix
+  shell commands with `rtk`." and its Verification section lists
+  `rtk pre-commit ...` / `rtk uv run ...` / `rtk docker compose ...` /
+  `rtk curl ...` commands. Its fff-MCP bullet is fine as-is (it already
+  says "when available; otherwise use `rg`") — leave that one alone.
 - Vendored skills in `{{cookiecutter.project_slug}}/.agents/skills/`:
   `django-celery-expert`, `django-expert` (source
   `vintasoftware/django-ai-plugins`), `mcp-builder` (source
@@ -139,6 +148,8 @@ redistribution check. It also adds a `domain_name` variable (folded in on
 - `{{cookiecutter.project_slug}}/pyproject.toml` (`license` key only)
 - `{{cookiecutter.project_slug}}/README.md` (truthfulness fixes, Step 5)
 - `{{cookiecutter.project_slug}}/AGENTS.md` (rtk optionalization)
+- `AGENTS.md` (root — rtk optionalization ONLY, Step 6; do not touch its
+  other guidance)
 - `{{cookiecutter.project_slug}}/.agents/` attribution note (Step 7 — a new
   `README.md` or NOTICE inside `.agents/`, nothing else in that tree)
 
@@ -338,7 +349,9 @@ have edited it): apply the same Verification-block fix (`up -d --build
 unqualified Hypothesis claim, and add a one-line License section (MIT, see
 LICENSE). Reconcile — don't duplicate — sections other plans added.
 
-### Step 6: Make rtk optional in baked AGENTS.md (absorbed from plan 014)
+### Step 6: Make rtk optional in BOTH AGENTS.md files (absorbed from plan 014; root file folded in 2026-07-05)
+
+In `{{cookiecutter.project_slug}}/AGENTS.md` (baked):
 
 1. Replace "Always prefix shell commands with `rtk`." with: "If the `rtk`
    CLI is available, prefix shell commands with `rtk` (token-optimizing
@@ -348,8 +361,22 @@ LICENSE). Reconcile — don't duplicate — sections other plans added.
    adding one line after the verification list: "Prefix these with `rtk`
    when it is available."
 
-**Verify**: `grep -cn "rtk uv" '{{cookiecutter.project_slug}}/AGENTS.md'`
-→ 0; no remaining command line *starts with* `rtk `.
+In the root `AGENTS.md` (same treatment, rtk lines ONLY):
+
+3. Replace its "Always prefix shell commands with `rtk`." bullet with the
+   same conditional sentence as item 1.
+4. Strip the `rtk ` prefix from every command bullet in its Verification
+   section (`rtk pre-commit ...`, `rtk uv run ...`,
+   `rtk docker compose ...`, `rtk curl ...`), adding the same "Prefix
+   these with `rtk` when it is available." line after the list. Leave the
+   fff-MCP bullet and all other guidance untouched.
+
+**Verify**: `grep -rn "rtk " AGENTS.md '{{cookiecutter.project_slug}}/AGENTS.md'`
+→ the only matches are the two "If the `rtk` CLI is available..."
+sentences and the two "Prefix these with `rtk` when it is available."
+lines; no line in either file *starts with* `rtk ` (allowing leading
+list markers/whitespace, i.e. `grep -rEn "^[-* ]*\`?rtk " ...` → 0
+matches).
 
 ### Step 7: Vendored-content redistribution check
 
@@ -390,7 +417,8 @@ identity sweeps (Step 8), the metadata parse via post-gen `uv lock`
 - [ ] LICENSE at root (maintainer copyright) and in the baked tree (rendered author); `license = "MIT"` in baked pyproject
 - [ ] Root README has Design Decisions + Required Configuration sections and a runnable Verification block
 - [ ] CONTRIBUTING.md and SECURITY.md exist at root
-- [ ] No baked-AGENTS.md command starts with `rtk `
+- [ ] No command in either AGENTS.md (root or baked) starts with `rtk `;
+      both carry the "if available" conditional instead
 - [ ] `.agents/README.md` credits every vendored skill with a verified redistributable license (or the Step 7 STOP fired)
 - [ ] Identity sweep: only Usage URL + root LICENSE copyright mention the maintainer
 - [ ] No files outside the in-scope list modified (`git status`)
