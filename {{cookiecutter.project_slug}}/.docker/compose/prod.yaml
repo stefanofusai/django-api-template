@@ -14,6 +14,7 @@ services:
       - ../../.env
     environment:
       DJANGO_ENV: prod
+      FORWARDED_ALLOW_IPS: "*"
     healthcheck:
       test:
         - CMD
@@ -27,10 +28,29 @@ services:
       retries: 3
       start_period: 30s
       start_interval: 2s
+    labels:
+      - docker-rollout.pre-stop-hook=sleep 3
+      - traefik.enable=true
+      - traefik.http.middlewares.api-retry.retry.attempts=3
+      - traefik.http.middlewares.api-retry.retry.initialinterval=100ms
+      - traefik.http.routers.api-web.entrypoints=web
+      - traefik.http.routers.api-web.middlewares=api-retry
+      - traefik.http.routers.api-web.rule=PathPrefix(`/`)
+      - traefik.http.routers.api-websecure.entrypoints=websecure
+      - traefik.http.routers.api-websecure.middlewares=api-retry
+      - traefik.http.routers.api-websecure.rule=Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.routers.api-websecure.tls.certresolver=letsencrypt
+      - traefik.http.services.api.loadbalancer.healthcheck.hostname=localhost
+      - traefik.http.services.api.loadbalancer.healthcheck.interval=1s
+      - traefik.http.services.api.loadbalancer.healthcheck.path=/api/health
+      - traefik.http.services.api.loadbalancer.healthcheck.timeout=1s
+      - traefik.http.services.api.loadbalancer.server.port=8000
     pre_start:
       - command:
           - /app/.docker/scripts/migrations.sh
     restart: unless-stopped
+    stop_grace_period: 5s
+    stop_signal: SIGCONT
   celery-beat:
     build:
       context: ../..
@@ -105,6 +125,36 @@ services:
     restart: unless-stopped
     volumes:
       - redis_data:/data
+  traefik:
+    command:
+      - --certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --ping=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+    healthcheck:
+      test:
+        - CMD
+        - traefik
+        - healthcheck
+        - --ping
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      start_interval: 2s
+    image: traefik:v3.7.6
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/letsencrypt
 volumes:
   postgres_data:
   redis_data:
+  traefik_data:

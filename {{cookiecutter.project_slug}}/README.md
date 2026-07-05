@@ -136,15 +136,22 @@ open http://localhost:8000/admin/
 Start the production stack:
 
 ```shell
-docker compose -f .docker/compose/prod.yaml up -d --wait
+docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --wait
 ```
 
-The `api` service publishes no ports. Put your own ingress or reverse proxy in
-front of it. The proxy must terminate TLS, set `X-Forwarded-Proto: https` on
-forwarded requests, and strip or overwrite any client-supplied
-`X-Forwarded-Proto` value. Set `FORWARDED_ALLOW_IPS` to the proxy address so
-Gunicorn trusts it. Without that proxy contract, `SECURE_PROXY_SSL_HEADER` is
-unsafe and `SECURE_SSL_REDIRECT` will loop.
+The production stack includes Traefik. Traefik terminates TLS with Let's
+Encrypt using `TRAEFIK_ACME_EMAIL` and `TRAEFIK_DOMAIN`, routes only to healthy
+API containers, and overwrites client-supplied forwarded headers. The `api`
+service publishes no ports, so `FORWARDED_ALLOW_IPS=*` is safe: only services
+on the Compose network can reach it. Port 80 serves probes and lets Django
+redirect non-probe HTTP requests; port 443 serves normal traffic.
+
+During `docker rollout`, Traefik actively checks `/api/health`, retries short
+backend selection races, waits briefly before stopping the old API container,
+and keeps the old process alive for a short drain window after Docker emits the
+stop event. Those pieces cover both sides of replacement: the new backend is
+not relied on until its HTTP health check passes, and the old backend keeps
+serving while Traefik removes it from rotation.
 
 Before deploying, generate real secrets:
 
@@ -160,7 +167,39 @@ Set `SENTRY_DSN` from your Sentry project settings; production boot fails if it
 is missing or blank. Sentry release names use the package version from
 `pyproject.toml`; tune `SENTRY_ENABLE_LOGS`,
 `SENTRY_PROFILE_SESSION_SAMPLE_RATE`, and `SENTRY_TRACES_SAMPLE_RATE` from the
-environment.
+environment. Run production Compose commands from the project root with
+`--env-file=.env` so Traefik labels resolve deployment values from the root
+environment file.
+
+Install docker-rollout once on each host:
+
+```shell
+mkdir -p ~/.docker/cli-plugins
+curl -fsSL https://raw.githubusercontent.com/wowu/docker-rollout/v0.13/docker-rollout \
+  -o ~/.docker/cli-plugins/docker-rollout
+chmod +x ~/.docker/cli-plugins/docker-rollout
+docker rollout --help
+```
+
+Deploy from the project root:
+
+```shell
+git pull
+docker compose -f .docker/compose/prod.yaml --env-file=.env build
+docker compose -f .docker/compose/prod.yaml --env-file=.env run --no-deps --rm api /app/.docker/scripts/migrations.sh
+docker rollout -f .docker/compose/prod.yaml --env-file=.env api
+docker compose -f .docker/compose/prod.yaml --env-file=.env up -d
+```
+
+Migrations must stay N-1 compatible because old code keeps serving while the
+new schema is live during the rollout overlap. Ship additive migrations first,
+then destructive cleanup in a later deploy. The final `up -d` converges the
+remaining services; `celery-worker` and `celery-beat` may restart briefly, and
+`acks_late` lets interrupted worker tasks be redelivered.
+
+Traefik mounts the Docker socket read-only for service discovery. That mount is
+standard for single-host Docker proxies, but it is effectively root-equivalent
+on the host if Traefik is compromised.
 
 Use `/api/health` as liveness: it checks that the process is up and backs the
 container healthcheck. Use `/api/ready` as readiness: it checks that the

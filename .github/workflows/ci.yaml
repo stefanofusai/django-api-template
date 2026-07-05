@@ -154,26 +154,31 @@ jobs:
           PY
       - name: Boot production stack
         working-directory: /tmp/smoke/my-project
-        run: docker compose -f .docker/compose/prod.yaml up -d --build --wait --wait-timeout 300
+        run: docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --build --wait --wait-timeout=300
       - name: Probe liveness and readiness from inside the api container
         working-directory: /tmp/smoke/my-project
         run: |
-          docker compose -f .docker/compose/prod.yaml exec api curl -fsS http://127.0.0.1:8000/api/health
-          docker compose -f .docker/compose/prod.yaml exec api curl -fsS http://127.0.0.1:8000/api/ready
+          docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/health
+          docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/ready
+      - name: Probe through traefik
+        working-directory: /tmp/smoke/my-project
+        run: |
+          curl -fsS http://localhost/api/health
+          curl -fsS http://localhost/api/ready
       - name: Assert service states
         working-directory: /tmp/smoke/my-project
         run: |
-          docker compose -f .docker/compose/prod.yaml ps
-          docker compose -f .docker/compose/prod.yaml ps celery-beat --format '{{.State}}' | grep -x running
-          test -z "$(docker compose -f .docker/compose/prod.yaml ps --status=exited -q)"
+          docker compose -f .docker/compose/prod.yaml --env-file=.env ps
+          docker compose -f .docker/compose/prod.yaml --env-file=.env ps --format='{{.State}}' celery-beat | grep -x running
+          test -z "$(docker compose -f .docker/compose/prod.yaml --env-file=.env ps -q --status=exited)"
       - name: Dump logs on failure
         if: failure()
         working-directory: /tmp/smoke/my-project
-        run: docker compose -f .docker/compose/prod.yaml logs
+        run: docker compose -f .docker/compose/prod.yaml --env-file=.env logs
       - name: Tear down
         if: always()
         working-directory: /tmp/smoke/my-project
-        run: docker compose -f .docker/compose/prod.yaml down -v
+        run: docker compose -f .docker/compose/prod.yaml --env-file=.env down -v
   pre-commit:
     name: Pre-commit
     runs-on: ubuntu-latest
