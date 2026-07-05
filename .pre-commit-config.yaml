@@ -1,5 +1,17 @@
+default_install_hook_types:
+  - commit-msg
+  - pre-commit
 exclude: ^(\{\{cookiecutter\.project_slug\}\}/|plans/)
 repos:
+  # Git
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+      - id: gitlint
+        args:
+          - --contrib=contrib-title-conventional-commits
+          - --ignore=B6
+          - --msg-filename
   # Generic checks and fixes
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
