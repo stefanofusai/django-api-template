@@ -10,8 +10,10 @@
 > **Drift check (run first)**: `git diff --stat 28d30e8..HEAD -- README.md cookiecutter.json '{{cookiecutter.project_slug}}/README.md' '{{cookiecutter.project_slug}}/AGENTS.md' '{{cookiecutter.project_slug}}/pyproject.toml'`
 > This plan runs LAST and documents the LIVE state — READMEs are expected to
 > have drifted via other plans; re-read every target file fully before
-> editing. On a mismatch in `cookiecutter.json` versus the excerpt below,
-> STOP.
+> editing. In `cookiecutter.json`, plan 022's six knob entries
+> (`use_celery`, `email_provider`, `use_sentry`, `use_s3_media`,
+> `use_traefik`, `traefik_tls`) are EXPECTED drift versus the excerpt
+> below; any other mismatch is a STOP.
 
 ## Status
 
@@ -36,7 +38,10 @@ configuration a new user must supply, and the vendored `.agents/` skills
 are redistributed without verified upstream licenses. This plan makes the
 repo publishable: neutral defaults, a README that states every choice and
 required configuration, LICENSE + minimal community files, and a
-redistribution check.
+redistribution check. It also adds a `domain_name` variable (folded in on
+2026-07-05) so baked projects get prod-correct
+`ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`/`TRAEFIK_DOMAIN` values instead of
+`example.com` placeholders.
 
 ## Important context: this is a cookiecutter template
 
@@ -48,7 +53,8 @@ redistribution check.
 
 ## Current state
 
-- `cookiecutter.json` (whole file at `28d30e8`):
+- `cookiecutter.json` (whole file at `28d30e8`; plan 022 adds six knob
+  entries between `github_username` and `_copy_without_render` — expected):
 
   ```json
   {
@@ -74,6 +80,18 @@ redistribution check.
 - Personal identity appears in exactly two files (verified by grep):
   `README.md` and `cookiecutter.json`. The `gh:stefanofusai/...` Usage URL
   is the real repository coordinate — it STAYS.
+- `{{cookiecutter.project_slug}}/.env.example` hardcodes the deployment
+  domain placeholders (values as of 2026-07-05, with plan 018's changes):
+  `ALLOWED_HOSTS=localhost,127.0.0.1`,
+  `CSRF_TRUSTED_ORIGINS=https://example.com,https://www.example.com`, and
+  `TRAEFIK_DOMAIN=example.com`. By execution time, plan 022 wraps the
+  `TRAEFIK_*` lines in a `{%- if cookiecutter.use_traefik == "yes" %}`
+  conditional and plan 020 may have grouped lines into commented blocks —
+  in Step 1b, edit the VALUES only and leave any wrappers/blocks intact.
+- `hooks/pre_gen_project.py` validates each variable that is written into
+  rendered files, using rendered `tojson` constants + compiled regex +
+  `sys.exit` (e.g. `GITHUB_USERNAME_PATTERN`). `domain_name` (Step 1b)
+  follows the same pattern.
 - No LICENSE at the root or in `{{cookiecutter.project_slug}}/`; the only
   license in-tree is the vendored
   `.agents/skills/mcp-builder/LICENSE.txt`. Baked `pyproject.toml
@@ -108,7 +126,11 @@ redistribution check.
 ## Scope
 
 **In scope**:
-- `cookiecutter.json` (three default values)
+- `cookiecutter.json` (three default values + the new `domain_name` entry)
+- `hooks/pre_gen_project.py` (Step 1b `domain_name` validation ONLY)
+- `{{cookiecutter.project_slug}}/.env.example` (Step 1b domain values ONLY)
+- `.github/workflows/ci.yaml` (root — one new `bake-invalid` matrix case
+  ONLY)
 - `README.md` (template root — restructure per Step 3)
 - `LICENSE` (create, template root)
 - `CONTRIBUTING.md` (create, template root)
@@ -123,7 +145,8 @@ redistribution check.
 **Out of scope**:
 - CODE_OF_CONDUCT.md and issue/PR templates — deliberately skipped for now
   (GitHub UI can add them later); record in the PR description.
-- Any `src/`, compose, workflow, or hook changes.
+- Any `src/`, compose, workflow, or hook changes beyond the three Step 1b
+  carve-outs listed in scope.
 - `skills-lock.json` (plan 010 owns its reconcile).
 - GitHub repo settings (description, topics, branch protection, advisories)
   — manual publishing checklist, see Maintenance notes.
@@ -149,6 +172,72 @@ rewrites that section anyway — keep the values in sync).
 `grep -n "John Doe" $BAKE/my-project/pyproject.toml` → authors/maintainers
 lines; `grep -n "johndoe" $BAKE/my-project/.github/dependabot.yml` →
 assignee entries; baked `uv run pytest` → all pass.
+
+### Step 1b: Add the `domain_name` variable (folded in 2026-07-05)
+
+Maintainer decision: a plain `domain_name` variable (default
+`"example.com"`) pre-fills the deployment-domain placeholders, so a
+project baked with its real domain gets a prod-correct `.env.example` out
+of the box. In particular it closes a real deploy footgun: Traefik routes
+`` Host(`TRAEFIK_DOMAIN`) `` to the api container, but Django rejects that
+host with a 400 until the operator remembers to extend `ALLOWED_HOSTS`.
+This is a value variable, NOT a feature knob — no conditionals, no file
+deletions.
+
+1. `cookiecutter.json`: add `"domain_name": "example.com",` after
+   `"github_username"` and before plan 022's knob entries.
+2. `hooks/pre_gen_project.py`: add validation in the file's existing style
+   (constants alphabetized with the others):
+
+   ```python
+   DOMAIN_NAME = {{ cookiecutter.domain_name | tojson }}
+   DOMAIN_NAME_PATTERN = re.compile(
+       r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$"
+   )
+   ```
+
+   and in `main()`, alongside the other checks:
+
+   ```python
+       if not DOMAIN_NAME_PATTERN.fullmatch(DOMAIN_NAME):
+           sys.exit(
+               "domain_name must be a bare lowercase hostname such as "
+               "api.example.com (no scheme, port, path, or trailing dot)."
+           )
+   ```
+
+3. `{{cookiecutter.project_slug}}/.env.example` — replace the literal
+   domain VALUES; leave plan 022's `{%- if %}` wrappers and any plan-020
+   block structure exactly where they are:
+   - `ALLOWED_HOSTS=localhost,127.0.0.1` →
+     `ALLOWED_HOSTS=localhost,127.0.0.1,{{ cookiecutter.domain_name }}`
+     (this is the ONE line whose default rendering changes — it gains
+     `,example.com`, which is harmless in dev and CI: the pytest env sets
+     its own `ALLOWED_HOSTS`, and the compose smoke probes localhost).
+   - `CSRF_TRUSTED_ORIGINS=https://example.com,https://www.example.com` →
+     `CSRF_TRUSTED_ORIGINS=https://{{ cookiecutter.domain_name }},https://www.{{ cookiecutter.domain_name }}`
+   - `TRAEFIK_DOMAIN=example.com` →
+     `TRAEFIK_DOMAIN={{ cookiecutter.domain_name }}` (inside 022's
+     `use_traefik` conditional).
+4. Root `.github/workflows/ci.yaml`, `bake-invalid` job matrix: add
+   `- case: bad-domain` with `extra-args: domain_name=no-dot`.
+5. Baked `{{cookiecutter.project_slug}}/README.md`: reconcile in Step 5 —
+   where the Production section tells the operator to add their domain to
+   `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`/`TRAEFIK_DOMAIN` manually,
+   reword to say these are pre-filled from `domain_name` at bake time
+   (keep the "keep `127.0.0.1` for the container healthcheck" guidance).
+
+**Verify**:
+- Default bake: `grep -n "^ALLOWED_HOSTS=" $BAKE/my-project/.env.example`
+  → `localhost,127.0.0.1,example.com`; `TRAEFIK_DOMAIN=example.com` and
+  the `CSRF_TRUSTED_ORIGINS` line render exactly as today.
+- `uvx cookiecutter . --no-input -o /tmp/dn domain_name=api.acme.dev` →
+  `grep -c "api.acme.dev" /tmp/dn/my-project/.env.example` → 4 occurrences
+  (1 ALLOWED_HOSTS + 2 CSRF + 1 TRAEFIK_DOMAIN); baked pytest passes.
+- `uvx cookiecutter . --no-input -o /tmp/dnbad domain_name=no-dot` →
+  non-zero exit, message names `domain_name`, and no project directory is
+  created.
+- Root `uvx pre-commit run --all-files` → exit 0 (actionlint on ci.yaml).
 
 ### Step 2: LICENSE + metadata
 
@@ -196,15 +285,20 @@ order — derive all feature claims from the live repo, not from this plan:
 4. **Requirements**: Python 3.14, uv, Docker Compose ≥ 2.30 (lifecycle
    hooks).
 5. **Usage** (unchanged command) + **Variables** table (Step 1 defaults;
-   keep the slug constraints line, updated if plan 011 added length/char
-   rules).
+   include the `domain_name` row — default `example.com`, "deployment
+   domain pre-filled into ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS, and
+   TRAEFIK_DOMAIN" — and keep plan 022's six knob rows; keep the slug
+   constraints line, updated if plan 011 added length/char rules).
 6. **Required Configuration** (NEW): the after-baking checklist — copy
    `.env.example`, then the production-required values (derive from the
    live `.env.example`: every uncommented empty value is required in prod —
    at planning time: `AWS_STORAGE_BUCKET_NAME`, `SENTRY_DSN`, plus
-   `SECRET_KEY` regeneration and real `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`;
-   include keys added by landed plans). Point at `.env.example`'s own
-   documentation and the baked README's Production section for the rest.
+   `SECRET_KEY` regeneration; note that
+   `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`/`TRAEFIK_DOMAIN` are pre-filled
+   from `domain_name` when the project is baked with its real domain
+   (Step 1b); include keys added by landed plans). Point at
+   `.env.example`'s own documentation and the baked README's Production
+   section for the rest.
 7. **Post-Generation** (keep, verbatim intent) and **Verification** —
    fix the block so it runs top-to-bottom:
 
@@ -291,6 +385,7 @@ identity sweeps (Step 8), the metadata parse via post-gen `uv lock`
 ## Done criteria
 
 - [ ] `cookiecutter.json` defaults are John Doe / john.doe@example.com / johndoe; root README table matches
+- [ ] `domain_name` exists (default `example.com`), pre_gen rejects `no-dot`, and a `domain_name=api.acme.dev` bake renders it 4 times in `.env.example`; `bake-invalid` has the `bad-domain` case
 - [ ] Default bake: pyproject authors = John Doe; dependabot assignees = johndoe; suite passes at 100%
 - [ ] LICENSE at root (maintainer copyright) and in the baked tree (rendered author); `license = "MIT"` in baked pyproject
 - [ ] Root README has Design Decisions + Required Configuration sections and a runnable Verification block
@@ -310,6 +405,9 @@ identity sweeps (Step 8), the metadata parse via post-gen `uv lock`
 - uv rejects the PEP 639 `license = "MIT"` string on the pinned version.
 - The default bake fails after Step 1 — a hook or file unexpectedly depends
   on the old default values; report which.
+- The three domain lines cannot be located in the live `.env.example`
+  (drift beyond plan 020's block restructuring and plan 022's
+  conditionals) — report what the file looks like instead.
 - Plan 014 turns out to be DONE or IN PROGRESS in the index — reconcile
   with its executor's changes instead of re-applying; report the overlap.
 

@@ -36,7 +36,8 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 018 | Traefik in prod.yaml + docker-rollout zero-downtime deploys | P2 | M | 002; serialize on .env.example; adapts to 008/013 | DONE |
 | 019 | Quirk/decision comments at trap points + AGENTS.md comment policy | P3 | S | cleanest after 005/006; serialize with shared files | TODO |
 | 020 | .env.example blocks + dependency-group rationalization | P2 | S–M | supersedes 010 Step 1; serialize on .env.example/pyproject | TODO |
-| 021 | Open-source readiness (neutral defaults, front-door README, LICENSE, community files) | P2 | M | all others (run last); absorbs 014 | TODO |
+| 021 | Open-source readiness (neutral defaults, domain_name variable, front-door README, LICENSE, community files) | P2 | M | all others (run last); absorbs 014 | TODO |
+| 022 | Bake-time feature knobs (use_celery, email_provider, use_sentry, use_s3_media, use_traefik, traefik_tls) | P1 | L | 018 committed (hard); 020 preferred first; before 021 | TODO |
 | 014 | LICENSE, README truthfulness, optional rtk | P3 | S | — | SUPERSEDED (absorbed into 021) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
@@ -88,7 +89,10 @@ REJECTED (with one-line rationale).
   cookiecutter defaults, root README with Design Decisions + Required
   Configuration sections, LICENSE root+baked, CONTRIBUTING/SECURITY,
   rtk made optional, vendored-skill license verification). It documents the
-  FINAL state — execute after everything else. Its maintenance notes carry
+  FINAL state — execute after everything else. 2026-07-05: 021 also absorbs
+  the `domain_name` variable (default `example.com`; pre-fills
+  ALLOWED_HOSTS/CSRF_TRUSTED_ORIGINS/TRAEFIK_DOMAIN; pre_gen hostname
+  validation + one new bake-invalid CI case) — its Step 1b. Its maintenance notes carry
   the manual publishing checklist, including deciding the fate of this
   `plans/` directory before the repo goes public.
 - **017 after 015** (gates docs on both API instances in one pass) and
@@ -104,6 +108,27 @@ REJECTED (with one-line rationale).
   wrote. Optional follow-up (not planned): a CI rollout rehearsal in the
   compose-smoke job.
 - **014 last**: documents the final state of everything.
+- **022 (bake-time knobs)** was written 2026-07-05 against the working tree
+  containing plan 018's changes (commit `33d77ee` + 018 diff); it templates
+  the very lines 018 added (traefik service/labels, `TRAEFIK_*` vars), so
+  018 must be **committed** before 022 runs — its drift check enforces this.
+  Run 020 before 022 when possible (022's `.env.example` conditionals then
+  land inside 020's block structure; 022 carries an adaptation note if the
+  order flips). Run 022 **before 021**: 021 documents the final knob
+  surface, and 022 already adds the six knob rows to the root README
+  Variables table. Whichever of 019/020/022 runs later must respect the
+  earlier ones' edits to the shared files (`.env.example`, `pyproject.toml`,
+  baked `README.md`). Maintainer decisions baked into 022: knob set is
+  celery/email-provider/sentry/s3-media/traefik/traefik-tls (license knob
+  deferred to 021; email providers limited to resend/smtp/none); defaults
+  must reproduce today's output byte-for-byte; `use_sentry=yes` keeps
+  Sentry boot-required in prod; Traefik stays the default and
+  `use_traefik=no` is an opt-out, not a reversal of 018. 2026-07-05
+  addition: `traefik_tls` (letsencrypt default / external) — external
+  serves an operator-provided PEM pair via Traefik's file provider
+  (provider-agnostic; Cloudflare Origin CA is the documented example);
+  a plain-HTTP-origin mode was rejected; the sub-knob is ignored when
+  `use_traefik=no`.
 - 004, 005, 006 are independent and can run in any gap.
 - Plans 002/007/009/016/017/018 share `prod.py` and/or `.env.example`; run
   them sequentially, never in parallel worktrees, or the drift checks will
