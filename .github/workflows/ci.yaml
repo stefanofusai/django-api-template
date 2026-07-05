@@ -128,6 +128,30 @@ jobs:
           sed -i "s|^AWS_STORAGE_BUCKET_NAME=.*|AWS_STORAGE_BUCKET_NAME=$(uuidgen)|" .env
           sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1|" .env
           sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=$(uuidgen)|" .env
+      - name: Adapt pre_start for GitHub runner Compose
+        working-directory: /tmp/smoke/my-project
+        run: |
+          # Temporary CI-only compatibility patch: GitHub-hosted runners reject
+          # the Compose pre_start lifecycle hook that the template ships with.
+          # Remove this step once runner Compose accepts that modern hook.
+          python - <<'PY'
+          from pathlib import Path
+
+          compose = Path(".docker/compose/prod.yaml")
+          text = compose.read_text()
+          pre_start = """    pre_start:
+                - command:
+                    - /app/.docker/scripts/migrations.sh
+          """
+          command = """    command:
+                - /bin/sh
+                - -c
+                - /app/.docker/scripts/migrations.sh && exec /app/.docker/scripts/gunicorn.sh
+          """
+          if pre_start not in text:
+              raise SystemExit("expected api pre_start hook not found")
+          compose.write_text(text.replace(pre_start, command))
+          PY
       - name: Boot production stack
         working-directory: /tmp/smoke/my-project
         run: docker compose -f .docker/compose/prod.yaml up -d --build --wait --wait-timeout 300
