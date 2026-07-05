@@ -61,6 +61,9 @@
   documented options order:
   <https://docs.sentry.io/platforms/python/configuration/options/#available-options>.
 - Add environment variables only for secrets, deployment topology, or resource sizing.
+- The API has no default auth. Endpoints requiring protection must add ninja
+  auth (global `auth=` on the API instance, or per-router/per-operation);
+  never ship a mutating endpoint unauthenticated.
 - Celery results are opt-in per task: use `@shared_task(ignore_result=False)`
   when a task's result must be persisted; tasks are at-least-once
   (`acks_late` + `reject_on_worker_lost`), so keep them idempotent.

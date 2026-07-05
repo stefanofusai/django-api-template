@@ -7,9 +7,9 @@ if SECRET_KEY.startswith("django-insecure-"):  # noqa: F821  # ty: ignore[unreso
     raise ImproperlyConfigured(msg)
 
 ANYMAIL = {"RESEND_API_KEY": env("RESEND_API_KEY")}
+API_DOCS_DECORATOR = "django.contrib.admin.views.decorators.staff_member_required"
 CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
-DEBUG = False
 EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
 LOGGING["handlers"]["console"]["formatter"] = "json"  # noqa: F821  # ty: ignore[unresolved-reference]
 MIDDLEWARE.insert(  # noqa: F821  # ty: ignore[unresolved-reference]

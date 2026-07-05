@@ -32,7 +32,7 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 013 | CI compose smoke test of the baked prod stack | P1 | M | 002; adapts to 003/007/008/009 | DONE |
 | 015 | /api/v1 versioning split (unversioned internal API + v1 mount); decouples API version from package version | P2 | S–M | 002; before 014/017 | DONE |
 | 016 | Persistent DB connections (CONN_MAX_AGE + CONN_HEALTH_CHECKS) | P2 | S | — (serialize on .env.example) | DONE |
-| 017 | Staff-gated API docs in prod + documented auth decision point | P2 | S–M | 015 preferred first; serialize on prod.py | TODO |
+| 017 | Staff-gated API docs in prod + documented auth decision point | P2 | S–M | 015 preferred first; serialize on prod.py | DONE |
 | 018 | Traefik in prod.yaml + docker-rollout zero-downtime deploys | P2 | M | 002; serialize on .env.example; adapts to 008/013 | TODO |
 | 019 | Quirk/decision comments at trap points + AGENTS.md comment policy | P3 | S | cleanest after 005/006; serialize with shared files | TODO |
 | 020 | .env.example blocks + dependency-group rationalization | P2 | S–M | supersedes 010 Step 1; serialize on .env.example/pyproject | TODO |
@@ -150,6 +150,20 @@ REJECTED (with one-line rationale).
   ingress)"** — was a settled tradeoff during the audit; REVERSED by the
   maintainer on 2026-07-04 in favor of a standardized deploy story (plan
   018: Traefik + docker-rollout). Do not treat the old stance as current.
+- **PgBouncer in prod.yaml** — evaluated 2026-07-05 at the maintainer's
+  request and rejected as a shipped default: the stack's steady-state
+  connection count is ~8–9 (5 sync gunicorn workers + celery concurrency 2 +
+  beat; ~14 during a rollout overlap) against Postgres's default
+  max_connections=100, and plan 016's persistent connections remove the
+  churn cost a pooler would mitigate. Transaction-mode pooling (the mode
+  that multiplexes) would force CONN_MAX_AGE=0 (contradicting 016) and
+  break session semantics — advisory locks, LISTEN/NOTIFY, psycopg3's
+  auto server-side prepared statements (needs PgBouncer ≥ 1.21 +
+  max_prepared_statements tuning) — costs every baked project would inherit
+  with no benefit at template scale. Escalation path when real connection
+  pressure appears: psycopg3's native pool (Django `"pool": True`,
+  in-process, no new service) first; shared PgBouncer only for multi-host
+  fleets — 016's README bullet documents the CONN_MAX_AGE=0 escape hatch.
 
 ## Deferred direction (recorded, no plan written)
 

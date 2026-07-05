@@ -119,6 +119,12 @@ Browse the versioned business API docs:
 open http://localhost:8000/api/v1/docs
 ```
 
+API docs and the OpenAPI schema are public in development and staff-only in
+production (`API_DOCS_DECORATOR`). The API itself ships unauthenticated: when
+you add the first endpoint that needs protection, set a global auth class
+(`NinjaAPI(auth=...)`) or per-router auth; see
+<https://django-ninja.dev/guides/authentication/>.
+
 Use Django Admin:
 
 ```shell
