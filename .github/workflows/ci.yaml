@@ -79,20 +79,6 @@ jobs:
           if find /tmp/bake -mindepth 1 -maxdepth 1 -type d | grep .; then
             echo "expected no generated project directories" && exit 1
           fi
-  pre-commit:
-    name: Pre-commit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6.0.3
-      - name: Set up Python
-        uses: actions/setup-python@v6.2.0
-        with:
-          python-version: "3.14"
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
-      - name: Run pre-commit
-        run: uvx pre-commit run --all-files
   docker-build:
     name: Docker build
     runs-on: ubuntu-latest
@@ -118,3 +104,63 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: UV_DEPENDENCY_GROUP=prod
+  docker-compose-smoke:
+    name: Docker compose smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.3
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.14"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.2.0
+      - name: Show compose version
+        run: docker compose version
+      - name: Bake project
+        run: uvx cookiecutter . --no-input -o /tmp/smoke
+      - name: Prepare production env file
+        working-directory: /tmp/smoke/my-project
+        run: |
+          cp .env.example .env
+          sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(uuidgen)$(uuidgen)|" .env
+          sed -i "s|^AWS_STORAGE_BUCKET_NAME=.*|AWS_STORAGE_BUCKET_NAME=$(uuidgen)|" .env
+          sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1|" .env
+          sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=$(uuidgen)|" .env
+      - name: Boot production stack
+        working-directory: /tmp/smoke/my-project
+        run: docker compose -f .docker/compose/prod.yaml up -d --build --wait --wait-timeout 300
+      - name: Probe liveness and readiness from inside the api container
+        working-directory: /tmp/smoke/my-project
+        run: |
+          docker compose -f .docker/compose/prod.yaml exec api curl -fsS http://127.0.0.1:8000/api/health
+          docker compose -f .docker/compose/prod.yaml exec api curl -fsS http://127.0.0.1:8000/api/ready
+      - name: Assert service states
+        working-directory: /tmp/smoke/my-project
+        run: |
+          docker compose -f .docker/compose/prod.yaml ps
+          docker compose -f .docker/compose/prod.yaml ps celery-beat --format '{{.State}}' | grep -x running
+          test -z "$(docker compose -f .docker/compose/prod.yaml ps --status=exited -q)"
+      - name: Dump logs on failure
+        if: failure()
+        working-directory: /tmp/smoke/my-project
+        run: docker compose -f .docker/compose/prod.yaml logs
+      - name: Tear down
+        if: always()
+        working-directory: /tmp/smoke/my-project
+        run: docker compose -f .docker/compose/prod.yaml down -v
+  pre-commit:
+    name: Pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.3
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.14"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.2.0
+      - name: Run pre-commit
+        run: uvx pre-commit run --all-files

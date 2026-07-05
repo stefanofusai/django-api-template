@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat 924bfba..HEAD -- .github/workflows/ci.yaml '{{cookiecutter.project_slug}}/.docker/' '{{cookiecutter.project_slug}}/.env.example' '{{cookiecutter.project_slug}}/src/'`
+> **Drift check (run first)**: `git diff --stat ce9334a..HEAD -- .github/workflows/ci.yaml '{{cookiecutter.project_slug}}/.docker/' '{{cookiecutter.project_slug}}/.env.example' '{{cookiecutter.project_slug}}/src/'`
 > This plan EXPECTS drift from plans 002/007/008/009 (health endpoint, env
 > vars, beat service) — read `plans/README.md` status first and adapt the
 > env/assertions to what actually landed (the steps call out each variant).
@@ -19,7 +19,7 @@
 - **Risk**: LOW (additive CI; flakiness risk handled via --wait timeouts)
 - **Depends on**: 002 (health endpoint + healthcheck tuning). Adapts to: 007 (SENTRY_DSN), 008 (beat), 009 (RESEND_API_KEY), 003 (users migration).
 - **Category**: tests
-- **Planned at**: commit `924bfba`, 2026-07-04
+- **Planned at**: commit `ce9334a`, 2026-07-05
 
 ## Why this matters
 
@@ -47,9 +47,11 @@ stack, `/api/ready` runs against real Redis and Postgres.
 
 ## Current state
 
-- Root `ci.yaml` jobs: `bake` (matrix), `docker-build` (+ after Plan 011:
-  `bake-invalid`; after 012: `pre-commit`). Bake steps use
-  `uvx cookiecutter . --no-input -o /tmp/bake`.
+- Root `ci.yaml` jobs on this branch: `bake`, `bake-invalid`,
+  `docker-build`, and `pre-commit`. Bake steps use
+  `uvx cookiecutter . --no-input -o /tmp/bake`. Add
+  `docker-compose-smoke` immediately after `docker-build` without removing
+  the existing jobs.
 - `{{cookiecutter.project_slug}}/.env.example` — dev-oriented defaults:
   `ALLOWED_HOSTS=localhost,127.0.0.1`, postgres creds = slug-derived,
   `SECRET_KEY` = an insecure placeholder (prod boot REJECTS it after Plan
@@ -97,11 +99,12 @@ Local rehearsal (from template root; requires Docker):
 
 ### Step 1: Write the job
 
-Add to root `ci.yaml` (job order alphabetical; name `compose-smoke`):
+Add to root `ci.yaml` immediately after `docker-build` (name
+`docker-compose-smoke`):
 
 ```yaml
-  compose-smoke:
-    name: Compose smoke test
+  docker-compose-smoke:
+    name: Docker compose smoke test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -120,8 +123,8 @@ Add to root `ci.yaml` (job order alphabetical; name `compose-smoke`):
         working-directory: /tmp/smoke/my-project
         run: |
           cp .env.example .env
-          sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(64))')|" .env
-          sed -i "s|^AWS_STORAGE_BUCKET_NAME=.*|AWS_STORAGE_BUCKET_NAME=smoke-test-bucket|" .env
+          sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(uuidgen)$(uuidgen)|" .env
+          sed -i "s|^AWS_STORAGE_BUCKET_NAME=.*|AWS_STORAGE_BUCKET_NAME=$(uuidgen)|" .env
       - name: Boot production stack
         working-directory: /tmp/smoke/my-project
         run: docker compose -f .docker/compose/prod.yaml up -d --build --wait --wait-timeout 300
@@ -147,13 +150,13 @@ Add to root `ci.yaml` (job order alphabetical; name `compose-smoke`):
 
 Adapt to what has landed (check `plans/README.md` status):
 - **007 landed** → add to the env-prep step:
-  `sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://00000000000000000000000000000000@sentry.example.com/1|" .env`
+  `sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1|" .env`
 - **009 landed** → add:
-  `sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=smoke-dummy|" .env`
+  `sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=$(uuidgen)|" .env`
 - **008 landed** → beat has no healthcheck, so `--wait` doesn't gate on it;
   the `--status=exited` assertion catches a crash-looping beat. Additionally
   assert it's up:
-  `docker compose -f .docker/compose/prod.yaml ps beat --format '{{.State}}' | grep -x running`
+  `docker compose -f .docker/compose/prod.yaml ps celery-beat --format '{{.State}}' | grep -x running`
   (note: inside this workflow file the `{{.State}}` Go-template braces are
   fine — this file is NOT Jinja-rendered; it lives at the template root).
 - **002 NOT landed** → probe `/api/ready` only (no `/api/health`), and expect
@@ -183,7 +186,7 @@ The job IS the test. Its own failure modes are covered by: `--wait-timeout
 
 ## Done criteria
 
-- [ ] `compose-smoke` job present in root ci.yaml with boot/probe/assert/teardown steps
+- [ ] `docker-compose-smoke` job present in root ci.yaml with boot/probe/assert/teardown steps
 - [ ] Local rehearsal passed end-to-end (or, if no local Docker: state so and rely on the first CI run — get the operator's OK first)
 - [ ] actionlint clean on the workflow
 - [ ] No files outside the in-scope list modified (`git status`)
