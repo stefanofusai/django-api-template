@@ -160,6 +160,9 @@ Use `/api/health` as liveness: it checks that the process is up and backs the
 container healthcheck. Use `/api/ready` as readiness: it checks that the
 database and cache are reachable for load-balancer routing.
 
+Persistent database connections default to 60 seconds with health checks. Set
+`CONN_MAX_AGE=0` when running behind PgBouncer in transaction mode.
+
 Internal probes are unversioned; business endpoints live under `/api/v1/`.
 To introduce v2, create a
 `v2_api = NinjaAPI(urls_namespace="v2", version="2.0.0")` instance and mount
