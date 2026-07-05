@@ -36,12 +36,14 @@ uvx cookiecutter gh:stefanofusai/django-api-template
 | `author_name` | `Stefano Fusai` | Package author and maintainer name. Must not contain `"`, `\`, or newlines. |
 | `author_email` | `stefanofusai@gmail.com` | Package author and maintainer email. |
 | `github_username` | `stefanofusai` | Badge and Dependabot assignee username. |
-| `use_celery` | `worker+beat` | Celery services to include: `worker+beat`, `worker`, or `none`. |
 | `email_provider` | `resend` | Production email provider: `resend`, `smtp`, or `none`. |
-| `use_sentry` | `yes` | Include the production Sentry integration. |
-| `use_s3_media` | `yes` | Store production media on S3-compatible object storage. |
-| `use_traefik` | `yes` | Include the bundled Traefik reverse proxy. |
+| `postgres` | `compose` | Run production Postgres as a bundled Compose service, or point `DATABASE_URL` at an external/managed Postgres-compatible database. |
+| `redis` | `compose` | Run production Redis as a bundled Compose service, or point `CACHE_URL` and `CELERY_BROKER_URL` at external Redis-protocol providers. |
 | `traefik_tls` | `letsencrypt` | Use `external` to serve an operator-provided PEM pair instead of running ACME; ignored when `use_traefik=no`. |
+| `use_celery` | `worker+beat` | Celery services to include: `worker+beat`, `worker`, or `none`. |
+| `use_s3_media` | `yes` | Store production media on S3-compatible object storage. |
+| `use_sentry` | `yes` | Include the production Sentry integration. |
+| `use_traefik` | `yes` | Include the bundled Traefik reverse proxy. |
 
 `project_slug` must start with a lowercase letter, contain only lowercase
 letters, digits, and single hyphen separators, and be 50 characters or fewer.

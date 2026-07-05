@@ -38,7 +38,7 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 020 | .env.example blocks + dependency-group rationalization | P2 | S–M | supersedes 010 Step 1; serialize on .env.example/pyproject | DONE |
 | 021 | Open-source readiness (neutral defaults, domain_name variable, front-door README, LICENSE, community files) | P2 | M | all others (run last); absorbs 014 | TODO |
 | 022 | Bake-time feature knobs (use_celery, email_provider, use_sentry, use_s3_media, use_traefik, traefik_tls) | P1 | L | 018/019/020 committed (verify 020's diff, not just its row); before 021 | DONE |
-| 023 | External backing services: postgres/redis compose-vs-external knobs | P2 | S–M | 022 DONE and committed (hard); before 021 | TODO |
+| 023 | External backing services: postgres/redis compose-vs-external knobs | P2 | S–M | 022 DONE and committed (hard); before 021 | DONE |
 | 014 | LICENSE, README truthfulness, optional rtk | P3 | S | — | SUPERSEDED (absorbed into 021) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |

@@ -251,10 +251,23 @@ Before deploying, generate real secrets:
 uv run python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
 
+{% if cookiecutter.postgres == "compose" -%}
 Use the generated value for `SECRET_KEY`, set a strong `POSTGRES_PASSWORD`, and
 keep `127.0.0.1` in `ALLOWED_HOSTS` alongside your domain because the container
 healthcheck probes over localhost. The production stack reads the same `.env`
 file as development, and production boot refuses `django-insecure-` keys.
+{%- else %}
+Use the generated value for `SECRET_KEY`, and keep `127.0.0.1` in
+`ALLOWED_HOSTS` alongside your domain because the container healthcheck probes
+over localhost. The production stack reads the same `.env` file as
+development, and production boot refuses `django-insecure-` keys.
+
+Set `DATABASE_URL` to the external PostgreSQL-compatible endpoint and append
+`?sslmode=require`, unless your provider requires stricter settings such as
+`verify-full` with a CA bundle. The `POSTGRES_*` variables only feed the local
+development Compose stack and are ignored by production. Your provider owns
+backups, high availability, and upgrades.
+{%- endif %}
 {% if cookiecutter.use_sentry == "yes" -%}
 Set `SENTRY_DSN` from your Sentry project settings; production boot fails if it
 is missing or blank. Sentry release names use the package version from
@@ -347,21 +360,35 @@ container healthcheck. Use `/api/ready` as readiness: it checks that the
 database and cache are reachable for load-balancer routing.
 
 Persistent database connections default to 60 seconds with health checks. Set
-`CONN_MAX_AGE=0` when running behind PgBouncer in transaction mode.
+`CONN_MAX_AGE=0` when running behind PgBouncer in transaction mode{% if cookiecutter.postgres == "external" -%}
+, RDS Proxy, Neon's pooled endpoint, or another transaction-mode pooler
+{%- endif %}.
 
 Internal probes are unversioned; business endpoints live under `/api/v1/`.
 To introduce v2, create a
 `v2_api = NinjaAPI(urls_namespace="v2", version="2.0.0")` instance and mount
 it at `path("api/v2/", v2_api.urls)`.
 
-{% if cookiecutter.use_celery != "none" -%}
+{% if cookiecutter.redis == "compose" and cookiecutter.use_celery != "none" -%}
 Redis runs append-only for broker durability. Cache and broker share one Redis
 instance on databases 0 and 1. Under memory pressure, Redis's default
 `noeviction` policy rejects writes instead of evicting keys, which also blocks
 task enqueues. Split Redis instances if cache volume grows.
-{%- else %}
+{%- elif cookiecutter.redis == "compose" %}
 Redis runs append-only for cache durability. Under memory pressure, Redis's
 default `noeviction` policy rejects writes instead of evicting keys.
+{%- elif cookiecutter.use_celery != "none" %}
+Set `CACHE_URL=rediss://:<password>@<host>:<port>/0` and
+`CELERY_BROKER_URL=rediss://:<password>@<host>:<port>/1?ssl_cert_reqs=required`
+to your Redis-compatible provider's TLS endpoint. Celery requires the
+`ssl_cert_reqs` parameter on `rediss://` broker URLs. The broker database must
+use a `noeviction` policy at the provider or task enqueues can fail under
+memory pressure. Keep cache and broker on separate databases, or separate
+instances, as with the bundled setup.
+{%- else %}
+Set `CACHE_URL=rediss://:<password>@<host>:<port>/0` to your
+Redis-compatible provider's TLS endpoint. Use a `noeviction` policy at the
+provider so cache writes fail explicitly under memory pressure.
 {%- endif %}
 
 The admin at `/admin/` is exposed wherever the API is routed. Restrict it at

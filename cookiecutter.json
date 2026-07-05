@@ -5,12 +5,64 @@
     "author_name": "Stefano Fusai",
     "author_email": "stefanofusai@gmail.com",
     "github_username": "stefanofusai",
-    "use_celery": ["worker+beat", "worker", "none"],
     "email_provider": ["resend", "smtp", "none"],
-    "use_sentry": ["yes", "no"],
-    "use_s3_media": ["yes", "no"],
-    "use_traefik": ["yes", "no"],
+    "postgres": ["compose", "external"],
+    "redis": ["compose", "external"],
     "traefik_tls": ["letsencrypt", "external"],
+    "use_celery": ["worker+beat", "worker", "none"],
+    "use_s3_media": ["yes", "no"],
+    "use_sentry": ["yes", "no"],
+    "use_traefik": ["yes", "no"],
+    "__prompts__": {
+        "project_name": "Project display name",
+        "project_slug": "URL/package slug derived from the project name",
+        "description": "Short package description",
+        "author_name": "Project author name",
+        "author_email": "Project author email",
+        "github_username": "GitHub username used for Dependabot assignees",
+        "email_provider": {
+            "__prompt__": "Production email provider",
+            "resend": "Resend API via django-anymail",
+            "smtp": "Generic SMTP relay",
+            "none": "No production email provider"
+        },
+        "postgres": {
+            "__prompt__": "Production Postgres topology",
+            "compose": "Run Postgres as a bundled Compose service",
+            "external": "Use an external or managed Postgres-compatible database"
+        },
+        "redis": {
+            "__prompt__": "Production Redis topology",
+            "compose": "Run Redis as a bundled Compose service",
+            "external": "Use an external Redis-compatible cache or broker"
+        },
+        "traefik_tls": {
+            "__prompt__": "Traefik TLS certificate source",
+            "letsencrypt": "Use Traefik ACME with Let's Encrypt",
+            "external": "Use operator-provided PEM certificate files"
+        },
+        "use_celery": {
+            "__prompt__": "Celery services to include",
+            "worker+beat": "Worker and scheduler services",
+            "worker": "Worker service only",
+            "none": "No Celery services or task module"
+        },
+        "use_s3_media": {
+            "__prompt__": "Production media storage",
+            "yes": "Use S3-compatible object storage",
+            "no": "Use the local /app/media volume"
+        },
+        "use_sentry": {
+            "__prompt__": "Production Sentry integration",
+            "yes": "Include boot-required Sentry error tracking",
+            "no": "Omit Sentry integration and dependency"
+        },
+        "use_traefik": {
+            "__prompt__": "Production reverse proxy",
+            "yes": "Include bundled Traefik ingress",
+            "no": "Expose API on localhost for bring-your-own ingress"
+        }
+    },
     "_copy_without_render": [
         ".github/workflows/*",
         ".agents/*"

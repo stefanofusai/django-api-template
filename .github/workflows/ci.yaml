@@ -19,6 +19,14 @@ jobs:
             project_name: My Project
             extra-args: ""
             slug: my-project
+          - case: external-backing
+            project_name: My Project
+            extra-args: postgres=external redis=external use_traefik=no
+            slug: my-project
+          - case: external-postgres
+            project_name: My Project
+            extra-args: postgres=external
+            slug: my-project
           - case: external-tls
             project_name: My Project
             extra-args: traefik_tls=external

@@ -5,11 +5,17 @@ services:
       dockerfile: .docker/Dockerfile
       args:
         UV_DEPENDENCY_GROUP: prod
+{%- if cookiecutter.postgres == "compose" or cookiecutter.redis == "compose" %}
     depends_on:
+{%- if cookiecutter.postgres == "compose" %}
       postgres:
         condition: service_healthy
+{%- endif %}
+{%- if cookiecutter.redis == "compose" %}
       redis:
         condition: service_healthy
+{%- endif %}
+{%- endif %}
     env_file:
       - ../../.env
     environment:
@@ -115,6 +121,7 @@ services:
 {%- endif %}
     restart: unless-stopped
 {%- endif %}
+{%- if cookiecutter.postgres == "compose" %}
   postgres:
     env_file:
       - ../../.env
@@ -131,6 +138,8 @@ services:
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql
+{%- endif %}
+{%- if cookiecutter.redis == "compose" %}
   redis:
     command:
       - redis-server
@@ -150,6 +159,7 @@ services:
     restart: unless-stopped
     volumes:
       - redis_data:/data
+{%- endif %}
 {%- if cookiecutter.use_traefik == "yes" %}
   traefik:
     command:
@@ -191,12 +201,18 @@ services:
       - traefik_data:/letsencrypt
 {%- endif %}
 {%- endif %}
+{%- if cookiecutter.postgres == "compose" or cookiecutter.redis == "compose" or cookiecutter.use_traefik == "yes" and cookiecutter.traefik_tls == "letsencrypt" or cookiecutter.use_s3_media == "no" %}
 volumes:
 {%- if cookiecutter.use_s3_media == "no" %}
   media_data:
 {%- endif %}
+{%- if cookiecutter.postgres == "compose" %}
   postgres_data:
+{%- endif %}
+{%- if cookiecutter.redis == "compose" %}
   redis_data:
+{%- endif %}
 {%- if cookiecutter.use_traefik == "yes" and cookiecutter.traefik_tls == "letsencrypt" %}
   traefik_data:
+{%- endif %}
 {%- endif %}
