@@ -1,6 +1,10 @@
 import shutil
 import subprocess
 
+GIT_INIT_WARNING = (
+    "WARNING: git repository was not initialized; run git init "
+    "--initial-branch=main manually"
+)
 UV_LOCK_WARNING = (
     "WARNING: uv.lock was not generated; CI, the ty hook, and uv-audit use "
     "--locked and will fail until you run uv lock"
@@ -8,10 +12,18 @@ UV_LOCK_WARNING = (
 
 
 def main() -> None:
-    subprocess.run(
-        ["git", "init", "--initial-branch=main"],
-        check=True,
-    )
+    if shutil.which("git"):
+        try:
+            subprocess.run(
+                ["git", "init", "--initial-branch=main"],
+                check=True,
+            )
+
+        except (OSError, subprocess.CalledProcessError):
+            print(GIT_INIT_WARNING)
+
+    else:
+        print(GIT_INIT_WARNING)
 
     if shutil.which("uv"):
         try:

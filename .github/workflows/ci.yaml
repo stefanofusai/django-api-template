@@ -18,6 +18,9 @@ jobs:
           - project_name: My API Server 2
             extra-args: project_name="My API Server 2"
             slug: my-api-server-2
+          - project_name: My_Underscore App
+            extra-args: project_name="My_Underscore App"
+            slug: my-underscore-app
           - project_name: My Project
             extra-args: ""
             slug: my-project
@@ -46,6 +49,36 @@ jobs:
         run: |
           git add -A
           uv run pre-commit run --all-files
+  bake-invalid:
+    name: Reject ${{ matrix.case }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - case: bad-description
+            extra-args: description='has "quotes"'
+          - case: bad-email
+            extra-args: author_email=nope
+          - case: bad-slug
+            extra-args: project_name='My  Project'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.3
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.14"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.2.0
+      - name: Bake must fail
+        run: |
+          if uvx cookiecutter . --no-input -o /tmp/bake ${{ matrix.extra-args }}; then
+            echo "expected bake to fail" && exit 1
+          fi
+          if find /tmp/bake -mindepth 1 -maxdepth 1 -type d | grep .; then
+            echo "expected no generated project directories" && exit 1
+          fi
   pre-commit:
     name: Pre-commit
     runs-on: ubuntu-latest

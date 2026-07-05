@@ -27,14 +27,14 @@ uvx cookiecutter gh:stefanofusai/django-api-template
 | Name | Default | Description |
 | --- | --- | --- |
 | `project_name` | `My Project` | Human-readable project name. |
-| `project_slug` | `my-project` | Repository and package distribution name. |
-| `description` | `A Django Ninja API service.` | Generated README and package description. |
-| `author_name` | `Stefano Fusai` | Package author and maintainer name. |
+| `project_slug` | `my-project` | Repository and package distribution name, derived from `project_name` unless set explicitly. |
+| `description` | `A Django Ninja API service.` | Generated README and package description. Must not contain `"`, `\`, or newlines. |
+| `author_name` | `Stefano Fusai` | Package author and maintainer name. Must not contain `"`, `\`, or newlines. |
 | `author_email` | `stefanofusai@gmail.com` | Package author and maintainer email. |
 | `github_username` | `stefanofusai` | Badge and Dependabot assignee username. |
 
-`project_slug` must start with a lowercase letter and contain only lowercase
-letters, digits, and single hyphen separators.
+`project_slug` must start with a lowercase letter, contain only lowercase
+letters, digits, and single hyphen separators, and be 50 characters or fewer.
 
 ## Post-Generation
 
