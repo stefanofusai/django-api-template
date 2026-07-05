@@ -1,12 +1,11 @@
 FROM python:3.14.5-slim AS base
 
+FROM base AS builder
+
 RUN apt-get update \
     && apt-get install --no-install-recommends --yes \
-        curl \
         uuid-runtime \
     && rm -rf /var/lib/apt/lists/*
-
-FROM base AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:0.11.19 /uv /uvx /bin/
 
@@ -40,6 +39,11 @@ RUN ALLOWED_HOSTS=localhost \
     .venv/bin/python manage.py collectstatic --no-input
 
 FROM base AS runtime
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends --yes \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PATH=/app/.venv/bin:$PATH
 ENV PYTHONDONTWRITEBYTECODE=1

@@ -26,7 +26,7 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 007 | Sentry error tracking, required in prod | P2 | S–M | 002 (soft) | DONE |
 | 008 | django-celery-beat + beat service | P2 | M | 002 | DONE |
 | 009 | Email via Anymail (Resend) + project-owned send task | P2 | M | 001, 007 (pattern) | DONE |
-| 010 | Dependency & image cleanup (prod group, pyupgrade, skills-lock, apt stages) | P3 | S | 007, 009 (ordering only) | TODO |
+| 010 | Dependency & image cleanup (pyupgrade, skills-lock check, apt stages) | P3 | S | 007, 009 (ordering only) | BLOCKED (Docker socket permission denied; non-Docker checks pass) |
 | 011 | Cookiecutter hooks hardening + negative-bake CI | P2 | M | — | TODO |
 | 012 | Template repo self-checks (root pre-commit, cached CI docker build) | P3 | S–M | 011 (ordering) | TODO |
 | 013 | CI compose smoke test of the baked prod stack | P1 | M | 002; adapts to 003/007/008/009 | TODO |
@@ -53,10 +53,10 @@ REJECTED (with one-line rationale).
   (empty line in `.env.example`, dummy values in the Dockerfile collectstatic
   RUN and the tests.yaml deploy-check env). Any plan adding a prod-required
   var must touch those same three places — and 013's env-prep step.
-- **010 after 007/009**: purely to avoid pyproject.toml merge friction; no
-  semantic dependency. **010's Step 1 (whitenoise/storages → prod group) is
-  superseded by plan 020** — 010's remaining scope is the pyupgrade hook
-  removal, the skills-lock reconcile, and the Dockerfile apt-stage split.
+- **010 after 007/009**: no semantic dependency remains. **010's original
+  Step 1 (whitenoise/storages → prod group) is superseded by plan 020** —
+  010's remaining scope is the pyupgrade hook removal, skills-lock
+  verification, and the Dockerfile apt-stage split.
 - **020 (env blocks + dependency groups)**: releases `.env.example` from the
   `file-contents-sorter` hook and restructures it into documented blocks;
   rationalizes dependency groups (django-stubs-ext → main deps because
