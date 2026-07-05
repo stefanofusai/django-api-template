@@ -5,6 +5,12 @@
     "author_name": "Stefano Fusai",
     "author_email": "stefanofusai@gmail.com",
     "github_username": "stefanofusai",
+    "use_celery": ["worker+beat", "worker", "none"],
+    "email_provider": ["resend", "smtp", "none"],
+    "use_sentry": ["yes", "no"],
+    "use_s3_media": ["yes", "no"],
+    "use_traefik": ["yes", "no"],
+    "traefik_tls": ["letsencrypt", "external"],
     "_copy_without_render": [
         ".github/workflows/*",
         ".agents/*"

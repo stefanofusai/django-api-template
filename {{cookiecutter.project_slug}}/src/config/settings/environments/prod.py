@@ -5,12 +5,23 @@ from config.settings import env
 if SECRET_KEY.startswith("django-insecure-"):  # noqa: F821  # ty: ignore[unresolved-reference]
     msg = "SECRET_KEY must be replaced with a securely generated value in production."
     raise ImproperlyConfigured(msg)
+{%- if cookiecutter.email_provider == "resend" %}
 
 ANYMAIL = {"RESEND_API_KEY": env("RESEND_API_KEY")}
+{%- endif %}
 API_DOCS_DECORATOR = "django.contrib.admin.views.decorators.staff_member_required"
 CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS")
+{%- if cookiecutter.email_provider == "resend" %}
 EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+{%- elif cookiecutter.email_provider == "smtp" %}
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+{%- endif %}
 LOGGING["handlers"]["console"]["formatter"] = "json"  # noqa: F821  # ty: ignore[unresolved-reference]
 MIDDLEWARE.insert(  # noqa: F821  # ty: ignore[unresolved-reference]
     1,
@@ -28,6 +39,7 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_REDIRECT_EXEMPT = [r"^api/health$", r"^api/ready$"]
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
+{%- if cookiecutter.use_s3_media == "yes" %}
 STORAGES["default"] = {  # noqa: F821  # ty: ignore[unresolved-reference]
     "BACKEND": "storages.backends.s3.S3Storage",
     "OPTIONS": {
@@ -43,6 +55,7 @@ STORAGES["default"] = {  # noqa: F821  # ty: ignore[unresolved-reference]
         "secret_key": env("AWS_SECRET_ACCESS_KEY", default=None),
     },
 }
+{%- endif %}
 STORAGES["staticfiles"] = {  # noqa: F821  # ty: ignore[unresolved-reference]
     "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
 }

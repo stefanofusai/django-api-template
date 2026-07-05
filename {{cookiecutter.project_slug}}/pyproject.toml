@@ -11,21 +11,35 @@ maintainers = [
 ]
 requires-python = ">=3.14,<3.15"
 dependencies = [
+{%- if cookiecutter.use_celery != "none" %}
     "celery[redis]==5.6.3",
+{%- endif %}
     "django[argon2]==6.0.6",
+{%- if cookiecutter.email_provider == "resend" %}
     "django-anymail[resend]==15.0",
+{%- endif %}
+{%- if cookiecutter.use_celery == "worker+beat" %}
     "django-celery-beat==2.9.0",
+{%- endif %}
+{%- if cookiecutter.use_celery != "none" %}
     "django-celery-results==2.6.0",
+{%- endif %}
     "django-environ==0.13.0",
     "django-extra-checks==0.17.0",
     "django-ninja==1.6.2",
     "django-redis==7.0.0",
     "django-split-settings==1.3.2",
     "django-stubs-ext==6.0.5",
+{%- if cookiecutter.use_celery != "none" %}
     "django-structlog[celery]==10.1.0",
+{%- else %}
+    "django-structlog==10.1.0",
+{%- endif %}
     "django-unfold==0.96.0",
     "psycopg[binary]==3.3.4",
+{%- if cookiecutter.use_sentry == "yes" %}
     "sentry-sdk==2.64.0",
+{%- endif %}
     "structlog==25.5.0",
 ]
 
@@ -51,7 +65,9 @@ dev = [
     "werkzeug==3.1.8",
 ]
 prod = [
+{%- if cookiecutter.use_s3_media == "yes" %}
     "django-storages[s3]==1.14.6",
+{%- endif %}
     "gunicorn==26.0.0",
     "whitenoise==6.12.0",
 ]
@@ -59,7 +75,9 @@ prod = [
 [tool.coverage.run]
 branch = true
 omit = [
+{%- if cookiecutter.use_sentry == "yes" %}
     "src/config/settings/components/sentry.py",
+{%- endif %}
     "src/config/settings/environments/dev.py",
     "src/config/settings/environments/prod.py",
 ]

@@ -9,8 +9,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Third-party
+{%- if cookiecutter.use_celery == "worker+beat" %}
     "django_celery_beat",
+{%- endif %}
+{%- if cookiecutter.use_celery != "none" %}
     "django_celery_results",
+{%- endif %}
     "django_structlog",
     "extra_checks",
     # Project

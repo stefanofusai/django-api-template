@@ -8,35 +8,38 @@
 > maintain the index.
 >
 > **Drift check (run first)**: this plan was written at commit `33d77ee`
-> **with plan 018's changes still uncommitted in the working tree** (Traefik
-> in `prod.yaml`, `TRAEFIK_*` vars in `.env.example`, Production README
-> rewrite, compose-smoke traefik probes in `.github/workflows/ci.yaml`). All
-> "Current state" excerpts below reflect that working-tree state, not the
-> `b7200cf` blobs. Before starting:
+> and **updated on 2026-07-05 after plans 018 (`9ac116d`), 019 (`745228d`),
+> and 020 landed** — the `.env.example` and `pyproject.toml` excerpts below
+> reflect plan 020's block/group restructuring, which at update time was
+> marked DONE in the index but still **uncommitted in the working tree**.
+> Before starting:
 >
-> 1. Confirm plan 018's changes have been **committed** (`git status` clean
->    for `{{cookiecutter.project_slug}}/.docker/compose/prod.yaml`,
+> 1. Confirm plan 020's changes are **committed** (`git status` clean for
 >    `{{cookiecutter.project_slug}}/.env.example`,
->    `{{cookiecutter.project_slug}}/README.md`, `.github/workflows/ci.yaml`).
->    If they are still uncommitted or were reverted, STOP.
+>    `{{cookiecutter.project_slug}}/pyproject.toml`,
+>    `{{cookiecutter.project_slug}}/.pre-commit-config.yaml`,
+>    `{{cookiecutter.project_slug}}/AGENTS.md`). This plan edits the same
+>    files; a DONE index row does NOT prove the diff was committed. If
+>    020's changes are uncommitted or reverted, STOP.
 > 2. Confirm `prod.yaml` contains a `traefik:` service and `.env.example`
 >    contains `TRAEFIK_ACME_EMAIL` / `TRAEFIK_DOMAIN`. If not, STOP.
-> 3. Spot-check the excerpts in "Current state" against the live files. Two
->    kinds of drift are EXPECTED: plan 020 restructuring `.env.example`
->    into commented blocks (see the note in Step 3), and plan 019 adding
->    comment lines near excerpted code (comment-only additions — the code
->    lines themselves must still match). Any other mismatch is a STOP.
+> 3. Spot-check the excerpts in "Current state" against the live files.
+>    Plan 019 added comment lines near excerpted code — comment-only
+>    additions are expected; the code lines themselves must still match.
+>    Any other mismatch is a STOP.
 
 ## Status
 
 - **Priority**: P1
 - **Effort**: L
 - **Risk**: MED
-- **Depends on**: plan 018 committed (hard); plan 020 preferred first (soft —
-  see `.env.example` note); must run **before** plan 021
+- **Depends on**: plans 018 (`9ac116d`) and 019 (`745228d`) committed;
+  plan 020's diff committed (hard — 022 edits the same files); must run
+  **before** plan 021
 - **Category**: direction / dx
-- **Planned at**: commit `33d77ee` + plan-018 working tree, 2026-07-05
-  (the index may show 018 as DONE while its diff is still uncommitted —
+- **Planned at**: commit `33d77ee`, 2026-07-05; excerpts refreshed the same
+  day against the post-020 working tree (the index may show a plan as DONE
+  while its diff is still uncommitted —
   the working-tree check below is the authoritative gate)
 
 ## Why this matters
@@ -46,7 +49,7 @@ entire value proposition of cookiecutter over "clone and delete stuff" is
 bake-time configurability, and today the template has none: every baked
 project gets Celery worker + beat, Resend email, Sentry, S3 media storage,
 and a Traefik ingress whether it needs them or not. A user who wants a small
-synchronous API must hand-strip ~15 files. This plan adds five knobs to
+synchronous API must hand-strip ~15 files. This plan adds six knobs to
 `cookiecutter.json` so each generated project contains only what it uses —
 with **defaults that reproduce today's output byte-for-byte**, so existing
 users and CI see no change.
@@ -174,16 +177,24 @@ if DJANGO_ENV == "prod":  # pragma: no cover
     "extra_checks",
 ```
 
-`pyproject.toml:13-31` dependencies (the knob-affected lines):
+`pyproject.toml` knob-affected dependency lines (post-020: plan 020 moved
+`django-storages[s3]` and `whitenoise` into the `prod` dependency group and
+`django-stubs-ext` into main dependencies; `dev` now starts with
+`{ include-group = "ci" }`). In `[project] dependencies`:
 
 ```toml
     "celery[redis]==5.6.3",
     "django-anymail[resend]==15.0",
     "django-celery-beat==2.9.0",
     "django-celery-results==2.6.0",
-    "django-storages[s3]==1.14.6",
     "django-structlog[celery]==10.1.0",
     "sentry-sdk==2.64.0",
+```
+
+and in `[dependency-groups] prod`:
+
+```toml
+    "django-storages[s3]==1.14.6",
 ```
 
 (pins may have moved by execution time — Dependabot; keep whatever pin is
@@ -228,38 +239,44 @@ sentry_sdk.init(
 )
 ```
 
-`.env.example` (working tree — flat, sorted, comments first):
+`.env.example` (post-020 working tree): a 5-line header comment, then
+blank-line-separated blocks, each a `# <Concern>` header followed by
+`# description` + `VAR=value` pairs, alphabetized within the block.
+Optional vars are commented with example values; required-in-prod vars are
+uncommented and empty. Plan 020 also released this file from the baked
+`file-contents-sorter` pre-commit hook, so block order survives rendering.
+The blocks and their knob-affected contents:
 
 ```text
-# AWS_ACCESS_KEY_ID=
-# AWS_S3_CUSTOM_DOMAIN=
-# AWS_S3_ENDPOINT_URL=
-# AWS_S3_REGION_NAME=
-# AWS_SECRET_ACCESS_KEY=
-# CONN_MAX_AGE=
-ALLOWED_HOSTS=localhost,127.0.0.1
-AWS_STORAGE_BUCKET_NAME=
-CACHE_URL=rediscache://redis:6379/0
-CELERY_BROKER_URL=redis://redis:6379/1
-CELERY_WORKER_CONCURRENCY=2
-CELERY_WORKER_MAX_TASKS_PER_CHILD=100
-CSRF_TRUSTED_ORIGINS=https://example.com,https://www.example.com
-DATABASE_URL=postgres://...@postgres:5432/...
-DJANGO_ENV=dev
-GUNICORN_GRACEFUL_TIMEOUT=30
-GUNICORN_TIMEOUT=60
-GUNICORN_WORKERS=5
-LOG_LEVEL=INFO
-POSTGRES_DB=... POSTGRES_PASSWORD=... POSTGRES_USER=...   (3 lines)
-RESEND_API_KEY=
-SECRET_KEY=django-insecure-change-me-in-production
-SENTRY_DSN=
-SENTRY_ENABLE_LOGS=False
-SENTRY_PROFILE_SESSION_SAMPLE_RATE=1.0
-SENTRY_TRACES_SAMPLE_RATE=1.0
-TRAEFIK_ACME_EMAIL={{ cookiecutter.author_email }}
-TRAEFIK_DOMAIN=example.com
+# Django               → ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS, DJANGO_ENV,
+                          LOG_LEVEL, SECRET_KEY          (no knob)
+# Database/PostgreSQL  → # CONN_MAX_AGE, DATABASE_URL, POSTGRES_*  (no knob)
+# Cache and broker/Redis → CACHE_URL (no knob);
+                          CELERY_BROKER_URL + its comment (celery on)
+# Process sizing       → CELERY_WORKER_CONCURRENCY,
+                          CELERY_WORKER_MAX_TASKS_PER_CHILD (+ comments,
+                          celery on); GUNICORN_* (no knob)
+# Reverse proxy        → whole block traefik-only; within it,
+                          TRAEFIK_ACME_EMAIL + comment letsencrypt-only;
+                          TRAEFIK_DOMAIN stays for both TLS modes
+# Email                → whole block email-provider-dependent
+                          (today: "# Resend API key required in
+                          production." + RESEND_API_KEY=)
+# Observability/Sentry → whole block sentry-only (SENTRY_DSN= required;
+                          # SENTRY_ENABLE_LOGS, # SENTRY_PROFILE_SESSION_
+                          SAMPLE_RATE, # SENTRY_TRACES_SAMPLE_RATE
+                          commented optionals)
+# Object storage/S3-compatible → whole block s3-only (five commented
+                          # AWS_* optionals + AWS_STORAGE_BUCKET_NAME=)
 ```
+
+**Block-wrapping rule for whole-block conditionals**: place the
+`{%- if ... %}` tag on its own line immediately BEFORE the blank line that
+precedes the block header, and `{%- endif %}` immediately after the
+block's last line — when false, the block and its separator blank line
+collapse cleanly; when true, output is byte-identical. For var-level
+conditionals inside a kept block, wrap the description comment line and
+its `VAR=` line together. The invariance gate catches any slip.
 
 `.docker/Dockerfile:30-39` (collectstatic RUN with dummy env, one var per
 backslash-continued line): `AWS_STORAGE_BUCKET_NAME=$(uuidgen)`,
@@ -543,10 +560,15 @@ Apply the line-conditional Jinja pattern. Conditions: `worker+beat` ≙
    ```
 
    (use the live pin, not necessarily `10.1.0`).
-7. `.env.example` — wrap `CELERY_BROKER_URL`, `CELERY_WORKER_CONCURRENCY`,
-   `CELERY_WORKER_MAX_TASKS_PER_CHILD` in "celery on". If plan 020 has
-   restructured this file into blocks, put the conditionals around the same
-   three vars wherever they now live and keep per-block alphabetical order.
+7. `.env.example` (post-020 blocks — see the Current state excerpt and its
+   block-wrapping rule):
+   - In `# Cache and broker/Redis`: wrap the `# Celery broker URL.` +
+     `CELERY_BROKER_URL=...` pair in "celery on". Render the block header
+     itself conditionally — `# Cache and broker/Redis` (celery on) vs
+     `# Cache/Redis` (celery none) — so the header stays truthful.
+   - In `# Process sizing`: wrap the two comment+var pairs
+     (`CELERY_WORKER_CONCURRENCY`, `CELERY_WORKER_MAX_TASKS_PER_CHILD`) in
+     "celery on"; the `GUNICORN_*` pairs stay unconditional.
 8. `.docker/compose/dev.yaml` and `prod.yaml` — wrap the whole
    `celery-worker:` service in "celery on" and the whole `celery-beat:`
    service in worker+beat (each service block from its name key through its
@@ -608,20 +630,35 @@ needs no conditional (file exists only when celery is on).
    safe dev default in every variant).
 4. `pyproject.toml` — wrap the `django-anymail[resend]` line in
    `email_provider == "resend"`.
-5. `.env.example` — wrap `RESEND_API_KEY=` in resend. Add an smtp block in
-   alphabetical position (E before G):
+5. `.env.example` — the whole `# Email` block (including its preceding
+   blank line) becomes provider-dependent. Target shape (strict
+   alphabetical order within the block, optional vars commented with
+   example values, per the file's stated conventions):
 
    ```text
-   {%- if cookiecutter.email_provider == "smtp" %}
-   # EMAIL_HOST_PASSWORD=
-   # EMAIL_HOST_USER=
-   # EMAIL_PORT=
-   # EMAIL_USE_TLS=
+   {%- if cookiecutter.email_provider != "none" %}
+
+   # Email
+   {%- if cookiecutter.email_provider == "resend" %}
+   # Resend API key required in production.
+   RESEND_API_KEY=
+   {%- else %}
+   # SMTP relay hostname required in production.
    EMAIL_HOST=
+   # Optional SMTP password.
+   # EMAIL_HOST_PASSWORD=change-me
+   # Optional SMTP user.
+   # EMAIL_HOST_USER=postmaster@example.com
+   # Optional SMTP port.
+   # EMAIL_PORT=587
+   # Optional STARTTLS toggle.
+   # EMAIL_USE_TLS=True
+   {%- endif %}
    {%- endif %}
    ```
 
-   Commented lines go in the leading comment block with the other `#`
+   With defaults this must render the existing `# Email` block
+   byte-identically (invariance gate).
    entries (match how `# AWS_*` optional vars are handled); `EMAIL_HOST=`
    (required, empty) goes in the main list between `DJANGO_ENV` and
    `GUNICORN_GRACEFUL_TIMEOUT`.
@@ -754,7 +791,9 @@ Condition: `cookiecutter.use_sentry == "yes"`; interacts with celery.
    also wrap the `"src/config/settings/components/sentry.py",` entry in
    `[tool.coverage.run] omit` in sentry (a stale omit path is harmless but
    untidy, and the invariance gate keeps the default identical).
-4. `.env.example` — wrap the four `SENTRY_*` lines in sentry.
+4. `.env.example` — wrap the whole `# Observability/Sentry` block
+   (header, `SENTRY_DSN=` pair, three commented optional pairs, and the
+   preceding blank line) in sentry, per the block-wrapping rule.
 5. `.docker/Dockerfile` — wrap the `SENTRY_DSN=...` collectstatic line in
    sentry (same pattern as Step 4.6).
 6. `.github/scripts/deploy-check.sh` — already conditional (Step 4.7).
@@ -781,9 +820,14 @@ Condition: `cookiecutter.use_s3_media == "yes"`.
    s3. When off, prod media falls back to `components/storage.py`'s
    `FileSystemStorage` at `/app/media`. The whitenoise `staticfiles` block
    below it stays unconditional.
-2. `pyproject.toml` — wrap the `django-storages[s3]` line in s3.
-3. `.env.example` — wrap the five commented `# AWS_*` lines and the
-   `AWS_STORAGE_BUCKET_NAME=` line in s3.
+2. `pyproject.toml` — wrap the `django-storages[s3]` line in s3. Post-020
+   it lives in `[dependency-groups] prod`, not in `[project] dependencies`.
+3. `.env.example` — wrap the whole `# Object storage/S3-compatible` block
+   (header, five commented `# AWS_*` pairs, `AWS_STORAGE_BUCKET_NAME=`
+   pair, and the preceding blank line) in s3, per the block-wrapping rule.
+   Note this is the file's last block — after wrapping, confirm the
+   rendered file still ends with exactly one trailing newline in both
+   branches (end-of-file-fixer will catch it otherwise).
 4. `.docker/Dockerfile` — wrap the `AWS_STORAGE_BUCKET_NAME=$(uuidgen)`
    collectstatic line in s3.
 5. `.docker/compose/prod.yaml` — when s3 is OFF, prod needs the media
@@ -836,8 +880,8 @@ file is deleted by the Step 2 hook).
      overwriting `X-Forwarded-Proto` — Step 8 documents this contract.
    - Wrap the whole `traefik:` service in traefik.
    - Wrap `traefik_data:` (top-level volumes) in traefik.
-2. `.env.example` — wrap `TRAEFIK_ACME_EMAIL` and `TRAEFIK_DOMAIN` in
-   traefik.
+2. `.env.example` — wrap the whole `# Reverse proxy` block (including its
+   preceding blank line) in traefik, per the block-wrapping rule.
 3. Deploy story: docker-rollout only works because Traefik health-gates and
    drains between overlapping containers, and a published host port cannot
    overlap two containers. So when traefik is OFF, the baked README's
@@ -888,9 +932,11 @@ file is deleted by the Step 2 hook).
      letsencrypt branch; external branch renders
      `traefik.http.routers.api-websecure.tls=true` instead (TLS enabled on
      the router, cert served from the file provider's default store).
-   - `.env.example`: `TRAEFIK_ACME_EMAIL` line → letsencrypt only.
-     `TRAEFIK_DOMAIN` stays in BOTH modes (the websecure router's Host
-     rule uses it).
+   - `.env.example`: inside the `# Reverse proxy` block that item 2 made
+     traefik-only, the `# ACME registration email used by Traefik.` +
+     `TRAEFIK_ACME_EMAIL=...` pair → letsencrypt only. The `TRAEFIK_DOMAIN`
+     pair stays in BOTH TLS modes (the websecure router's Host rule uses
+     it).
    - `.gitignore` (baked): append a conditional block (operators drop
      their PEM pair here; it must never be committed):
 
@@ -1138,9 +1184,9 @@ Stop and report back (do not improvise) if:
   collectstatic RUN, `.github/scripts/deploy-check.sh` (this replaces the
   old "tests.yaml env block" site), and the root ci.yaml smoke env-prep —
   choosing the right knob condition for each.
-- **Plan 020** (env blocks): if it runs after this plan, its restructuring
-  of `.env.example` must preserve the knob conditionals. Its dependency
-  note in `plans/README.md` should be updated by whoever executes second.
+- **Plan 020** (env blocks) landed BEFORE this plan executes; the
+  `.env.example` conditionals here target its block structure. Any future
+  re-blocking of `.env.example` must preserve the knob conditionals.
 - **Plan 021** (open-source readiness): documents the final knob surface in
   the front-door README; the Variables table added here gives it the
   structure. 021 also owns the license knob decision (deferred from this

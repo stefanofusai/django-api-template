@@ -7,7 +7,11 @@
   and long flags within their groups, and write long flags with values using
   `--flag=value`.
 - Use `rg` or `rg --files` for searching.
+{%- if cookiecutter.use_celery != "none" %}
 - Use `uv run ...` for Python tooling, tests, pre-commit, Django, and Celery commands.
+{%- else %}
+- Use `uv run ...` for Python tooling, tests, pre-commit, and Django commands.
+{%- endif %}
 - Do not commit unless explicitly asked.
 - Preserve existing uncommitted work. Never revert user changes unless explicitly asked.
 - Keep `pyproject.toml` and `uv.lock` in sync when dependencies or dependency groups change.
@@ -15,7 +19,15 @@
 
 ## Project Context
 
+{% if cookiecutter.use_celery != "none" and cookiecutter.use_s3_media == "yes" -%}
 - This is a Python 3.14 Django 6 project using Django Ninja, Celery, django-structlog, django-storages, pytest, Ruff, Ty, uv, Docker, and Compose.
+{%- elif cookiecutter.use_celery != "none" %}
+- This is a Python 3.14 Django 6 project using Django Ninja, Celery, django-structlog, pytest, Ruff, Ty, uv, Docker, and Compose.
+{%- elif cookiecutter.use_s3_media == "yes" %}
+- This is a Python 3.14 Django 6 project using Django Ninja, django-structlog, django-storages, pytest, Ruff, Ty, uv, Docker, and Compose.
+{%- else %}
+- This is a Python 3.14 Django 6 project using Django Ninja, django-structlog, pytest, Ruff, Ty, uv, Docker, and Compose.
+{%- endif %}
 - Settings use `django-split-settings` with responsibility-based components and environment overlays. Keep this structure.
 - Environment overlays should mutate only environment-specific differences.
 - Do not add `django-configurations`, settings builder functions, wildcard imports, or tests that only assert configuration values.
@@ -62,9 +74,11 @@
   calls or similar side effects. For example, initialize integrations such as
   `sentry_sdk.init(...)` after the settings values they depend on have been
   declared.
+{%- if cookiecutter.use_sentry == "yes" %}
 - Order `sentry_sdk.init(...)` keyword arguments according to Sentry's
   documented options order:
   <https://docs.sentry.io/platforms/python/configuration/options/#available-options>.
+{%- endif %}
 - Add environment variables only for secrets, deployment topology, or resource sizing.
 - Keep `.env.example` grouped by concern, not globally byte-sorted. Alphabetize keys only within each block.
 - In `.env.example`, comments must be own-line only; never put inline comments after a value.
@@ -73,9 +87,11 @@
 - The API has no default auth. Endpoints requiring protection must add ninja
   auth (global `auth=` on the API instance, or per-router/per-operation);
   never ship a mutating endpoint unauthenticated.
+{%- if cookiecutter.use_celery != "none" %}
 - Celery results are opt-in per task: use `@shared_task(ignore_result=False)`
   when a task's result must be persisted; tasks are at-least-once
   (`acks_late` + `reject_on_worker_lost`), so keep them idempotent.
+{%- endif %}
 - Do not add empty optional values to `.env.example`; document optional AWS variables as commented examples.
 - Keep operational constants fixed in code unless there is a real deployment need to configure them.
 - Keep Django Ninja routers resource-oriented. Mount resource routers at their resource prefix and keep route-local paths relative.
@@ -116,6 +132,8 @@
 - Use `gunicorn.sh` for the web process and `GUNICORN_WORKERS` for worker count.
 - Do not reintroduce `WEB_CONCURRENCY` for Gunicorn workers.
 - Keep Gunicorn's control socket disabled unless permissions are deliberately redesigned.
+{%- if cookiecutter.use_celery != "none" %}
 - Use `celery -A config`, not `--app=config`.
+{%- endif %}
 - Format complex shell commands over multiple lines with backslashes.
 - For curl healthchecks, use compact short flags in the established style, such as `-fsS -o /dev/null`.

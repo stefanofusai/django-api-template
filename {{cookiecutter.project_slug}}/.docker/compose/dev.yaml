@@ -37,6 +37,7 @@ services:
       - ../../manage.py:/app/manage.py
       - ../../src:/app/src
       - media_data:/app/media
+{%- if cookiecutter.use_celery == "worker+beat" %}
   celery-beat:
     build:
       context: ../..
@@ -57,6 +58,8 @@ services:
       - ../../manage.py:/app/manage.py
       - ../../src:/app/src
       - media_data:/app/media
+{%- endif %}
+{%- if cookiecutter.use_celery != "none" %}
   celery-worker:
     build:
       context: ../..
@@ -86,6 +89,7 @@ services:
       - ../../manage.py:/app/manage.py
       - ../../src:/app/src
       - media_data:/app/media
+{%- endif %}
   postgres:
     env_file:
       - ../../.env

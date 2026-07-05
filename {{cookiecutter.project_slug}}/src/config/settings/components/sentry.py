@@ -1,6 +1,8 @@
 import sentry_sdk
 from django.core.exceptions import ImproperlyConfigured
+{%- if cookiecutter.use_celery != "none" %}
 from sentry_sdk.integrations.celery import CeleryIntegration
+{%- endif %}
 
 from config.pyproject import project_version
 from config.settings import env
@@ -21,7 +23,11 @@ sentry_sdk.init(
     release=project_version,
     environment="prod",
     send_default_pii=False,
+{%- if cookiecutter.use_celery == "worker+beat" %}
     integrations=[CeleryIntegration(monitor_beat_tasks=True)],
+{%- elif cookiecutter.use_celery == "worker" %}
+    integrations=[CeleryIntegration()],
+{%- endif %}
     traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
     profile_lifecycle="trace",
     profile_session_sample_rate=SENTRY_PROFILE_SESSION_SAMPLE_RATE,

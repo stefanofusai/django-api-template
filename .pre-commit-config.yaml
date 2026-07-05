@@ -17,8 +17,6 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-added-large-files
-      - id: check-ast
-        files: ^hooks/post_gen_project\.py$
       - id: check-case-conflict
       - id: check-json
       - id: check-merge-conflict
@@ -26,16 +24,6 @@ repos:
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace
-  # Python
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.16
-    hooks:
-      - id: ruff-check
-        files: ^hooks/post_gen_project\.py$
-        args:
-          - --fix
-      - id: ruff-format
-        files: ^hooks/post_gen_project\.py$
   # Markdown
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.48.0

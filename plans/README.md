@@ -37,7 +37,7 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 019 | Quirk/decision comments at trap points + AGENTS.md comment policy | P3 | S | cleanest after 005/006; serialize with shared files | DONE |
 | 020 | .env.example blocks + dependency-group rationalization | P2 | S–M | supersedes 010 Step 1; serialize on .env.example/pyproject | DONE |
 | 021 | Open-source readiness (neutral defaults, domain_name variable, front-door README, LICENSE, community files) | P2 | M | all others (run last); absorbs 014 | TODO |
-| 022 | Bake-time feature knobs (use_celery, email_provider, use_sentry, use_s3_media, use_traefik, traefik_tls) | P1 | L | 018 committed (hard); 020 preferred first; before 021 | TODO |
+| 022 | Bake-time feature knobs (use_celery, email_provider, use_sentry, use_s3_media, use_traefik, traefik_tls) | P1 | L | 018/019/020 committed (verify 020's diff, not just its row); before 021 | DONE |
 | 023 | External backing services: postgres/redis compose-vs-external knobs | P2 | S–M | 022 DONE and committed (hard); before 021 | TODO |
 | 014 | LICENSE, README truthfulness, optional rtk | P3 | S | — | SUPERSEDED (absorbed into 021) |
 
@@ -115,9 +115,12 @@ REJECTED (with one-line rationale).
   containing plan 018's changes (commit `33d77ee` + 018 diff); it templates
   the very lines 018 added (traefik service/labels, `TRAEFIK_*` vars), so
   018 must be **committed** before 022 runs — its drift check enforces this.
-  Run 020 before 022 when possible (022's `.env.example` conditionals then
-  land inside 020's block structure; 022 carries an adaptation note if the
-  order flips). Run 022 **before 021**: 021 documents the final knob
+  020 landed before 022 (2026-07-05) and 022's excerpts were refreshed the
+  same day to the post-020 state: `.env.example` block structure (whole
+  Sentry/S3/Reverse-proxy/Email blocks are knob-conditional) and the
+  dependency-group moves (django-storages[s3] now conditioned inside the
+  `prod` group). Before executing 022, verify 020's diff is COMMITTED —
+  its DONE row predated the commit. Run 022 **before 021**: 021 documents the final knob
   surface, and 022 already adds the six knob rows to the root README
   Variables table. Whichever of 019/020/022 runs later must respect the
   earlier ones' edits to the shared files (`.env.example`, `pyproject.toml`,

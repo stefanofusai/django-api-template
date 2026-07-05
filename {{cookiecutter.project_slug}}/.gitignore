@@ -100,7 +100,11 @@ ipython_config.py
 #   This is especially recommended for binary packages to ensure reproducibility, and is more
 #   commonly ignored for libraries.
 # uv.lock
+{% if cookiecutter.use_traefik == "yes" and cookiecutter.traefik_tls == "external" -%}
+# TLS origin certificate (operator-provided)
+.docker/certs/
 
+{%- endif %}
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
 #   This is especially recommended for binary packages to ensure reproducibility, and is more
@@ -129,9 +133,11 @@ ipython_config.py
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
 
+{% if cookiecutter.use_celery != "none" -%}
 # Celery stuff
 celerybeat-schedule*
 celerybeat.pid
+{%- endif %}
 
 # Redis
 *.rdb

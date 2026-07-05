@@ -1,7 +1,9 @@
 from config.settings import env
 
 CELERY_ACCEPT_CONTENT = ["json"]
+{%- if cookiecutter.use_celery == "worker+beat" %}
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+{%- endif %}
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/1")
 # Results are opt-in per task: CELERY_TASK_IGNORE_RESULT discards results by

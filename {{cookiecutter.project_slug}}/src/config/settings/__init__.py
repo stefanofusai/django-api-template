@@ -19,16 +19,20 @@ settings_files = [
     "components/templates.py",
     "components/database.py",
     "components/cache.py",
+{%- if cookiecutter.use_celery != "none" %}
     "components/celery.py",
+{%- endif %}
     "components/email.py",
     "components/logging.py",
     "components/storage.py",
     "components/checks.py",
     f"environments/{DJANGO_ENV}.py",
 ]
+{%- if cookiecutter.use_sentry == "yes" %}
 
 if DJANGO_ENV == "prod":  # pragma: no cover
     settings_files.append("components/sentry.py")
+{%- endif %}
 
 # include() executes every file below in one shared namespace, in order:
 # components define names (MIDDLEWARE, LOGGING, STORAGES, ...) that the

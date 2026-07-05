@@ -4,11 +4,15 @@ A Cookiecutter template for a modern Django Ninja API service.
 
 ## What You Get
 
-- Celery and Redis included by default
 - Dependabot for Compose, Docker, GitHub Actions, pre-commit hooks, and uv
 - Django 6 and Django Ninja in a `src/` layout
 - Dockerfile and Docker Compose definitions
 - `django-split-settings` with `ci`, `dev`, and `prod` overlays
+- Optional Celery (worker, or worker and beat), chosen at bake time
+- Optional email provider: Resend API, SMTP, or none
+- Optional S3-compatible media storage
+- Optional Sentry integration
+- Optional Traefik ingress with Let's Encrypt or operator-provided TLS
 - PostgreSQL for local and production Compose stacks
 - pytest with 100% coverage, Hypothesis, and Schemathesis
 - actionlint, gitlint, markdownlint, Ruff, Ty, uv-audit, yamlfmt, yamllint, and
@@ -32,9 +36,16 @@ uvx cookiecutter gh:stefanofusai/django-api-template
 | `author_name` | `Stefano Fusai` | Package author and maintainer name. Must not contain `"`, `\`, or newlines. |
 | `author_email` | `stefanofusai@gmail.com` | Package author and maintainer email. |
 | `github_username` | `stefanofusai` | Badge and Dependabot assignee username. |
+| `use_celery` | `worker+beat` | Celery services to include: `worker+beat`, `worker`, or `none`. |
+| `email_provider` | `resend` | Production email provider: `resend`, `smtp`, or `none`. |
+| `use_sentry` | `yes` | Include the production Sentry integration. |
+| `use_s3_media` | `yes` | Store production media on S3-compatible object storage. |
+| `use_traefik` | `yes` | Include the bundled Traefik reverse proxy. |
+| `traefik_tls` | `letsencrypt` | Use `external` to serve an operator-provided PEM pair instead of running ACME; ignored when `use_traefik=no`. |
 
 `project_slug` must start with a lowercase letter, contain only lowercase
 letters, digits, and single hyphen separators, and be 50 characters or fewer.
+The feature-knob defaults reproduce the historical full-stack output.
 
 ## Post-Generation
 

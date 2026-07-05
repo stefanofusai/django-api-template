@@ -23,17 +23,6 @@ jobs:
       - name: Install dependencies
         run: uv sync --group=ci --locked --no-default-groups
       - name: Run deploy checks
-        run: |
-          ALLOWED_HOSTS=localhost \
-          AWS_STORAGE_BUCKET_NAME=$(uuidgen) \
-          CACHE_URL=locmemcache:// \
-          CSRF_TRUSTED_ORIGINS=https://localhost \
-          DATABASE_URL=sqlite:///:memory: \
-          DJANGO_ENV=prod \
-          RESEND_API_KEY=$(uuidgen) \
-          SECRET_KEY=$(uuidgen)$(uuidgen) \
-          SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1 \
-          uv run --group=ci --locked --no-default-groups \
-          python manage.py check --deploy --fail-level=WARNING --tag=security
+        run: ./.github/scripts/deploy-check.sh
       - name: Run tests
         run: uv run --group=ci --locked --no-default-groups pytest
