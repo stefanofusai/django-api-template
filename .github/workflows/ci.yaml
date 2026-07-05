@@ -46,6 +46,20 @@ jobs:
         run: |
           git add -A
           uv run pre-commit run --all-files
+  pre-commit:
+    name: Pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.3
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.14"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.2.0
+      - name: Run pre-commit
+        run: uvx pre-commit run --all-files
   docker-build:
     name: Docker build
     runs-on: ubuntu-latest
@@ -60,6 +74,14 @@ jobs:
         uses: astral-sh/setup-uv@v8.2.0
       - name: Bake project
         run: uvx cookiecutter . --no-input -o /tmp/bake
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.1.0
       - name: Build image
-        working-directory: /tmp/bake/my-project
-        run: docker build -f .docker/Dockerfile --build-arg UV_DEPENDENCY_GROUP=prod .
+        uses: docker/build-push-action@v7.2.0
+        with:
+          context: /tmp/bake/my-project
+          file: /tmp/bake/my-project/.docker/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: UV_DEPENDENCY_GROUP=prod

@@ -27,8 +27,8 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 008 | django-celery-beat + beat service | P2 | M | 002 | DONE |
 | 009 | Email via Anymail (Resend) + project-owned send task | P2 | M | 001, 007 (pattern) | DONE |
 | 010 | Dependency & image cleanup (pyupgrade, skills-lock check, apt stages) | P3 | S | 007, 009 (ordering only) | BLOCKED (Docker socket permission denied; non-Docker checks pass) |
-| 011 | Cookiecutter hooks hardening + negative-bake CI | P2 | M | — | TODO |
-| 012 | Template repo self-checks (root pre-commit, cached CI docker build) | P3 | S–M | 011 (ordering) | TODO |
+| 011 | Cookiecutter hooks hardening + negative-bake CI | P2 | M | — | DONE |
+| 012 | Template repo self-checks (root pre-commit, cached CI docker build) | P3 | S–M | 011 (ordering) | DONE |
 | 013 | CI compose smoke test of the baked prod stack | P1 | M | 002; adapts to 003/007/008/009 | TODO |
 | 015 | /api/v1 versioning split (unversioned ops API + v1 mount); retires `project_version` | P2 | S–M | 002; before 014/017 | TODO |
 | 016 | Persistent DB connections (CONN_MAX_AGE + CONN_HEALTH_CHECKS) | P2 | S | — (serialize on .env.example) | TODO |
