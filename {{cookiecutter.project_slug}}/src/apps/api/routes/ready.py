@@ -36,11 +36,15 @@ def _cache_ready() -> bool:
     cache_value = "ok"
 
     try:
+        # cache.set returns None on backends that do not report an outcome;
+        # only an explicit False means the backend rejected the write. The get
+        # round-trip below verifies the None case.
         if cache.set(cache_key, cache_value, timeout=1) is False:
             return False
 
         return cache.get(cache_key) == cache_value
 
+    # Parenthesis-free except tuples are PEP 758 syntax (Python 3.14+).
     except ConnectionInterrupted, OSError, RedisError:
         return False
 

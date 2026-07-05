@@ -27,6 +27,10 @@
 - Avoid trailing commas on newlines unless Ruff adds them to keep long lines valid/readable.
 - Never add `from __future__ import annotations`.
 - Avoid `Protocol` or other speculative abstractions unless multiple real implementations already need them.
+- Only add code comments that state constraints the code cannot show — upstream
+  defaults, cross-file couplings, deliberately unusual constructs — and that
+  name the misreading they prevent (see `src/apps/api/pagination.py` for the
+  canonical example). Never add comments that narrate what the code does.
 - Prefer clear, explicit code over clever compression.
 - Use extended YAML block style instead of compact flow style, for example
   `branches:` followed by `- main` instead of `branches: [main]`.

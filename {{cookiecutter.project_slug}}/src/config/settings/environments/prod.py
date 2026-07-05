@@ -20,6 +20,10 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_HSTS_SECONDS = 31536000
+# X-Forwarded-Proto is trusted here, which is only safe behind a proxy that
+# overwrites the client-supplied header (see README, Production). The
+# redirect-exempt patterns match request.path.lstrip("/") — no leading
+# slash — and keep the plain-HTTP container healthchecks reachable.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_REDIRECT_EXEMPT = [r"^api/health$", r"^api/ready$"]
 SECURE_SSL_REDIRECT = True

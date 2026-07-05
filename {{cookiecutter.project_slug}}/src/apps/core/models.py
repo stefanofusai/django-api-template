@@ -26,6 +26,8 @@ class User(AbstractUser):
 
 
 class UUIDModel(models.Model):
+    # uuid7 (stdlib since 3.14) over uuid4: time-ordered values keep b-tree
+    # primary-key indexes append-mostly instead of randomly fragmented.
     id = models.UUIDField(primary_key=True, default=uuid.uuid7, editable=False)
 
     class Meta:

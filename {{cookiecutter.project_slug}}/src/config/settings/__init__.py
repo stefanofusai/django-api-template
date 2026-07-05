@@ -30,6 +30,10 @@ settings_files = [
 if DJANGO_ENV == "prod":  # pragma: no cover
     settings_files.append("components/sentry.py")
 
+# include() executes every file below in one shared namespace, in order:
+# components define names (MIDDLEWARE, LOGGING, STORAGES, ...) that the
+# environment overlay at the end mutates. The overlays' noqa: F821 markers
+# exist because linters cannot see this shared namespace.
 include(*settings_files)
 
 # See: https://github.com/typeddjango/django-stubs?tab=readme-ov-file#i-cannot-use-queryset-or-manager-with-type-annotations

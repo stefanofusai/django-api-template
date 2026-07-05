@@ -17,6 +17,8 @@ ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 ENV UV_PROJECT_ENVIRONMENT=/app/.venv
 
+# Dependencies only (no project) so this layer caches until the lockfile
+# changes; the post-COPY sync below installs the rest.
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
@@ -27,6 +29,8 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --group=${UV_DEPENDENCY_GROUP} --locked --no-default-groups
 
+# Throwaway values: prod settings require these at import time, but nothing
+# reads them during collectstatic.
 RUN ALLOWED_HOSTS=localhost \
     AWS_STORAGE_BUCKET_NAME=$(uuidgen) \
     CACHE_URL=locmemcache:// \

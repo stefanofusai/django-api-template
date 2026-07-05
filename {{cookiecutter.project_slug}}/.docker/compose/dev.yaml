@@ -44,6 +44,8 @@ services:
       args:
         UV_DEPENDENCY_GROUP: dev
     command: /app/.docker/scripts/celery-beat.sh
+    # Gates on api health as a "migrations completed" signal: api's
+    # pre_start runs migrate before the api container starts serving.
     depends_on:
       api:
         condition: service_healthy
@@ -62,6 +64,8 @@ services:
       args:
         UV_DEPENDENCY_GROUP: dev
     command: /app/.docker/scripts/celery-worker.sh
+    # Gates on api health as a "migrations completed" signal: api's
+    # pre_start runs migrate before the api container starts serving.
     depends_on:
       api:
         condition: service_healthy
