@@ -1,4 +1,6 @@
 import importlib
+import importlib.util
+from types import ModuleType
 
 import ninja.conf
 from django.test import override_settings
@@ -11,17 +13,20 @@ TEST_MAX_LIMIT = 500
 @override_settings(NINJA_PAGINATION_MAX_LIMIT=TEST_MAX_LIMIT)
 def test_bounded_pagination_caps_limit_at_max_limit_when_setting_is_finite() -> None:
     importlib.reload(ninja.conf)
-    module = importlib.reload(pagination)
+    spec = importlib.util.spec_from_file_location(
+        "_pagination_with_finite_max_limit",
+        pagination.__file__,
+    )
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert isinstance(module, ModuleType)
 
-    try:
-        assert module.PAGINATION_MAX_LIMIT == TEST_MAX_LIMIT
-        limit_field = module.BoundedLimitOffsetPagination.Input.model_fields["limit"]
+    assert module.PAGINATION_MAX_LIMIT == TEST_MAX_LIMIT
+    limit_field = module.BoundedLimitOffsetPagination.Input.model_fields["limit"]
 
-        assert limit_field.metadata[1].le == TEST_MAX_LIMIT
-
-    finally:
-        importlib.reload(ninja.conf)
-        importlib.reload(pagination)
+    assert limit_field.metadata[1].le == TEST_MAX_LIMIT
 
 
 def test_bounded_pagination_caps_limit_at_per_page_when_max_limit_is_unset() -> None:
