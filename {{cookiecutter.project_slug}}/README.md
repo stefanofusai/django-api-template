@@ -55,7 +55,9 @@ starts. When the API is healthy, the Celery services start and you can open:
 
 - API docs: <http://localhost:8000/api/docs>
 - Django Admin: <http://localhost:8000/admin/>
+- health: <http://localhost:8000/api/health>
 - readiness: <http://localhost:8000/api/ready>
+- versioned API docs: <http://localhost:8000/api/v1/docs>
 
 Create a staff user inside the running API container:
 
@@ -111,6 +113,12 @@ Browse the API docs:
 open http://localhost:8000/api/docs
 ```
 
+Browse the versioned business API docs:
+
+```shell
+open http://localhost:8000/api/v1/docs
+```
+
 Use Django Admin:
 
 ```shell
@@ -151,6 +159,11 @@ environment.
 Use `/api/health` as liveness: it checks that the process is up and backs the
 container healthcheck. Use `/api/ready` as readiness: it checks that the
 database and cache are reachable for load-balancer routing.
+
+Operational probes are unversioned; business endpoints live under `/api/v1/`.
+To introduce v2, create a
+`v2_api = NinjaAPI(urls_namespace="v2", version="2.0.0")` instance and mount
+it at `path("api/v2/", v2_api.urls)`.
 
 Redis runs append-only for broker durability. Cache and broker share one Redis
 instance on databases 0 and 1. Under memory pressure, Redis's default

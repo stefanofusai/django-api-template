@@ -2,7 +2,7 @@ import pytest
 from ninja.testing import TestClient
 from pytest_factoryboy import register
 
-from apps.api.api import api
+from apps.api.api import ops_api, v1_api
 from tests.factories import UserFactory
 
 TEST_TYPE_MARKERS = {
@@ -18,7 +18,12 @@ register(UserFactory)
 
 @pytest.fixture
 def api_client() -> TestClient:
-    return TestClient(api)
+    return TestClient(ops_api)
+
+
+@pytest.fixture
+def v1_client() -> TestClient:
+    return TestClient(v1_api)
 
 
 # Hooks
