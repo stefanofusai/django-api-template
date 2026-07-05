@@ -34,7 +34,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
       - name: Bake project
-        run: uvx cookiecutter . --no-input -o /tmp/bake ${{ matrix.extra-args }}
+        run: uvx cookiecutter . -o /tmp/bake --no-input ${{ matrix.extra-args }}
       - name: Assert lockfile exists
         working-directory: /tmp/bake/${{ matrix.slug }}
         run: test -f uv.lock
@@ -73,7 +73,7 @@ jobs:
         uses: astral-sh/setup-uv@v8.2.0
       - name: Bake must fail
         run: |
-          if uvx cookiecutter . --no-input -o /tmp/bake ${{ matrix.extra-args }}; then
+          if uvx cookiecutter . -o /tmp/bake --no-input ${{ matrix.extra-args }}; then
             echo "expected bake to fail" && exit 1
           fi
           if find /tmp/bake -mindepth 1 -maxdepth 1 -type d | grep .; then
@@ -92,7 +92,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
       - name: Bake project
-        run: uvx cookiecutter . --no-input -o /tmp/bake
+        run: uvx cookiecutter . -o /tmp/bake --no-input
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.1.0
       - name: Build image
@@ -119,7 +119,7 @@ jobs:
       - name: Show compose version
         run: docker compose version
       - name: Bake project
-        run: uvx cookiecutter . --no-input -o /tmp/smoke
+        run: uvx cookiecutter . -o /tmp/smoke --no-input
       - name: Prepare production env file
         working-directory: /tmp/smoke/my-project
         run: |
