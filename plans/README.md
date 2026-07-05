@@ -30,7 +30,7 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 011 | Cookiecutter hooks hardening + negative-bake CI | P2 | M | — | DONE |
 | 012 | Template repo self-checks (root pre-commit, cached CI docker build) | P3 | S–M | 011 (ordering) | DONE |
 | 013 | CI compose smoke test of the baked prod stack | P1 | M | 002; adapts to 003/007/008/009 | DONE |
-| 015 | /api/v1 versioning split (unversioned ops API + v1 mount); retires `project_version` | P2 | S–M | 002; before 014/017 | TODO |
+| 015 | /api/v1 versioning split (unversioned internal API + v1 mount); decouples API version from package version | P2 | S–M | 002; before 014/017 | DONE |
 | 016 | Persistent DB connections (CONN_MAX_AGE + CONN_HEALTH_CHECKS) | P2 | S | — (serialize on .env.example) | TODO |
 | 017 | Staff-gated API docs in prod + documented auth decision point | P2 | S–M | 015 preferred first; serialize on prod.py | TODO |
 | 018 | Traefik in prod.yaml + docker-rollout zero-downtime deploys | P2 | M | 002; serialize on .env.example; adapts to 008/013 | TODO |
@@ -67,14 +67,14 @@ REJECTED (with one-line rationale).
 - **013 late**: the smoke test asserts the FINAL stack (health endpoint, beat
   service, all required env vars). Its steps enumerate the per-plan variants.
 - **015 after 002, before 014**: it splits `api.py` into an unversioned
-  `ops_api` (health/ready stay at `/api/…` — compose/settings/workflows
+  `internal_api` (health/ready stay at `/api/…` — compose/settings/workflows
   untouched) and a `v1_api` at `/api/v1/`. If executed BEFORE 002, run it
   with `ready_router` only and leave a note for 002's executor that the
-  mount target is now `ops_api`. Design per
+  mount target is now `internal_api`. Design per
   <https://django-ninja.dev/guides/versioning/>.
-- **015 ↔ 005 coordination**: 015 retires `project_version` (maintainer
-  decision — the API contract version is an explicit literal); whichever of
-  015/005 runs second must account for the other's changes to
+- **015 ↔ 005 coordination**: 015 decouples the public API contract version
+  from `project_version` (the API contract version is an explicit literal);
+  whichever of 015/005 runs second must account for the other's changes to
   `config/pyproject.py` and its tests. 005 may also dockerignore
   `README.md`, but ONLY after its tomllib swap (pyproject-parser reads the
   readme file at import — verified empirically; tomllib does not, and uv

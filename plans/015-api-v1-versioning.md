@@ -1,4 +1,4 @@
-# Plan 015: Mount the business API at /api/v1/ with an unversioned ops API, so v2 is a two-line addition
+# Plan 015: Mount the business API at /api/v1/ with an unversioned internal API, so v2 is a two-line addition
 
 > **Executor instructions**: Follow this plan step by step. Run every
 > verification command and confirm the expected result before moving to the
@@ -7,19 +7,20 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat baf91ce..HEAD -- '{{cookiecutter.project_slug}}/src/apps/api/' '{{cookiecutter.project_slug}}/src/config/urls.py' '{{cookiecutter.project_slug}}/tests/' '{{cookiecutter.project_slug}}/README.md' '{{cookiecutter.project_slug}}/AGENTS.md'`
-> This plan EXPECTS Plan 002's drift (health endpoint/schema/test). Compare
-> the "Current state" excerpts against the live code; on any OTHER mismatch,
-> treat it as a STOP condition.
+> **Drift check (run first)**: `git diff --stat 9fe975b..HEAD -- '{{cookiecutter.project_slug}}/src/apps/api/' '{{cookiecutter.project_slug}}/src/config/pyproject.py' '{{cookiecutter.project_slug}}/src/config/urls.py' '{{cookiecutter.project_slug}}/src/config/settings/components/sentry.py' '{{cookiecutter.project_slug}}/tests/' '{{cookiecutter.project_slug}}/README.md' '{{cookiecutter.project_slug}}/AGENTS.md'`
+> The plan was refreshed after Plans 001–013 landed. If this drift check
+> reports anything, compare the "Current state" excerpts against the live
+> code before editing; on any mismatch not explained by a newer executed
+> plan, treat it as a STOP condition.
 
 ## Status
 
 - **Priority**: P2
 - **Effort**: S–M
 - **Risk**: MED (URL restructure; every consumer of `/api/*` paths inside the repo must move in the same change)
-- **Depends on**: 002 (health endpoint should exist so the ops surface is complete; see "If 002 has not run" note). Run BEFORE 014 (docs finalization).
+- **Depends on**: 002 (health endpoint should exist so the internal surface is complete). Run BEFORE 014/017 (docs finalization and docs gating).
 - **Category**: tech-debt / architecture
-- **Planned at**: commit `baf91ce`, 2026-07-04
+- **Planned at**: commit `9fe975b`, 2026-07-05
 
 ## Why this matters
 
@@ -31,13 +32,13 @@ is cheap now and expensive later, which is exactly what a template should
 absorb.
 
 Design decision (settled here so the executor doesn't relitigate):
-**operational probes stay unversioned; business endpoints get versioned.**
+**internal probes stay unversioned; business endpoints get versioned.**
 `/api/health` and `/api/ready` are infrastructure contracts — compose
 healthchecks, load balancers, and Plan 013's smoke test reference them, and
 none of those should ever churn on an API version bump. So this plan splits
 the single `NinjaAPI` into:
 
-- `ops_api`, mounted at `/api/` — health + ready, stable forever.
+- `internal_api`, mounted at `/api/` — health + ready, stable forever.
 - `v1_api`, mounted at `/api/v1/` — empty today; the mount point, docs page,
   and test scaffolding all exist so the first business endpoint (and later a
   `v2_api`) drops in with no restructuring.
@@ -54,8 +55,7 @@ Adding v2 later = one `NinjaAPI` instance + one `path()` line; that is the
 
 ## Current state
 
-(As of `baf91ce`; Plan 002 adds `routes/health.py`, `schemas/health.py`, a
-health test, and mounts `health_router` — fold that in.)
+(As of `9fe975b`; Plans 001–013 have landed.)
 
 - `{{cookiecutter.project_slug}}/src/apps/api/api.py` (whole file):
 
@@ -64,9 +64,10 @@ health test, and mounts `health_router` — fold that in.)
 
   from config.pyproject import project_name, project_version
 
-  from .routes import ready_router
+  from .routes import health_router, ready_router
 
   api = NinjaAPI(title=project_name, version=str(project_version))
+  api.add_router("", health_router)
   api.add_router("", ready_router)
   ```
 
@@ -88,33 +89,36 @@ health test, and mounts `health_router` — fold that in.)
 
   ```python
   @pytest.fixture
-  def api_client() -> TestClient:
-      return TestClient(api)
+  def internal_internal_api_client() -> TestClient:
+      return TestClient(internal_api)
   ```
 
 - `{{cookiecutter.project_slug}}/tests/integration/api/schema_test.py` —
   schemathesis against `"/api/openapi.json"` via `from_wsgi`.
 - `{{cookiecutter.project_slug}}/tests/unit/api/api_test.py` — asserts
   `api.title == project_name` and `api.version == str(project_version)`.
+- `{{cookiecutter.project_slug}}/tests/unit/config/pyproject_test.py` —
+  still covers `project_version` as package metadata, including the missing
+  `project.version` guard. Leave it unchanged.
+- `{{cookiecutter.project_slug}}/src/config/pyproject.py` still exports
+  `project_version`; keep it. It is now consumed by
+  `src/config/settings/components/sentry.py` for Sentry release tagging.
 - `{{cookiecutter.project_slug}}/tests/integration/api/request_id_test.py` —
-  hits `/api/missing` (a 404 path; unaffected by this plan).
+  hits `/api/ready` and asserts request IDs on the response (unaffected by
+  this plan).
 - README documents `/api/docs`, `/api/ready` (and `/api/health` after 002).
 - django-ninja constraint: multiple `NinjaAPI` instances need distinct URL
   namespaces or system check `ninja.E001`/namespace collisions occur — set
   `urls_namespace` explicitly on both instances.
 - Infra references that this plan must NOT move: compose healthchecks
   (`/api/health` after 002, `/api/ready` before), `SECURE_REDIRECT_EXEMPT`
-  regexes in `environments/prod.py`, Plan 013's probes. Keeping ops at
+  regexes in `environments/prod.py`, Plan 013's probes. Keeping internal at
   `/api/` means **zero changes** to compose, settings, Dockerfile, or
   workflows — verify that stays true (`git status` at the end).
 - Conventions (AGENTS.md): routers mounted at resource prefixes; alphabetical
   ordering where dependency order doesn't matter; no config-value-only tests.
 
-**If 002 has not run yet** (check `plans/README.md`): execute this plan with
-`ready_router` only — everywhere the steps mention health, skip it; Plan
-002's executor will then add health to `ops_api` (its "Current state" will
-have drifted — leave a note in the index row telling 002's executor that the
-mount target is now `ops_api` in `api.py`).
+Plan 002 has run; `health_router` exists and must stay on `internal_api`.
 
 ## Commands you will need
 
@@ -136,18 +140,16 @@ mount target is now `ops_api` in `api.py`).
 
 **In scope**:
 - `{{cookiecutter.project_slug}}/src/apps/api/api.py`
-- `{{cookiecutter.project_slug}}/src/config/pyproject.py` (remove `project_version`)
 - `{{cookiecutter.project_slug}}/src/config/urls.py`
 - `{{cookiecutter.project_slug}}/tests/conftest.py`
 - `{{cookiecutter.project_slug}}/tests/unit/api/api_test.py`
-- `{{cookiecutter.project_slug}}/tests/unit/config/pyproject_test.py`
 - `{{cookiecutter.project_slug}}/tests/integration/api/schema_test.py`
 - `{{cookiecutter.project_slug}}/tests/integration/api/versioning_test.py` (create)
 - `{{cookiecutter.project_slug}}/README.md`
 - `{{cookiecutter.project_slug}}/AGENTS.md` (one bullet)
 
 **Out of scope**:
-- Compose files, `prod.py`, workflows, Dockerfile — the ops paths don't move;
+- Compose files, `prod.py`, workflows, Dockerfile — the internal paths don't move;
   if you find yourself editing any of these, the design is being violated.
 - Any business endpoint for v1 — it stays deliberately empty.
 - Header/content-negotiation versioning schemes — URL-path versioning is the
@@ -158,12 +160,12 @@ mount target is now `ops_api` in `api.py`).
 ## Git workflow
 
 - Branch: `advisor/015-api-v1-versioning`
-- Conventional commit, e.g. `feat: mount business API at /api/v1 with unversioned ops API`
+- Conventional commit, e.g. `feat: mount business API at /api/v1 with unversioned internal API`
 - Do NOT push or open a PR unless the operator instructed it.
 
 ## Steps
 
-### Step 1: Split the API objects and retire `project_version`
+### Step 1: Split the API objects and decouple API versioning from package version
 
 Rewrite `src/apps/api/api.py`:
 
@@ -174,12 +176,12 @@ from config.pyproject import project_name
 
 from .routes import health_router, ready_router
 
-ops_api = NinjaAPI(
-    title=f"{project_name} (operations)",
-    urls_namespace="ops",
+internal_api = NinjaAPI(
+    title=f"{project_name} (internal)",
+    urls_namespace="internal",
 )
-ops_api.add_router("", health_router)
-ops_api.add_router("", ready_router)
+internal_api.add_router("", health_router)
+internal_api.add_router("", ready_router)
 
 v1_api = NinjaAPI(
     title=project_name,
@@ -188,40 +190,27 @@ v1_api = NinjaAPI(
 )
 ```
 
-Notes: alphabetical constants order would put `ops_api` before `v1_api`
-anyway; drop `health_router` if 002 hasn't run. `v1_api.version` is the API
+Notes: alphabetical constants order would put `internal_api` before `v1_api`
+anyway. `v1_api.version` is the API
 contract version ("1.0.0") — explicitly NOT the package version; API
-contracts and package releases move on different clocks. `ops_api` takes
+contracts and package releases move on different clocks. `internal_api` takes
 ninja's default version ("1.0.0"), which is meaningless-but-harmless for an
-ops surface. **The maintainer decided `project_version` is not needed once
-this lands** — Step 1b removes it at the source.
+internal surface. Keep `project_version` exported from `config.pyproject` because
+Sentry uses it for release tagging; this plan removes only the API object's
+runtime dependency on it.
 
-### Step 1b: Remove `project_version` from config.pyproject
+### Step 1b: Keep `project_version` for Sentry, remove only API/test coupling
 
-`api.py` was the only non-test consumer
-(`grep -rn "project_version" '{{cookiecutter.project_slug}}/src'` — confirm
-only `config/pyproject.py` itself remains). In
-`src/config/pyproject.py`, delete the `project_version` assignment and its
-missing-version `RuntimeError` guard, keeping `project_name` (and the
-`project_metadata` presence guard). The file's shape depends on whether Plan
-005 (tomllib) has landed — apply the deletion to whichever form is live:
+`api.py` must stop importing `project_version`, but
+`src/config/settings/components/sentry.py` still imports it to set the Sentry
+release. Do not edit `src/config/pyproject.py` or its tests unless the live
+code has drifted in a way that breaks this invariant.
 
-- pre-005 (pyproject-parser): delete
-  `project_version = project_metadata["version"]` and the
-  `if project_version is None: ... raise RuntimeError(msg)` block.
-- post-005 (tomllib): delete `project_version = project_metadata.get("version")`
-  and the same guard.
-
-Then update the tests:
-
-- `tests/unit/config/pyproject_test.py`: delete
-  `test_pyproject_raises_when_project_version_is_missing` and remove
-  `project_version` from the imports/assertions of the happy-path test.
-- `tests/unit/api/api_test.py`: rewritten in Step 3 anyway — it must not
-  reference `project_version`.
-
-(`[project].version` stays in `pyproject.toml` itself — it is required
-package metadata; only the runtime plumbing goes.)
+**Verify**:
+`grep -rn "project_version" '{{cookiecutter.project_slug}}/src'` shows
+matches only in `src/config/pyproject.py` and
+`src/config/settings/components/sentry.py`. Test files may still cover
+`project_version` as package metadata; do not remove those tests.
 
 ### Step 2: Mount both
 
@@ -231,11 +220,11 @@ package metadata; only the runtime plumbing goes.)
 from django.contrib import admin
 from django.urls import path
 
-from apps.api.api import ops_api, v1_api
+from apps.api.api import internal_api, v1_api
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", ops_api.urls),
+    path("api/", internal_api.urls),
     path("api/v1/", v1_api.urls),
 ]
 ```
@@ -245,30 +234,31 @@ collision would surface here as ninja errors).
 
 ### Step 3: Update fixtures and existing tests
 
-- `tests/conftest.py`: keep `api_client` bound to the ops instance (existing
-  ready/health tests keep working unchanged), and add a `v1_client`:
+- `tests/conftest.py`: keep `internal_api_client` bound to the internal
+  instance (existing ready/health tests keep working unchanged), and add a
+  `v1_api_client`:
 
   ```python
-  from apps.api.api import ops_api, v1_api
+  from apps.api.api import internal_api, v1_api
 
   @pytest.fixture
-  def api_client() -> TestClient:
-      return TestClient(ops_api)
+  def internal_api_client() -> TestClient:
+      return TestClient(internal_api)
 
   @pytest.fixture
-  def v1_client() -> TestClient:
+  def v1_api_client() -> TestClient:
       return TestClient(v1_api)
   ```
 
-  (Fixtures alphabetized; `v1_client` is consumed by Step 4's test so the
+  (Fixtures alphabetized; `v1_api_client` is consumed by Step 4's test so the
   fixture — and thus the import — is exercised, keeping coverage at 100%.)
 - `tests/unit/api/api_test.py`: update to the split objects — assert
-  `ops_api.title` embeds `project_name`, `v1_api.title == project_name`, and
-  `v1_api.version == "1.0.0"`. No `project_version` references (removed in
-  Step 1b). (These remain structural assertions on the objects the app
-  builds, matching the file's existing pattern.)
+  `internal_api.title` embeds `project_name`, `v1_api.title == project_name`, and
+  `v1_api.version == "1.0.0"`. Do not import `project_version` here. These
+  remain structural assertions on the objects the app builds, matching the
+  file's existing pattern.
 - `tests/integration/api/schema_test.py`: the schemathesis fixture stays on
-  `"/api/openapi.json"` (ops schema — where all real operations live today).
+  `"/api/openapi.json"` (internal schema — where all real operations live today).
   No change needed; confirm it still collects and passes.
 
 ### Step 4: Version-surface integration test
@@ -291,16 +281,16 @@ def test_v1_api_exposes_openapi_schema_at_versioned_path(client: Client) -> None
     assert response.json()["info"]["version"] == "1.0.0"
 
 
-def test_v1_api_serves_no_operations_when_template_is_fresh(
-    v1_client: TestClient,
+def test_v1_api_serves_no_routes_when_template_is_fresh(
+    v1_api_client: TestClient,
 ) -> None:
-    response = v1_client.get("/does-not-exist")
+    response = v1_api_client.get("/does-not-exist")
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 ```
 
 (The first uses Django's `client` fixture — full URLconf path, proving the
-mount; the second exercises the `v1_client` fixture. Names/alphabetization
+mount; the second exercises the `v1_api_client` fixture. Names/alphabetization
 per AGENTS.md.)
 
 **Verify**: bake → `uv run pytest` → all pass, 100% coverage.
@@ -312,17 +302,17 @@ In the bake, temporarily parametrize a second schemathesis fixture against
 gracefully (suite still passes), keep it in the template with a one-line
 comment ("exercises every v1 operation as they are added"). If it errors on
 an empty schema, drop it and note in the plan's index row that v1 contract
-testing starts when the first endpoint lands (the ops schema test remains).
+testing starts when the first endpoint lands (the internal schema test remains).
 
 ### Step 6: Documentation
 
-- `README.md`: update endpoint list — ops docs at `/api/docs`, versioned API
-  docs at `/api/v1/docs`; state the rule: "operational probes are
+- `README.md`: update endpoint list — internal docs at `/api/docs`, versioned API
+  docs at `/api/v1/docs`; state the rule: "internal probes are
   unversioned; business endpoints live under `/api/v1/`. To introduce v2,
   create a `v2_api = NinjaAPI(urls_namespace="v2", version="2.0.0")` and
   mount it at `path("api/v2/", v2_api.urls)`."
 - `AGENTS.md`, under "Django And Configuration": add "Mount business routers
-  on `v1_api` (under `/api/v1/`); `ops_api` is reserved for operational
+  on `v1_api` (under `/api/v1/`); `internal_api` is reserved for internal
   probes and must stay unversioned."
 
 **Verify**: `uv run pre-commit run markdownlint --all-files` in bake → passes.
@@ -341,13 +331,13 @@ testing starts when the first endpoint lands (the ops schema test remains).
 - Updated `api_test.py`: both instances carry the intended title/version
   split.
 - Existing ready/health/request-id/schemathesis tests: unchanged behavior —
-  they prove the ops surface didn't move.
+  they prove the internal surface didn't move.
 
 ## Done criteria
 
 - [ ] `grep -n "api/v1/" '{{cookiecutter.project_slug}}/src/config/urls.py'` → one mount
 - [ ] `grep -n "urls_namespace" '{{cookiecutter.project_slug}}/src/apps/api/api.py'` → two distinct namespaces
-- [ ] `grep -rn "project_version" '{{cookiecutter.project_slug}}/src' '{{cookiecutter.project_slug}}/tests'` → no matches
+- [ ] `grep -rn "project_version" '{{cookiecutter.project_slug}}/src'` → matches only `src/config/pyproject.py` and `src/config/settings/components/sentry.py`
 - [ ] Baked project: `/api/ready` (and `/api/health` if 002 ran) still served at UNVERSIONED paths (existing integration tests pass unchanged)
 - [ ] Baked project: `curl`-equivalent test proves `/api/v1/openapi.json` → 200 with `info.version == "1.0.0"`
 - [ ] `uv run pytest` → all pass, 100%; `pre-commit run --all-files` → all pass
@@ -360,8 +350,8 @@ testing starts when the first endpoint lands (the ops schema test remains).
   values don't resolve — report the exact error; do not fall back to a single
   instance with path prefixes.
 - Any existing test needs its requested PATH changed (other than imports/
-  fixtures) — that means an ops endpoint moved; the design forbids it.
-- Schemathesis on the ops schema stops collecting after the split — report;
+  fixtures) — that means an internal endpoint moved; the design forbids it.
+- Schemathesis on the internal schema stops collecting after the split — report;
   the `from_wsgi("/api/openapi.json", ...)` target should be unaffected.
 
 ## Maintenance notes
@@ -373,5 +363,5 @@ testing starts when the first endpoint lands (the ops schema test remains).
 - Plan 013's smoke test could add a `/api/v1/openapi.json` probe once this
   lands — one-line follow-up, noted here rather than editing 013
   retroactively.
-- Deprecating v1 someday = removing one `path()` + one instance; the ops API
+- Deprecating v1 someday = removing one `path()` + one instance; the internal API
   never participates in that lifecycle.

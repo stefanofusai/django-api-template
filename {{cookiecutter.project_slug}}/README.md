@@ -160,7 +160,7 @@ Use `/api/health` as liveness: it checks that the process is up and backs the
 container healthcheck. Use `/api/ready` as readiness: it checks that the
 database and cache are reachable for load-balancer routing.
 
-Operational probes are unversioned; business endpoints live under `/api/v1/`.
+Internal probes are unversioned; business endpoints live under `/api/v1/`.
 To introduce v2, create a
 `v2_api = NinjaAPI(urls_namespace="v2", version="2.0.0")` instance and mount
 it at `path("api/v2/", v2_api.urls)`.

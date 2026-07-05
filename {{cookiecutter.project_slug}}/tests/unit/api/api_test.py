@@ -1,9 +1,9 @@
-from apps.api.api import ops_api, v1_api
+from apps.api.api import internal_api, v1_api
 from config.pyproject import project_name
 
 
-def test_ops_api_uses_project_name_in_operations_title() -> None:
-    assert ops_api.title == f"{project_name} (operations)"
+def test_internal_api_uses_project_name_in_internal_title() -> None:
+    assert internal_api.title == f"{project_name} (internal)"
 
 
 def test_v1_api_uses_project_name_and_contract_version() -> None:

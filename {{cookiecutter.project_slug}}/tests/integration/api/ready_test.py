@@ -13,13 +13,13 @@ if TYPE_CHECKING:
 
 
 def test_ready_endpoint_returns_cache_error_when_cache_raises(
-    api_client: TestClient,
+    internal_api_client: TestClient,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(ready_route, "_database_ready", return_value=True)
     cache_set = mocker.patch.object(ready_route.cache, "set", side_effect=RedisError)
 
-    response = api_client.get("/ready")
+    response = internal_api_client.get("/ready")
 
     assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
     assert response.data == {"status": "error", "errors": ["cache"]}
@@ -27,14 +27,14 @@ def test_ready_endpoint_returns_cache_error_when_cache_raises(
 
 
 def test_ready_endpoint_returns_cache_error_when_cache_set_fails(
-    api_client: TestClient,
+    internal_api_client: TestClient,
     mocker: MockerFixture,
 ) -> None:
     mocker.patch.object(ready_route, "_database_ready", return_value=True)
     cache_set = mocker.patch.object(ready_route.cache, "set", return_value=False)
     cache_get = mocker.patch.object(ready_route.cache, "get")
 
-    response = api_client.get("/ready")
+    response = internal_api_client.get("/ready")
 
     assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
     assert response.data == {"status": "error", "errors": ["cache"]}
@@ -43,7 +43,7 @@ def test_ready_endpoint_returns_cache_error_when_cache_set_fails(
 
 
 def test_ready_endpoint_returns_database_error_when_connection_raises(
-    api_client: TestClient,
+    internal_api_client: TestClient,
     mocker: MockerFixture,
 ) -> None:
     connection = ready_route.connections["default"]
@@ -51,7 +51,7 @@ def test_ready_endpoint_returns_database_error_when_connection_raises(
         connection, "ensure_connection", side_effect=DatabaseError
     )
 
-    response = api_client.get("/ready")
+    response = internal_api_client.get("/ready")
 
     assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
     assert response.data == {"status": "error", "errors": ["database"]}
@@ -59,14 +59,14 @@ def test_ready_endpoint_returns_database_error_when_connection_raises(
 
 
 def test_ready_endpoint_returns_error_when_dependencies_are_unavailable(
-    api_client: TestClient, mocker: MockerFixture
+    internal_api_client: TestClient, mocker: MockerFixture
 ) -> None:
     cache_ready = mocker.patch.object(ready_route, "_cache_ready", return_value=False)
     database_ready = mocker.patch.object(
         ready_route, "_database_ready", return_value=False
     )
 
-    response = api_client.get("/ready")
+    response = internal_api_client.get("/ready")
 
     assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
     assert response.data == {"status": "error", "errors": ["cache", "database"]}
@@ -76,9 +76,9 @@ def test_ready_endpoint_returns_error_when_dependencies_are_unavailable(
 
 @pytest.mark.django_db
 def test_ready_endpoint_returns_ok_when_dependencies_are_available(
-    api_client: TestClient,
+    internal_api_client: TestClient,
 ) -> None:
-    response = api_client.get("/ready")
+    response = internal_api_client.get("/ready")
 
     assert response.status_code == HTTPStatus.OK
     assert response.data == {"status": "ok"}

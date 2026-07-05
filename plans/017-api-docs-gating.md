@@ -8,7 +8,7 @@
 > maintain the index.
 >
 > **Drift check (run first)**: `git diff --stat 2849304..HEAD -- '{{cookiecutter.project_slug}}/src/apps/api/' '{{cookiecutter.project_slug}}/src/config/settings/' '{{cookiecutter.project_slug}}/tests/' '{{cookiecutter.project_slug}}/README.md' '{{cookiecutter.project_slug}}/AGENTS.md'`
-> This plan EXPECTS drift from plans 002 (health) and 015 (ops/v1 split) —
+> This plan EXPECTS drift from plans 002 (health) and 015 (internal/v1 split) —
 > the steps handle both shapes. On any OTHER mismatch with "Current state",
 > STOP.
 
@@ -54,7 +54,7 @@ no branch in `api.py`:
 ## Current state
 
 (As of `2849304`. Plan 002 adds a health router; plan 015 splits into
-`ops_api` at `/api/` + `v1_api` at `/api/v1/` — apply this plan's decorator
+`internal_api` at `/api/` + `v1_api` at `/api/v1/` — apply this plan's decorator
 to EVERY NinjaAPI instance that exists when you execute.)
 
 - `{{cookiecutter.project_slug}}/src/apps/api/api.py` (pre-002/015 shape):
@@ -161,7 +161,7 @@ pass-through.)
 ### Step 3: Resolve it in api.py — no branch
 
 In `src/apps/api/api.py`, resolve once at module scope and pass to every
-NinjaAPI instance (both `ops_api` and `v1_api` if 015 landed; the single
+NinjaAPI instance (both `internal_api` and `v1_api` if 015 landed; the single
 `api` otherwise):
 
 ```python
@@ -170,7 +170,7 @@ from django.utils.module_loading import import_string
 
 docs_decorator = import_string(settings.API_DOCS_DECORATOR)
 
-ops_api = NinjaAPI(
+internal_api = NinjaAPI(
     ...,
     docs_decorator=docs_decorator,
 )

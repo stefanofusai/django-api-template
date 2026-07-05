@@ -6,9 +6,9 @@ if TYPE_CHECKING:
 
 
 def test_health_endpoint_returns_ok_without_touching_dependencies(
-    api_client: TestClient,
+    internal_api_client: TestClient,
 ) -> None:
-    response = api_client.get("/health")
+    response = internal_api_client.get("/health")
 
     assert response.status_code == HTTPStatus.OK
     assert response.data == {"status": "ok"}

@@ -4,12 +4,12 @@ from config.pyproject import project_name
 
 from .routes import health_router, ready_router
 
-ops_api = NinjaAPI(
-    title=f"{project_name} (operations)",
-    urls_namespace="ops",
+internal_api = NinjaAPI(
+    title=f"{project_name} (internal)",
+    urls_namespace="internal",
 )
-ops_api.add_router("", health_router)
-ops_api.add_router("", ready_router)
+internal_api.add_router("", health_router)
+internal_api.add_router("", ready_router)
 
 v1_api = NinjaAPI(
     title=project_name,
