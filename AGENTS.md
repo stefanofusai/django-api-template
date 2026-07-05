@@ -2,7 +2,8 @@
 
 ## Command Workflow
 
-- Always prefix shell commands with `rtk`.
+- If the `rtk` CLI is available, prefix shell commands with `rtk`
+  (token-optimizing proxy); otherwise run commands directly.
 - Put short flags before long flags in shell commands, alphabetize short flags
   and long flags within their groups, and write long flags with values using
   `--flag=value`.
@@ -106,12 +107,13 @@
 ## Verification
 
 - Run relevant root checks before completion:
-  - `rtk pre-commit run --all-files`
+  - `pre-commit run --all-files`
 - For template behavior changes, bake a project in a temporary output directory
   and run the generated-project checks that match the change.
 - Freshly baked projects are expected to pass:
-  - `rtk uv run pytest`
-  - `rtk uv run pre-commit run --all-files`
-  - `rtk docker compose -f .docker/compose/dev.yaml up --build`
-  - `rtk curl -fsS http://localhost:8000/api/ready`
-  - `rtk docker compose -f .docker/compose/dev.yaml down -v`
+  - `uv run pytest`
+  - `uv run pre-commit run --all-files`
+  - `docker compose -f .docker/compose/dev.yaml up --build`
+  - `curl -fsS http://localhost:8000/api/ready`
+  - `docker compose -f .docker/compose/dev.yaml down -v`
+- Prefix these with `rtk` when it is available.

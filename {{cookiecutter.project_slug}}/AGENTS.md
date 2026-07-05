@@ -2,7 +2,8 @@
 
 ## Command Workflow
 
-- Always prefix shell commands with `rtk`.
+- If the `rtk` CLI is available, prefix shell commands with `rtk`
+  (token-optimizing proxy); otherwise run commands directly.
 - Put short flags before long flags in shell commands, alphabetize short flags
   and long flags within their groups, and write long flags with values using
   `--flag=value`.
@@ -99,12 +100,13 @@
 
 ## Testing
 
-- The full suite enforces 100% coverage. Focused test commands are useful, but final verification should include `rtk uv run pytest`.
+- The full suite enforces 100% coverage. Focused test commands are useful, but final verification should include `uv run pytest`.
 - Run relevant checks before completion:
-  - `rtk uv run pre-commit run ruff-check --all-files`
-  - `rtk uv run pre-commit run ty --all-files`
-  - `rtk uv run pytest`
-  - `rtk uv run pre-commit run --all-files` for broad changes
+  - `uv run pre-commit run ruff-check --all-files`
+  - `uv run pre-commit run ty --all-files`
+  - `uv run pytest`
+  - `uv run pre-commit run --all-files` for broad changes
+  Prefix these with `rtk` when it is available.
 - Register factories in `tests/factories.py` when adding concrete models
   (see `UserFactory`).
 - Use pytest-factoryboy model fixtures directly and prefer attribute

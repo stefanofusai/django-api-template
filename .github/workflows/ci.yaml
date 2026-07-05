@@ -85,6 +85,8 @@ jobs:
         include:
           - case: bad-description
             extra-args: description='has "quotes"'
+          - case: bad-domain
+            extra-args: domain_name=no-dot
           - case: bad-email
             extra-args: author_email=nope
           - case: bad-knob

@@ -3,6 +3,11 @@ import re
 import shutil
 import subprocess
 
+COMPOSE_MIN_VERSION = (5, 3, 0)
+COMPOSE_VERSION_WARNING = (
+    "WARNING: Docker Compose 5.3.0 or newer is required for the generated "
+    "Compose files because they use pre_start lifecycle hooks"
+)
 EMAIL_PROVIDER = {{ cookiecutter.email_provider | tojson }}
 TRAEFIK_TLS = {{ cookiecutter.traefik_tls | tojson }}
 USE_CELERY = {{ cookiecutter.use_celery | tojson }}
@@ -82,6 +87,8 @@ def main() -> None:
     else:
         print(UV_LOCK_WARNING)
 
+    _warn_on_unsupported_compose()
+
     print(
         "\nNext steps:\n"
         "  uv sync --locked\n"
@@ -89,6 +96,51 @@ def main() -> None:
         "  uv run pre-commit install --install-hooks\n"
         "  git add -A && git commit -m 'feat: initial project scaffold'\n"
     )
+
+
+# Utils
+
+
+def _parse_compose_version(output: str) -> tuple[int, int, int] | None:
+    parts = re.findall(r"\d+", output)
+    if not parts:
+        return None
+
+    version = [int(part) for part in parts[:3]]
+    while len(version) < 3:
+        version.append(0)
+
+    return tuple(version)
+
+
+def _warn_on_unsupported_compose() -> None:
+    if not shutil.which("docker"):
+        print(f"{COMPOSE_VERSION_WARNING}; docker was not found.")
+        return
+
+    try:
+        result = subprocess.run(
+            ["docker", "compose", "version", "--short"],
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+
+    except (OSError, subprocess.CalledProcessError):
+        print(f"{COMPOSE_VERSION_WARNING}; docker compose version could not be checked.")
+        return
+
+    compose_version = _parse_compose_version(result.stdout)
+    if compose_version is None:
+        print(f"{COMPOSE_VERSION_WARNING}; docker compose version could not be parsed.")
+        return
+
+    if compose_version < COMPOSE_MIN_VERSION:
+        version_text = ".".join(str(part) for part in compose_version)
+        print(
+            f"{COMPOSE_VERSION_WARNING}; detected Docker Compose "
+            f"{version_text}."
+        )
 
 
 if __name__ == "__main__":

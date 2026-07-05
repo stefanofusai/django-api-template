@@ -65,7 +65,7 @@ overlays:
 
 Requirements:
 
-- Docker Compose >= 2.30 (lifecycle hooks and start_interval)
+- Docker Compose >= 5.3.0 (`pre_start` lifecycle hooks)
 - Python 3.14
 - [uv](https://docs.astral.sh/uv/)
 
@@ -245,6 +245,12 @@ listener. The proxy must forward `Host` and overwrite client-supplied
 `X-Forwarded-Proto` so Django can enforce HTTPS without redirect loops.
 {%- endif %}
 
+`ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, and `TRAEFIK_DOMAIN` are pre-filled
+from `domain_name` when the project is baked. Bake with the real deployment
+hostname so the generated `.env.example` is production-ready, and keep
+`127.0.0.1` in `ALLOWED_HOSTS` because the container healthcheck probes over
+localhost.
+
 Before deploying, generate real secrets:
 
 ```shell
@@ -252,15 +258,13 @@ uv run python -c "from django.core.management.utils import get_random_secret_key
 ```
 
 {% if cookiecutter.postgres == "compose" -%}
-Use the generated value for `SECRET_KEY`, set a strong `POSTGRES_PASSWORD`, and
-keep `127.0.0.1` in `ALLOWED_HOSTS` alongside your domain because the container
-healthcheck probes over localhost. The production stack reads the same `.env`
-file as development, and production boot refuses `django-insecure-` keys.
-{%- else %}
-Use the generated value for `SECRET_KEY`, and keep `127.0.0.1` in
-`ALLOWED_HOSTS` alongside your domain because the container healthcheck probes
-over localhost. The production stack reads the same `.env` file as
+Use the generated value for `SECRET_KEY`, and set a strong
+`POSTGRES_PASSWORD`. The production stack reads the same `.env` file as
 development, and production boot refuses `django-insecure-` keys.
+{%- else %}
+Use the generated value for `SECRET_KEY`. The production stack reads the same
+`.env` file as development, and production boot refuses `django-insecure-`
+keys.
 
 Set `DATABASE_URL` to the external PostgreSQL-compatible endpoint and append
 `?sslmode=require`, unless your provider requires stricter settings such as
@@ -425,3 +429,19 @@ uv run pre-commit run ty --all-files
 
 CI runs tests, deploy checks, pre-commit, dependency audit, and Docker image
 build validation through GitHub Actions.
+
+## Verification
+
+Freshly generated projects are expected to pass:
+
+```shell
+uv run pytest
+uv run pre-commit run --all-files
+docker compose -f .docker/compose/dev.yaml up -d --build --wait
+curl -fsS http://localhost:8000/api/ready
+docker compose -f .docker/compose/dev.yaml down -v
+```
+
+## License
+
+MIT. See `LICENSE`.
