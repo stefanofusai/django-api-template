@@ -35,7 +35,7 @@ and running the baked suite (`uv run pytest` → 100% coverage required;
 | 017 | Staff-gated API docs in prod + documented auth decision point | P2 | S–M | 015 preferred first; serialize on prod.py | DONE |
 | 018 | Traefik in prod.yaml + docker-rollout zero-downtime deploys | P2 | M | 002; serialize on .env.example; adapts to 008/013 | DONE |
 | 019 | Quirk/decision comments at trap points + AGENTS.md comment policy | P3 | S | cleanest after 005/006; serialize with shared files | DONE |
-| 020 | .env.example blocks + dependency-group rationalization | P2 | S–M | supersedes 010 Step 1; serialize on .env.example/pyproject | TODO |
+| 020 | .env.example blocks + dependency-group rationalization | P2 | S–M | supersedes 010 Step 1; serialize on .env.example/pyproject | DONE |
 | 021 | Open-source readiness (neutral defaults, domain_name variable, front-door README, LICENSE, community files) | P2 | M | all others (run last); absorbs 014 | TODO |
 | 022 | Bake-time feature knobs (use_celery, email_provider, use_sentry, use_s3_media, use_traefik, traefik_tls) | P1 | L | 018 committed (hard); 020 preferred first; before 021 | TODO |
 | 014 | LICENSE, README truthfulness, optional rtk | P3 | S | — | SUPERSEDED (absorbed into 021) |

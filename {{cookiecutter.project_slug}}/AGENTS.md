@@ -20,6 +20,7 @@
 - Environment overlays should mutate only environment-specific differences.
 - Do not add `django-configurations`, settings builder functions, wildcard imports, or tests that only assert configuration values.
 - Pin dependencies in `pyproject.toml` to exact versions, and use the latest intended release when adding or updating a dependency.
+- Put dependencies imported by settings loaded outside `prod` in main dependencies. A prod-only dependency can live in the `prod` group only when non-prod settings never import it.
 
 ## Style
 
@@ -65,6 +66,10 @@
   documented options order:
   <https://docs.sentry.io/platforms/python/configuration/options/#available-options>.
 - Add environment variables only for secrets, deployment topology, or resource sizing.
+- Keep `.env.example` grouped by concern, not globally byte-sorted. Alphabetize keys only within each block.
+- In `.env.example`, comments must be own-line only; never put inline comments after a value.
+- In `.env.example`, empty uncommented values mean required in production and must have a boot guard or prod-only consumer that fails loudly.
+- In `.env.example`, commented values are optional overrides with safe code defaults.
 - The API has no default auth. Endpoints requiring protection must add ninja
   auth (global `auth=` on the API instance, or per-router/per-operation);
   never ship a mutating endpoint unauthenticated.

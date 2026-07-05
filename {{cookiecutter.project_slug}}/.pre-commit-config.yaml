@@ -31,7 +31,7 @@ repos:
       - id: detect-private-key
       - id: end-of-file-fixer
       - id: file-contents-sorter
-        files: ^(\.docker/Dockerfile\.dockerignore|\.env\.example)$
+        files: ^\.docker/Dockerfile\.dockerignore$
       - id: mixed-line-ending
       - id: name-tests-test
         exclude: ^tests/factories\.py$
