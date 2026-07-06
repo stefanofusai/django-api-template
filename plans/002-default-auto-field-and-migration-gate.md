@@ -1,273 +1,129 @@
-# Plan 002: Set DEFAULT_AUTO_FIELD and gate CI on migration drift
+# Plan 002: Catch migration drift with a dedicated CI workflow
 
-> **Executor instructions**: Follow this plan step by step. Run every
-> verification command and confirm the expected result before moving to the
-> next step. If anything in the "STOP conditions" section occurs, stop and
-> report — do not improvise. When done, update the status row for this plan
-> in `plans/README.md` — unless a reviewer dispatched you and told you they
-> maintain the index.
->
-> **Drift check (run first)**:
-> `git diff --stat d333a73..HEAD -- '{{cookiecutter.project_slug}}/src/config/settings/components/core.py' '{{cookiecutter.project_slug}}/.github' .github/workflows/ci.yaml`
-> If any in-scope file changed since this plan was written, compare the
-> "Current state" excerpts against the live code before proceeding; on a
-> mismatch, treat it as a STOP condition. (Plan 001 legitimately edits
-> `tests.yaml` and `ci.yaml` — that drift is expected; re-read those files
-> and integrate.)
+> **Status: DONE** (implemented directly on 2026-07-06, brought to `main`
+> uncommitted per operator request). This file is the record of what
+> shipped and why; earlier revisions are summarized under "History".
 
 ## Status
 
 - **Priority**: P1
 - **Effort**: S
 - **Risk**: LOW
-- **Depends on**: 001 (ordering only — both edit `tests.yaml`/`ci.yaml`;
-  this plan is correct with or without 001)
-- **Category**: bug
-- **Planned at**: commit `d333a73`, 2026-07-05
-- **Execution note**: blocked on 2026-07-06. A fresh Django 6.0.6 bake
-  reports `global_settings.DEFAULT_AUTO_FIELD` as
-  `django.db.models.BigAutoField`; removing the explicit setting still
-  yields "No changes detected". The `DEFAULT_AUTO_FIELD` premise is stale.
-  Rewrite this as a migration-drift gate-only plan before executing.
+- **Depends on**: 001 (DONE)
+- **Category**: bug (prevention)
+- **Planned at**: commit `46ef781`, 2026-07-06
+
+## History (why the approach changed 3×)
+
+1. Original: set `DEFAULT_AUTO_FIELD` + add a migration gate. **Dropped the
+   `DEFAULT_AUTO_FIELD` half** — moot on Django 6 (defaults to
+   `BigAutoField`; no drift with or without it).
+2. Then: a shell `migrations-check.sh` wired into both CI surfaces
+   (committed to a worktree as `7ecbc04`, reverted).
+3. Then: a pytest test in the suite.
+4. **Final (shipped): a dedicated CI workflow** in the baked project,
+   `.github/workflows/migrations.yaml` — per the operator's explicit
+   preference: CI-only, no pytest, no pre-commit, no shell script, no new
+   dependency, no `DEFAULT_AUTO_FIELD`.
 
 ## Why this matters
 
-No settings module sets `DEFAULT_AUTO_FIELD`, so Django falls back to
-`AutoField` for implicit primary keys — but the committed initial
-migration freezes `core.User.id` as `BigAutoField`. The runtime model and
-the migration state disagree: `manage.py makemigrations` on a fresh baked
-project wants to generate an `AlterField` back to `AutoField`, and Django
-emits the `models.W042` warning. Nothing catches this because CI never
-asks "are migrations in sync with models?". This plan fixes the setting
-to match the migration and adds the missing CI gate so model/migration
-drift can never ship silently again.
+Nothing verified that committed migrations stay in sync with the models.
+If someone edits a model and forgets to generate/commit the migration,
+the mismatch ships silently — the app boots, most tests pass, and it
+surfaces only in production (`column does not exist`) or as a surprise
+`makemigrations` prompt on the next developer's machine.
+`makemigrations --check --dry-run` exits non-zero if any model change
+lacks its migration; a dedicated workflow runs it on every push/PR of a
+generated project.
 
-## Current state
+## What shipped
 
-Cookiecutter template; generated project under the literal directory
-`{{cookiecutter.project_slug}}/` (quote in shell). `.github/workflows/*`
-inside it are copied without rendering (no Jinja allowed there).
+`{{cookiecutter.project_slug}}/.github/workflows/migrations.yaml` — a new
+workflow (copied WITHOUT rendering, so Jinja-free), mirroring the baked
+`tests.yaml` structure:
 
-- `{{cookiecutter.project_slug}}/src/config/settings/components/core.py`
-  — full current content:
+- `name: Migrations` (Title-case noun, matching the repo convention:
+  `tests.yaml`→"Tests", `dependency-audit.yaml`→"Dependency Audit"; no
+  verb prefix — hence the filename is `migrations.yaml`, not
+  `check-migrations.yaml`).
+- Triggers: `pull_request` and `push` to `main`; standard `concurrency`
+  block.
+- A `postgres: image: postgres:18.4` service (same as `tests.yaml`, with
+  the single-line `options:` health-check form that yamlfmt accepts) so
+  `makemigrations --check`'s migration-history consistency probe connects
+  cleanly instead of emitting a `RuntimeWarning` (the exit code is correct
+  either way, but the service keeps CI logs clean).
+- Steps: Checkout → Set up Python (`python-version-file: pyproject.toml`)
+  → Set up uv → Install dependencies
+  (`uv sync --group=ci --locked --no-default-groups`) → "Check for missing
+  migrations": a static `env:` block (`ALLOWED_HOSTS`, `CACHE_URL`,
+  `DATABASE_URL`, `DEFAULT_FROM_EMAIL`, `DJANGO_ENV: ci`, and a
+  clearly-fake `SECRET_KEY: ci-migration-check-not-a-real-secret` — safe
+  because `DJANGO_ENV=ci` does not enforce the `django-insecure-` check;
+  matches how `tests.yaml`/`ci.yaml` already hardcode a throwaway
+  `DATABASE_URL` in `env:`), with a single-line
+  `run: uv run --group=ci --locked --no-default-groups manage.py
+  makemigrations --check --dry-run` (no redundant `python` — `uv run`
+  executes the `manage.py` script directly).
 
-  ```python
-  from config.settings import env
-
-  ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
-  API_DOCS_DECORATOR = "apps.api.docs.public"
-  DEBUG = False
-  ROOT_URLCONF = "config.urls"
-  SECRET_KEY = env("SECRET_KEY")
-  TIME_ZONE = "UTC"
-  WSGI_APPLICATION = "config.wsgi.application"
-  ```
-
-  Settings in components are alphabetized.
-
-- `{{cookiecutter.project_slug}}/src/apps/core/migrations/0001_initial.py:22-30`
-  — the frozen PK:
-
-  ```python
-  (
-      "id",
-      models.BigAutoField(
-          auto_created=True,
-          primary_key=True,
-          serialize=False,
-          verbose_name="ID",
-      ),
-  ),
-  ```
-
-- `grep -rn "DEFAULT_AUTO_FIELD" '{{cookiecutter.project_slug}}/src'` →
-  no matches (verified at planning time).
-
-- `{{cookiecutter.project_slug}}/.github/scripts/deploy-check.sh` — the
-  existing pattern for running `manage.py` in CI with throwaway env vars
-  (own-line env assignments, `\` continuations, Jinja conditionals per
-  knob, `uv run --group=ci --locked --no-default-groups`). Model the new
-  script on it. Note it uses `DJANGO_ENV=prod`; the new script uses
-  `DJANGO_ENV=ci`, which needs only `ALLOWED_HOSTS`, `CACHE_URL`, and
-  `SECRET_KEY` inside the script (the database URL comes from the
-  environment or the rendered pytest default). It therefore needs NO
-  Jinja conditionals at all.
-
-- `{{cookiecutter.project_slug}}/.github/workflows/tests.yaml` — steps:
-  checkout, setup-python, setup-uv, `uv sync`, "Run deploy checks"
-  (`./.github/scripts/deploy-check.sh`), "Run tests" (pytest).
-
-- `.github/workflows/ci.yaml` `bake` job — steps: bake, assert lockfile,
-  `uv sync --locked`, "Run tests" (`uv run pytest`), "Run pre-commit".
-
-- `makemigrations --check --dry-run` can check migration-history
-  consistency against the configured database. Run it with the Postgres
-  service from plan 001 available so failures are real migration drift,
-  not connection warnings.
-
-## Commands you will need
-
-| Purpose | Command | Expected on success |
-|---------|---------|---------------------|
-| Bake | `uvx cookiecutter . --no-input -o /tmp/plan002` | project baked |
-| Install | `cd /tmp/plan002/my-project && uv sync --locked` | exit 0 |
-| Drift check (manual) | see Step 2 | exit 0, "No changes detected" |
-| Baked tests | Postgres running per plan 001 docs, then `uv run pytest` | pass |
-| Baked pre-commit | `git add -A && uv run pre-commit run --all-files` | exit 0 |
-| actionlint | `uvx --from actionlint actionlint <file>` | exit 0 |
-| Root pre-commit | `pre-commit run --all-files` | exit 0 |
+`DEFAULT_FROM_EMAIL` is set unconditionally (the workflow can't use Jinja,
+and `components/email.py` requires it when `email_provider != "none"`;
+it's harmless when email is off). No knob conditionals are needed —
+verified the file is byte-identical across bakes.
 
 ## Scope
 
-**In scope**:
+**In scope**: `{{cookiecutter.project_slug}}/.github/workflows/migrations.yaml`
+(create) — ONE file.
 
-- `{{cookiecutter.project_slug}}/src/config/settings/components/core.py`
-- `{{cookiecutter.project_slug}}/.github/scripts/migrations-check.sh`
-  (create)
-- `{{cookiecutter.project_slug}}/.github/workflows/tests.yaml` (one step)
-- `.github/workflows/ci.yaml` (one step in the `bake` job)
+**Out of scope / explicitly NOT done**: no `DEFAULT_AUTO_FIELD`; no pytest
+test; no pre-commit hook; no `.github/scripts/*` shell script; no
+third-party package (`django-test-migrations` tests migration *behaviour*,
+a different concern with nothing to exercise here — deferred).
 
-**Out of scope** (do NOT touch):
+Also added (follow-up): a matching "Check for missing migrations" step in
+the template repo's own `.github/workflows/ci.yaml` `bake` job, so
+template-level migration drift (e.g. a future app's missing migration) is
+caught on EVERY bake variant in the template's own CI — not only in a
+generated project's CI. Same command/env as the baked workflow.
 
-- `src/apps/core/migrations/0001_initial.py` — the point is to make the
-  runtime match the migration, never the reverse.
-- `deploy-check.sh` — separate concern (security checks).
-- Any model file; `apps.py` files (`default_auto_field` per-app is NOT
-  the chosen mechanism — one global setting is).
+## Verification (done)
 
-## Git workflow
-
-- Work directly on `main`; do not create or switch to a plan branch unless the
-  operator explicitly asks.
-- Do NOT commit, push, or open a PR unless the operator explicitly instructs it.
-- If asked to commit, use a conventional commit such as
-  `fix: set DEFAULT_AUTO_FIELD and gate CI on migration drift`.
-
-## Steps
-
-### Step 1: Set DEFAULT_AUTO_FIELD
-
-In `core.py`, insert alphabetically (after `DEBUG`, before
-`ROOT_URLCONF`):
-
-```python
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-```
-
-`BigAutoField` is what `0001_initial.py` already froze, so no new
-migration is needed or expected.
-
-**Verify**: `grep -n "DEFAULT_AUTO_FIELD" '{{cookiecutter.project_slug}}/src/config/settings/components/core.py'`
-→ one match, in alphabetical position.
-
-### Step 2: Prove the drift is gone in a baked project
-
-```shell
-uvx cookiecutter . --no-input -o /tmp/plan002
-cd /tmp/plan002/my-project && uv sync --locked
-docker compose -f .docker/compose/dev.yaml up -d --wait postgres
-ALLOWED_HOSTS=localhost \
-CACHE_URL=locmemcache:// \
-DJANGO_ENV=ci \
-SECRET_KEY=plan002-check-secret-0123456789 \
-uv run python manage.py makemigrations --check --dry-run
-```
-
-**Verify**: exit 0 with "No changes detected" and no migration-history
-connection warning. Sanity-check the fix is what removed the drift:
-temporarily comment the new setting out, rerun — it must exit 1
-proposing an `id` AlterField for `core.user` — then restore the setting
-and rerun to exit 0. Also run the same env-prefixed `manage.py check`
-and confirm no `models.W042` in the output.
-
-### Step 3: Create `migrations-check.sh`
-
-Create `{{cookiecutter.project_slug}}/.github/scripts/migrations-check.sh`
-(mode 755, `git update-index --chmod=+x` if needed), modeled on
-`deploy-check.sh`'s style but Jinja-free:
-
-```sh
-#!/bin/sh
-set -eu
-
-ALLOWED_HOSTS=localhost \
-CACHE_URL=locmemcache:// \
-DJANGO_ENV=ci \
-SECRET_KEY=$(uuidgen)$(uuidgen) \
-uv run --group=ci --locked --no-default-groups \
-    python manage.py makemigrations --check --dry-run
-```
-
-**Verify**: run it inside the baked project
-(`./.github/scripts/migrations-check.sh` after copying the file in, or
-re-bake) → exit 0.
-
-### Step 4: Wire it into both CI surfaces
-
-- In `{{cookiecutter.project_slug}}/.github/workflows/tests.yaml`, add
-  between "Run deploy checks" and "Run tests":
-
-  ```yaml
-        - name: Run migrations check
-          env:
-            DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-          run: ./.github/scripts/migrations-check.sh
-  ```
-
-- In `.github/workflows/ci.yaml` `bake` job, add the equivalent step
-  (with the job's `working-directory: /tmp/bake/${{ matrix.slug }}`
-  pattern) between "Run tests" and "Run pre-commit", also with
-  `env: DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres`.
-
-**Verify**: `uvx --from actionlint actionlint` on both files → exit 0.
-
-### Step 5: Full verification
-
-Re-bake fresh; start Postgres per plan 001
-(`docker compose -f .docker/compose/dev.yaml up -d --wait postgres`),
-run the baked suite, `git add -A && uv run pre-commit run --all-files`
-in the baked project, and `pre-commit run --all-files` at the root.
-
-**Verify**: all exit 0. Also bake the minimal knob case
-(`use_celery=none email_provider=none use_sentry=no use_s3_media=no
-use_traefik=no`) and run `./.github/scripts/migrations-check.sh` there →
-exit 0 (proves the script needs no knob conditionals).
-
-## Test plan
-
-No new pytest tests: the behavior is enforced by the new CI gate itself.
-The negative check in Step 2 (comment out → exit 1 → restore) is the
-regression demonstration.
+- Baked default project; `migrations.yaml` passes `yamlfmt`, `yamllint`,
+  "Lint GitHub Actions workflow files" (actionlint), and "Validate GitHub
+  Workflows" (check-jsonschema) with no rewrite.
+- Positive: with a matching Postgres running, the check command exits 0,
+  prints "No changes detected", no warning.
+- Negative: inserting a throwaway field on `core.User` makes the command
+  detect a missing migration (`0002_user_scratch.py`, "Add field scratch
+  to user"); reverted → clean again.
 
 ## Done criteria
 
-- [ ] `DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"` present in
-      `core.py`, alphabetized
-- [ ] Baked `migrations-check.sh` exits 0 on default AND minimal bakes
-      with Postgres running
-- [ ] With the setting removed, the script exits 1 (verified once, then
-      restored)
-- [ ] `git status` in the baked project after the full suite shows no
-      generated migration files
-- [ ] Both workflows pass actionlint; root + baked pre-commit exit 0
-- [ ] `plans/README.md` status row updated
-
-## STOP conditions
-
-- Step 2 still reports changes AFTER adding the setting — the drift is
-  different from the analysis (e.g. another model/field involved).
-  Report the proposed migration diff verbatim.
-- Step 2's negative check does NOT report drift with the setting absent —
-  the premise of this plan is wrong; report.
-- `makemigrations --check` exits 0 but emits a migration-history
-  connection warning while Postgres is healthy — report the warning and
-  do not hide it.
+- [x] `migrations.yaml` created (Jinja-free), runs `makemigrations
+      --check --dry-run` under `DJANGO_ENV=ci` with a postgres service
+- [x] Passes yamlfmt/yamllint/actionlint/workflow-schema hooks
+- [x] Positive run exit 0 "No changes detected"; negative run detects the
+      missing migration
+- [x] No pytest, no pre-commit, no shell script, no dependency, no
+      `DEFAULT_AUTO_FIELD`
+- [x] `plans/README.md` status row updated
 
 ## Maintenance notes
 
-- Any new app must rely on the global `DEFAULT_AUTO_FIELD`; do not add
-  per-app `default_auto_field` values.
-- The CI gate means every future model change must ship its migration in
-  the same commit — this is the desired discipline.
-- Plan 009 (example resource app) generates a new migration; this gate
-  will verify it.
+- The baked `migrations.yaml` enforces migration discipline in each
+  **generated project's** CI. Separately, the template repo's own
+  `ci.yaml` `bake` job runs the same `makemigrations --check --dry-run`
+  step on every bake variant, so template-level migration drift is caught
+  in the template's own CI too (a baked workflow in `/tmp/bake` never
+  triggers on GitHub, hence the explicit bake-job step).
+- **Plan 009** (example `notes` resource) generates a new migration. Its
+  original Step 4 referenced a `migrations-check.sh` that no longer
+  exists; when executing 009, verify its migration by running
+  `manage.py makemigrations --check --dry-run` directly (the command this
+  workflow runs) — the generated project also gains `migrations.yaml`
+  automatically.
+- `django-test-migrations` (data-migration/reversibility testing) remains
+  deferred: no data migrations to exercise yet; Django 6 support
+  unconfirmed.

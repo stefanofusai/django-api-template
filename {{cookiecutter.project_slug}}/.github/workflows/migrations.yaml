@@ -1,0 +1,45 @@
+name: Migrations
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  makemigrations:
+    name: Makemigrations check
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Keep this image in sync with .docker/compose/{dev,prod}.yaml;
+        # Dependabot does not track images inside workflow service blocks.
+        image: postgres:18.4
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready --username=$$POSTGRES_USER" --health-interval=5s --health-retries=5 --health-timeout=5s
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.3
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version-file: pyproject.toml
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.2.0
+      - name: Install dependencies
+        run: uv sync --group=ci --locked --no-default-groups
+      - name: Check missing migrations
+        env:
+          ALLOWED_HOSTS: localhost
+          CACHE_URL: locmemcache://
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+          DEFAULT_FROM_EMAIL: noreply@example.com
+          DJANGO_ENV: ci
+          SECRET_KEY: ci-secret-for-migrations-0123456789-abcdefghijklmnopqrstuvwxyz
+        run: uv run --group=ci --locked --no-default-groups manage.py makemigrations --check --dry-run

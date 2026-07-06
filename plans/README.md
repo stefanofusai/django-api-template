@@ -31,7 +31,7 @@ requires a reachable Postgres (see that plan's README updates).
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | 001 | Tests run against real PostgreSQL (maintainer mandate) | P1 | M | — (run first) | DONE |
-| 002 | DEFAULT_AUTO_FIELD + migration-drift CI gate | P1 | S | 001 (ordering) | BLOCKED — premise stale: Django 6 defaults to BigAutoField; rewrite as gate-only |
+| 002 | Migration-drift check (dedicated CI workflow) | P1 | S | 001 | DONE — on `main` uncommitted. Ships baked `.github/workflows/migrations.yaml` (`uv run manage.py makemigrations --check --dry-run`, DJANGO_ENV=ci, postgres service) AND a matching step in the template's own ci.yaml `bake` job (runs on every bake variant). CI-only per operator: no pytest, no pre-commit, no shell script, no deps, no DEFAULT_AUTO_FIELD. Verified: hooks green, positive exit 0, negative detects drift, full suite 30 passed/100%. Also (same batch): dropped `python` from deploy-check.sh + migrations cmd; trimmed pyproject ALLOWED_HOSTS to `localhost,testserver` (localhost=schemathesis WSGI host, testserver=Django test client; 127.0.0.1 dropped). |
 | 003 | Production email sender (DEFAULT_FROM_EMAIL) | P1 | S | — | DONE |
 | 004 | Graceful shutdown: drop SIGCONT, SIGTERM drain + rollout rehearsal | P1 | S–M | — | DONE |
 | 005 | CI smoke-tests the shipped prod.yaml unpatched | P2 | S–M | 004 (soft) | DONE — merged to `main` (`d79cd17`); CI green, unpatched prod.yaml boots with Compose 5.3.0 |

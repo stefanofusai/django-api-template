@@ -89,6 +89,16 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
         run: uv run pytest
+      - name: Check missing migrations
+        working-directory: /tmp/bake/${{ matrix.slug }}
+        env:
+          ALLOWED_HOSTS: localhost
+          CACHE_URL: locmemcache://
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+          DEFAULT_FROM_EMAIL: noreply@example.com
+          DJANGO_ENV: ci
+          SECRET_KEY: ci-secret-for-migrations-0123456789-abcdefghijklmnopqrstuvwxyz
+        run: uv run manage.py makemigrations --check --dry-run
       - name: Run pre-commit
         working-directory: /tmp/bake/${{ matrix.slug }}
         run: |
