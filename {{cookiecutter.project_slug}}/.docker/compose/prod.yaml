@@ -1,3 +1,10 @@
+# Bounds json-file logs per container (~50 MB) so a chatty service
+# cannot fill the host disk. Sizes are fixed operational constants.
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-file: "5"
+    max-size: 10m
 services:
   api:
     build:
@@ -60,6 +67,7 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
 {%- endif %}
+    logging: *default-logging
     pre_start:
       - command:
           - /app/.docker/scripts/migrations.sh
@@ -90,6 +98,7 @@ services:
       - ../../.env
     environment:
       DJANGO_ENV: prod
+    logging: *default-logging
     restart: unless-stopped
 {%- endif %}
 {%- if cookiecutter.use_celery != "none" %}
@@ -118,6 +127,7 @@ services:
       retries: 3
       start_period: 30s
       start_interval: 5s
+    logging: *default-logging
 {%- if cookiecutter.use_s3_media == "no" %}
     volumes:
       - media_data:/app/media
@@ -138,6 +148,7 @@ services:
       start_period: 10s
       start_interval: 2s
     image: postgres:18.4
+    logging: *default-logging
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql
@@ -148,6 +159,8 @@ services:
       - redis-server
       - --appendonly
       - "yes"
+      - --maxmemory
+      - ${REDIS_MAXMEMORY}
     healthcheck:
       test:
         - CMD
@@ -159,6 +172,7 @@ services:
       start_period: 10s
       start_interval: 2s
     image: redis:8.8.0
+    logging: *default-logging
     restart: unless-stopped
     volumes:
       - redis_data:/data
@@ -191,6 +205,7 @@ services:
       start_period: 10s
       start_interval: 2s
     image: traefik:v3.7.6
+    logging: *default-logging
     ports:
       - "80:80"
       - "443:443"

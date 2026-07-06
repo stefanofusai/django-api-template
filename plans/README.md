@@ -35,8 +35,8 @@ requires a reachable Postgres (see that plan's README updates).
 | 003 | Production email sender (DEFAULT_FROM_EMAIL) | P1 | S | — | DONE |
 | 004 | Graceful shutdown: drop SIGCONT, SIGTERM drain + rollout rehearsal | P1 | S–M | — | DONE |
 | 005 | CI smoke-tests the shipped prod.yaml unpatched | P2 | S–M | 004 (soft) | DONE — merged to `main` (`d79cd17`); CI green, unpatched prod.yaml boots with Compose 5.3.0 |
-| 006 | Postgres backup script + restore runbook (compose knob) | P2 | M | — | DONE — approved in worktree `worktree-agent-a4809930f3fcbce06` (commit `5f200fa`); unmerged. Live Step 5 verified (dump/restore/prune). NOTE: local prod-stack boot + native script prune require Compose 5.3.0 + GNU head (Linux); this macOS host has 2.40.3/BSD head |
-| 007 | Bound container logs + Redis memory | P2 | S | — | TODO |
+| 006 | Postgres backup script + restore runbook (compose knob) | P2 | M | — | DONE — committed to `main` (`30703c5`). Live Step 5 verified (dump/restore/prune). NOTE: local prod-stack boot + native script prune require Compose 5.3.0 + GNU head (Linux); this macOS host has 2.40.3/BSD head |
+| 007 | Bound container logs + Redis memory | P2 | S | — | DONE — approved (worktree commit `65b3f05`); brought to `main` uncommitted per operator request. Verified: logging on every service across 3 bake variants, live Redis maxmemory 268435456, REDIS_MAXMEMORY gated to redis=compose, baked yamlfmt/markdownlint clean |
 | 008 | Test-suite hardening (v1 contract, docs gating, reload leak) | P2 | S | 001 (soft) | TODO |
 | 009 | `use_example_api` knob: notes resource vertical slice | P2 | L | 001, 002, 008 (hard) | TODO |
 | 010 | Example periodic task (clear_expired_sessions) + hook matrix fix | P3 | M | 003 (hard), 001 (ordering) | TODO |

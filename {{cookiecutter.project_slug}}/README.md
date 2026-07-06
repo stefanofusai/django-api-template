@@ -411,12 +411,17 @@ it at `path("api/v2/", v2_api.urls)`.
 
 {% if cookiecutter.redis == "compose" and cookiecutter.use_celery != "none" -%}
 Redis runs append-only for broker durability. Cache and broker share one Redis
-instance on databases 0 and 1. Under memory pressure, Redis's default
-`noeviction` policy rejects writes instead of evicting keys, which also blocks
-task enqueues. Split Redis instances if cache volume grows.
+instance on databases 0 and 1. Memory is bounded by `REDIS_MAXMEMORY` (default
+256mb); under memory pressure, Redis's default `noeviction` policy rejects
+writes instead of evicting keys, which surfaces as cache write errors and
+blocked task enqueues rather than silent eviction or host OOM. Raise the value
+or split Redis instances if cache volume grows.
 {%- elif cookiecutter.redis == "compose" %}
-Redis runs append-only for cache durability. Under memory pressure, Redis's
-default `noeviction` policy rejects writes instead of evicting keys.
+Redis runs append-only for cache durability. Memory is bounded by
+`REDIS_MAXMEMORY` (default 256mb); under memory pressure, Redis's default
+`noeviction` policy rejects writes instead of evicting keys, which surfaces as
+cache write errors rather than silent eviction or host OOM. Raise the value or
+split instances as cache volume grows.
 {%- elif cookiecutter.use_celery != "none" %}
 Set `CACHE_URL=rediss://:<password>@<host>:<port>/0` and
 `CELERY_BROKER_URL=rediss://:<password>@<host>:<port>/1?ssl_cert_reqs=required`
@@ -430,6 +435,22 @@ Set `CACHE_URL=rediss://:<password>@<host>:<port>/0` to your
 Redis-compatible provider's TLS endpoint. Use a `noeviction` policy at the
 provider so cache writes fail explicitly under memory pressure.
 {%- endif %}
+
+Container logs are capped at roughly 50 MB per container (`json-file` driver,
+5 files of 10 MB) via the compose logging policy, so a chatty service cannot
+fill the host disk. Per-service memory limits are deliberately not set in the
+compose file — a wrong default can OOM-kill a legitimate workload — but you
+can add a kernel-enforced cap per host by uncommenting a block like this under
+the service you want to bound:
+
+```yaml
+# deploy:
+#   resources:
+#     limits:
+#       memory: 512M
+```
+
+Size it to your host and workload before enabling it.
 
 The admin at `/admin/` is exposed wherever the API is routed. Restrict it at
 the proxy with an IP allowlist or route only `/api/` publicly.
