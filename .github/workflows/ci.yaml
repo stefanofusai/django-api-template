@@ -164,7 +164,7 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: UV_DEPENDENCY_GROUP=prod
   docker-compose-smoke:
-    name: Docker compose smoke test (${{ matrix.variant }})
+    name: Docker Compose smoke test (${{ matrix.variant }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -192,7 +192,7 @@ jobs:
           echo "fffb010206c952ee5e45d0cd05dc88d3ca063c4634d40eaad6b72677c4c7bbf0  $HOME/.docker/cli-plugins/docker-compose" | sha256sum -c -
           chmod +x ~/.docker/cli-plugins/docker-compose
           docker compose version
-      - name: Show compose version
+      - name: Show Docker Compose version
         run: docker compose version
       - name: Bake project
         run: uvx cookiecutter . -o /tmp/smoke --no-input ${{ matrix.extra-args }}
