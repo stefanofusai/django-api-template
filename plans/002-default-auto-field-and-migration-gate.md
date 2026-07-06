@@ -24,6 +24,11 @@
   this plan is correct with or without 001)
 - **Category**: bug
 - **Planned at**: commit `d333a73`, 2026-07-05
+- **Execution note**: blocked on 2026-07-06. A fresh Django 6.0.6 bake
+  reports `global_settings.DEFAULT_AUTO_FIELD` as
+  `django.db.models.BigAutoField`; removing the explicit setting still
+  yields "No changes detected". The `DEFAULT_AUTO_FIELD` premise is stale.
+  Rewrite this as a migration-drift gate-only plan before executing.
 
 ## Why this matters
 
@@ -83,9 +88,10 @@ inside it are copied without rendering (no Jinja allowed there).
   (own-line env assignments, `\` continuations, Jinja conditionals per
   knob, `uv run --group=ci --locked --no-default-groups`). Model the new
   script on it. Note it uses `DJANGO_ENV=prod`; the new script uses
-  `DJANGO_ENV=ci`, which needs only `ALLOWED_HOSTS`, `CACHE_URL`,
-  `DATABASE_URL`, `SECRET_KEY` (the `ci` overlay adds no required vars)
-  and therefore needs NO Jinja conditionals at all.
+  `DJANGO_ENV=ci`, which needs only `ALLOWED_HOSTS`, `CACHE_URL`, and
+  `SECRET_KEY` inside the script (the database URL comes from the
+  environment or the rendered pytest default). It therefore needs NO
+  Jinja conditionals at all.
 
 - `{{cookiecutter.project_slug}}/.github/workflows/tests.yaml` — steps:
   checkout, setup-python, setup-uv, `uv sync`, "Run deploy checks"
@@ -94,8 +100,10 @@ inside it are copied without rendering (no Jinja allowed there).
 - `.github/workflows/ci.yaml` `bake` job — steps: bake, assert lockfile,
   `uv sync --locked`, "Run tests" (`uv run pytest`), "Run pre-commit".
 
-- `makemigrations --check --dry-run` does not connect to the database, so
-  a parse-only `DATABASE_URL` works.
+- `makemigrations --check --dry-run` can check migration-history
+  consistency against the configured database. Run it with the Postgres
+  service from plan 001 available so failures are real migration drift,
+  not connection warnings.
 
 ## Commands you will need
 
@@ -157,19 +165,20 @@ migration is needed or expected.
 ```shell
 uvx cookiecutter . --no-input -o /tmp/plan002
 cd /tmp/plan002/my-project && uv sync --locked
+docker compose -f .docker/compose/dev.yaml up -d --wait postgres
 ALLOWED_HOSTS=localhost \
 CACHE_URL=locmemcache:// \
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres \
 DJANGO_ENV=ci \
 SECRET_KEY=plan002-check-secret-0123456789 \
 uv run python manage.py makemigrations --check --dry-run
 ```
 
-**Verify**: exit 0 with "No changes detected". Sanity-check the fix is
-what removed the drift: temporarily comment the new setting out, rerun —
-it must exit 1 proposing an `id` AlterField for `core.user` — then
-restore the setting and rerun to exit 0. Also run the same env-prefixed
-`manage.py check` and confirm no `models.W042` in the output.
+**Verify**: exit 0 with "No changes detected" and no migration-history
+connection warning. Sanity-check the fix is what removed the drift:
+temporarily comment the new setting out, rerun — it must exit 1
+proposing an `id` AlterField for `core.user` — then restore the setting
+and rerun to exit 0. Also run the same env-prefixed `manage.py check`
+and confirm no `models.W042` in the output.
 
 ### Step 3: Create `migrations-check.sh`
 
@@ -181,10 +190,8 @@ Create `{{cookiecutter.project_slug}}/.github/scripts/migrations-check.sh`
 #!/bin/sh
 set -eu
 
-# DATABASE_URL is parse-only: makemigrations --check never connects.
 ALLOWED_HOSTS=localhost \
 CACHE_URL=locmemcache:// \
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres \
 DJANGO_ENV=ci \
 SECRET_KEY=$(uuidgen)$(uuidgen) \
 uv run --group=ci --locked --no-default-groups \
@@ -202,21 +209,24 @@ re-bake) → exit 0.
 
   ```yaml
         - name: Run migrations check
+          env:
+            DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
           run: ./.github/scripts/migrations-check.sh
   ```
 
 - In `.github/workflows/ci.yaml` `bake` job, add the equivalent step
   (with the job's `working-directory: /tmp/bake/${{ matrix.slug }}`
-  pattern) between "Run tests" and "Run pre-commit".
+  pattern) between "Run tests" and "Run pre-commit", also with
+  `env: DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres`.
 
 **Verify**: `uvx --from actionlint actionlint` on both files → exit 0.
 
 ### Step 5: Full verification
 
-Re-bake fresh; run the baked suite (Postgres per plan 001 — if plan 001
-is not yet merged, tests still run on SQLite; either way they must pass),
-`git add -A && uv run pre-commit run --all-files` in the baked project,
-and `pre-commit run --all-files` at the root.
+Re-bake fresh; start Postgres per plan 001
+(`docker compose -f .docker/compose/dev.yaml up -d --wait postgres`),
+run the baked suite, `git add -A && uv run pre-commit run --all-files`
+in the baked project, and `pre-commit run --all-files` at the root.
 
 **Verify**: all exit 0. Also bake the minimal knob case
 (`use_celery=none email_provider=none use_sentry=no use_s3_media=no
@@ -234,6 +244,7 @@ regression demonstration.
 - [ ] `DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"` present in
       `core.py`, alphabetized
 - [ ] Baked `migrations-check.sh` exits 0 on default AND minimal bakes
+      with Postgres running
 - [ ] With the setting removed, the script exits 1 (verified once, then
       restored)
 - [ ] `git status` in the baked project after the full suite shows no
@@ -248,8 +259,9 @@ regression demonstration.
   Report the proposed migration diff verbatim.
 - Step 2's negative check does NOT report drift with the setting absent —
   the premise of this plan is wrong; report.
-- `makemigrations --check` tries to connect to the database (unexpected
-  in Django 6) — report rather than adding a real DB dependency.
+- `makemigrations --check` exits 0 but emits a migration-history
+  connection warning while Postgres is healthy — report the warning and
+  do not hide it.
 
 ## Maintenance notes
 
