@@ -192,8 +192,11 @@ contains the string `pre_start`).
 
 - [ ] `ci.yaml` smoke job installs a pinned, checksum-verified Compose
       >= 5.3.0
-- [ ] The "Adapt pre_start" step is gone;
-      `grep -c pre_start .github/workflows/ci.yaml` → 0
+- [ ] The "Adapt pre_start" step is gone; the patch logic no longer
+      appears: `grep -c "expected api pre_start hook not found" .github/workflows/ci.yaml` → 0
+      (NOTE: do not grep bare `pre_start` — the Step 2 install step's own
+      name "Install Docker Compose with pre_start support" contains that
+      substring by design, so a bare grep returns 1, not 0.)
 - [ ] Local rehearsal (Step 4) booted the unpatched prod stack to
       healthy with probes passing
 - [ ] actionlint + root pre-commit exit 0

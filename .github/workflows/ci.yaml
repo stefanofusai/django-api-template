@@ -173,6 +173,15 @@ jobs:
           python-version: "3.14"
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
+      - name: Install Docker Compose with pre_start support
+        run: |
+          mkdir -p ~/.docker/cli-plugins
+          curl -fsSL \
+            https://github.com/docker/compose/releases/download/v5.3.0/docker-compose-linux-x86_64 \
+            -o ~/.docker/cli-plugins/docker-compose
+          echo "fffb010206c952ee5e45d0cd05dc88d3ca063c4634d40eaad6b72677c4c7bbf0  $HOME/.docker/cli-plugins/docker-compose" | sha256sum -c -
+          chmod +x ~/.docker/cli-plugins/docker-compose
+          docker compose version
       - name: Show compose version
         run: docker compose version
       - name: Bake project
@@ -192,30 +201,6 @@ jobs:
         run: |
           cp .env.example .env
           sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(uuidgen)$(uuidgen)|" .env
-      - name: Adapt pre_start for GitHub runner Compose
-        working-directory: /tmp/smoke/my-project
-        run: |
-          # Temporary CI-only compatibility patch: GitHub-hosted runners reject
-          # the Compose pre_start lifecycle hook that the template ships with.
-          # Remove this step once runner Compose accepts that modern hook.
-          python - <<'PY'
-          from pathlib import Path
-
-          compose = Path(".docker/compose/prod.yaml")
-          text = compose.read_text()
-          pre_start = """    pre_start:
-                - command:
-                    - /app/.docker/scripts/migrations.sh
-          """
-          command = """    command:
-                - /bin/sh
-                - -c
-                - /app/.docker/scripts/migrations.sh && exec /app/.docker/scripts/gunicorn.sh
-          """
-          if pre_start not in text:
-              raise SystemExit("expected api pre_start hook not found")
-          compose.write_text(text.replace(pre_start, command))
-          PY
       - name: Boot production stack
         working-directory: /tmp/smoke/my-project
         run: docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --build --wait --wait-timeout=300
