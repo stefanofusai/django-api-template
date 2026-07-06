@@ -90,7 +90,7 @@ django_settings_module = "config.settings"
 DJANGO_SETTINGS_MODULE = "config.settings"
 addopts = "--cov=src --cov-fail-under=100 --cov-report=term-missing:skip-covered --numprocesses=auto"
 env = [
-    "ALLOWED_HOSTS=localhost,127.0.0.1,testserver",
+    "ALLOWED_HOSTS=localhost,testserver",
     "CACHE_URL=locmemcache://",
     "D:DATABASE_URL=postgres://{{ cookiecutter.project_slug.replace('-', '_') }}:{{ cookiecutter.project_slug.replace('-', '_') }}@localhost:5432/{{ cookiecutter.project_slug.replace('-', '_') }}",
 {%- if cookiecutter.email_provider != "none" %}
