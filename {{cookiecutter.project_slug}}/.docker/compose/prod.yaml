@@ -68,8 +68,11 @@ services:
       - media_data:/app/media
 {%- endif %}
     restart: unless-stopped
-    stop_grace_period: 5s
-    stop_signal: SIGCONT
+    # Must exceed GUNICORN_GRACEFUL_TIMEOUT (.env, default 30s) so Docker
+    # never SIGKILLs a still-draining gunicorn. Traefik removes the
+    # container from rotation before SIGTERM lands (pre-stop hook + 1s
+    # health checks), so SIGTERM only has to finish in-flight requests.
+    stop_grace_period: 35s
 {%- if cookiecutter.use_celery == "worker+beat" %}
   celery-beat:
     build:

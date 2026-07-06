@@ -224,10 +224,11 @@ redirect non-probe HTTP requests; port 443 serves normal traffic.
 
 During `docker rollout`, Traefik actively checks `/api/health`, retries short
 backend selection races, waits briefly before stopping the old API container,
-and keeps the old process alive for a short drain window after Docker emits the
-stop event. Those pieces cover both sides of replacement: the new backend is
-not relied on until its HTTP health check passes, and the old backend keeps
-serving while Traefik removes it from rotation.
+then delivers SIGTERM: gunicorn stops accepting connections and finishes
+in-flight requests for up to `GUNICORN_GRACEFUL_TIMEOUT` seconds while Traefik
+has already removed the backend from rotation. Those pieces cover both sides of
+replacement: the new backend is not relied on until its HTTP health check
+passes, and the old backend keeps serving until gunicorn finishes draining.
 {%- elif cookiecutter.use_traefik == "yes" and cookiecutter.traefik_tls == "external" %}
 The production stack includes Traefik. Traefik serves TLS from
 `.docker/certs/cert.pem` and `.docker/certs/key.pem`, routes only to healthy
@@ -238,10 +239,11 @@ redirect non-probe HTTP requests; port 443 serves normal traffic.
 
 During `docker rollout`, Traefik actively checks `/api/health`, retries short
 backend selection races, waits briefly before stopping the old API container,
-and keeps the old process alive for a short drain window after Docker emits the
-stop event. Those pieces cover both sides of replacement: the new backend is
-not relied on until its HTTP health check passes, and the old backend keeps
-serving while Traefik removes it from rotation.
+then delivers SIGTERM: gunicorn stops accepting connections and finishes
+in-flight requests for up to `GUNICORN_GRACEFUL_TIMEOUT` seconds while Traefik
+has already removed the backend from rotation. Those pieces cover both sides of
+replacement: the new backend is not relied on until its HTTP health check
+passes, and the old backend keeps serving until gunicorn finishes draining.
 {%- else %}
 Bring your own ingress. The production `api` service publishes
 `127.0.0.1:8000:8000`; put your proxy on the host in front of that loopback

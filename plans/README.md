@@ -33,7 +33,7 @@ requires a reachable Postgres (see that plan's README updates).
 | 001 | Tests run against real PostgreSQL (maintainer mandate) | P1 | M | — (run first) | DONE |
 | 002 | DEFAULT_AUTO_FIELD + migration-drift CI gate | P1 | S | 001 (ordering) | BLOCKED — premise stale: Django 6 defaults to BigAutoField; rewrite as gate-only |
 | 003 | Production email sender (DEFAULT_FROM_EMAIL) | P1 | S | — | DONE |
-| 004 | Graceful shutdown: drop SIGCONT, SIGTERM drain + rollout rehearsal | P1 | S–M | — | TODO |
+| 004 | Graceful shutdown: drop SIGCONT, SIGTERM drain + rollout rehearsal | P1 | S–M | — | DONE |
 | 005 | CI smoke-tests the shipped prod.yaml unpatched | P2 | S–M | 004 (soft) | TODO |
 | 006 | Postgres backup script + restore runbook (compose knob) | P2 | M | — | TODO |
 | 007 | Bound container logs + Redis memory | P2 | S | — | TODO |
