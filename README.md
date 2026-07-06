@@ -24,6 +24,7 @@ Compose deployment defaults, and CI gates for the baked project.
 - Optional S3-compatible media storage
 - Optional Sentry integration
 - Optional Traefik ingress with Let's Encrypt or operator-provided TLS
+- `pg_dump` backup script and restore runbook for the bundled Postgres
 - PostgreSQL and Redis as bundled Compose services or external production
   services
 - Standardized production deploy path with docker-rollout when Traefik is

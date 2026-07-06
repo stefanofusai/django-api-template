@@ -9,6 +9,7 @@ COMPOSE_VERSION_WARNING = (
     "Compose files because they use pre_start lifecycle hooks"
 )
 EMAIL_PROVIDER = {{ cookiecutter.email_provider | tojson }}
+POSTGRES = {{ cookiecutter.postgres | tojson }}
 TRAEFIK_TLS = {{ cookiecutter.traefik_tls | tojson }}
 USE_CELERY = {{ cookiecutter.use_celery | tojson }}
 USE_SENTRY = {{ cookiecutter.use_sentry | tojson }}
@@ -38,6 +39,11 @@ REMOVED_PATHS = [
     *(
         ["src/apps/core/tasks.py", "tests/unit/core/tasks_test.py"]
         if USE_CELERY == "none" or EMAIL_PROVIDER == "none"
+        else []
+    ),
+    *(
+        [".docker/scripts/postgres-backup.sh"]
+        if POSTGRES != "compose"
         else []
     ),
     *(

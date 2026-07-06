@@ -267,6 +267,36 @@ uv run python -c "from django.core.management.utils import get_random_secret_key
 Use the generated value for `SECRET_KEY`, and set a strong
 `POSTGRES_PASSWORD`. The production stack reads the same `.env` file as
 development, and production boot refuses `django-insecure-` keys.
+
+The bundled Postgres has no backup mechanism of its own: it is a single
+named Docker volume, and losing the host or the volume loses the data.
+`.docker/scripts/postgres-backup.sh` runs `pg_dump` in custom format
+against the running `postgres` service and prunes old dumps. Schedule it
+with host cron, for example:
+
+```shell
+0 3 * * * cd /path/to/{{ cookiecutter.project_slug }} && ./.docker/scripts/postgres-backup.sh /var/backups/{{ cookiecutter.project_slug }}
+```
+
+Copy dumps off-host; a dump left on the same disk as the database does
+not survive host loss.
+
+To restore, stop the `api` service and any worker services first, then
+run:
+
+```shell
+docker compose -f .docker/compose/prod.yaml --env-file=.env exec -T postgres \
+    pg_restore --clean --if-exists --dbname="$POSTGRES_DB" --username="$POSTGRES_USER" \
+    < /var/backups/<project>/<stamp>.dump
+```
+
+Rehearse restores periodically so the procedure is proven before it is
+needed under pressure. This is snapshot-based backup only: anything
+written after the last dump is lost, and there is no point-in-time
+recovery here. If your recovery point objective is measured in minutes
+rather than hours, move to managed Postgres (`postgres=external`)
+instead, where the provider owns backups, high availability, and
+upgrades.
 {%- else %}
 Use the generated value for `SECRET_KEY`. The production stack reads the same
 `.env` file as development, and production boot refuses `django-insecure-`
