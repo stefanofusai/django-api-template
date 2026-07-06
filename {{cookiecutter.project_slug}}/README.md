@@ -48,9 +48,10 @@ Settings use `django-split-settings` with reusable components and environment
 overlays:
 
 {% if cookiecutter.use_celery != "none" -%}
-- `ci` uses SQLite, eager Celery tasks, and in-memory storage.
+- `ci` uses eager Celery tasks and in-memory storage; the database always
+  comes from `DATABASE_URL`.
 {%- else %}
-- `ci` uses SQLite and in-memory storage.
+- `ci` uses in-memory storage; the database always comes from `DATABASE_URL`.
 {%- endif %}
 - `dev` enables developer tooling and filesystem-backed media.
 {% if cookiecutter.use_s3_media == "yes" -%}
@@ -403,15 +404,19 @@ the proxy with an IP allowlist or route only `/api/` publicly.
 Run the test suite:
 
 ```shell
+docker compose -f .docker/compose/dev.yaml up -d --wait postgres
 uv run pytest
 ```
 
+Tests connect to `localhost:5432` by default and honor a `DATABASE_URL`
+environment override; pytest-xdist creates per-worker `test_*_gwN` databases.
+
 {% if cookiecutter.use_celery != "none" -%}
-The suite uses CI settings, in-memory SQLite and storage, eager Celery tasks,
-and enforces 100% coverage through `pytest-cov`.
+The suite uses CI settings, real PostgreSQL, in-memory storage, eager Celery
+tasks, and enforces 100% coverage through `pytest-cov`.
 {%- else %}
-The suite uses CI settings, in-memory SQLite and storage, and enforces 100%
-coverage through `pytest-cov`.
+The suite uses CI settings, real PostgreSQL, in-memory storage, and enforces
+100% coverage through `pytest-cov`.
 {%- endif %}
 
 Run repository checks:
@@ -435,6 +440,7 @@ build validation through GitHub Actions.
 Freshly generated projects are expected to pass:
 
 ```shell
+docker compose -f .docker/compose/dev.yaml up -d --wait postgres
 uv run pytest
 uv run pre-commit run --all-files
 docker compose -f .docker/compose/dev.yaml up -d --build --wait

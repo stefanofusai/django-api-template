@@ -92,7 +92,7 @@ addopts = "--cov=src --cov-fail-under=100 --cov-report=term-missing:skip-covered
 env = [
     "ALLOWED_HOSTS=localhost,127.0.0.1,testserver",
     "CACHE_URL=locmemcache://",
-    "DATABASE_URL=sqlite:///:memory:",
+    "D:DATABASE_URL=postgres://{{ cookiecutter.project_slug.replace('-', '_') }}:{{ cookiecutter.project_slug.replace('-', '_') }}@localhost:5432/{{ cookiecutter.project_slug.replace('-', '_') }}",
     "DJANGO_ENV=ci",
     "SECRET_KEY=ci-secret-for-tests-0123456789-abcdefghijklmnopqrstuvwxyz",
 ]

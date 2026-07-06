@@ -103,6 +103,10 @@ services:
       start_period: 10s
       start_interval: 2s
     image: postgres:18.4
+    # Published for host-run pytest, which defaults DATABASE_URL to this
+    # service (see [tool.pytest.ini_options] env). Bound to loopback only.
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
   redis:

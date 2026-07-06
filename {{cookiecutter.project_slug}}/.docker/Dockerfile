@@ -30,14 +30,15 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --group=${UV_DEPENDENCY_GROUP} --locked --no-default-groups
 
 # Throwaway values: prod settings require these at import time, but nothing
-# reads them during collectstatic.
+# reads them during collectstatic; the DATABASE_URL is parse-only - no
+# connection is made.
 RUN ALLOWED_HOSTS=localhost \
 {%- if cookiecutter.use_s3_media == "yes" %}
     AWS_STORAGE_BUCKET_NAME=$(uuidgen) \
 {%- endif %}
     CACHE_URL=locmemcache:// \
     CSRF_TRUSTED_ORIGINS=https://localhost \
-    DATABASE_URL=sqlite:///:memory: \
+    DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres \
     DJANGO_ENV=prod \
 {%- if cookiecutter.email_provider == "smtp" %}
     EMAIL_HOST=smtp.example.com \

@@ -111,6 +111,7 @@
 - For template behavior changes, bake a project in a temporary output directory
   and run the generated-project checks that match the change.
 - Freshly baked projects are expected to pass:
+  - `docker compose -f .docker/compose/dev.yaml up -d --wait postgres`
   - `uv run pytest`
   - `uv run pre-commit run --all-files`
   - `docker compose -f .docker/compose/dev.yaml up --build`

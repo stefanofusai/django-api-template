@@ -47,8 +47,8 @@ Compose deployment defaults, and CI gates for the baked project.
   PostgreSQL, and Redis or point at external backing services.
 - Liveness (`/api/health`) and readiness (`/api/ready`) are separate so
   container restarts and load-balancer routing can make different decisions.
-- PostgreSQL is the database target; SQLite is used only by the CI test
-  overlay.
+- PostgreSQL is the database target everywhere, including tests: the suite runs
+  against a real Postgres so migrations and engine semantics are exercised.
 - Production Sentry is boot-required when enabled, so broken observability
   fails before traffic reaches the app.
 - The template deliberately ships no CORS or throttling defaults; add them
@@ -141,6 +141,7 @@ git commit -m "feat: initial project scaffold"
 Freshly baked projects are expected to pass:
 
 ```shell
+docker compose -f .docker/compose/dev.yaml up -d --wait postgres
 uv run pytest
 uv run pre-commit run --all-files
 docker compose -f .docker/compose/dev.yaml up -d --build --wait
