@@ -23,4 +23,4 @@ SECRET_KEY=$(uuidgen)$(uuidgen) \
 SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1 \
 {%- endif %}
 uv run --group=ci --locked --no-default-groups \
-    python manage.py check --deploy --fail-level=WARNING --tag=security
+    manage.py check --deploy --fail-level=WARNING --tag=security
