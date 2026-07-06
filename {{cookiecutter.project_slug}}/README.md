@@ -147,7 +147,8 @@ files in a Docker volume.
 {% if cookiecutter.email_provider == "resend" -%}
 Development prints email to the console, tests keep email in memory, and
 production sends through Resend via django-anymail. Set `RESEND_API_KEY` in
-production, set `DEFAULT_FROM_EMAIL` once the sending domain is known, and send
+production. Set `DEFAULT_FROM_EMAIL` to the sender address for outgoing mail,
+and verify that sender domain in Resend. Send
 {%- if cookiecutter.use_celery != "none" %}
 messages asynchronously with `apps.core.tasks.send_email.delay(...)`.
 {%- else %}
@@ -156,7 +157,9 @@ messages with `django.core.mail.send_mail(...)`.
 {%- elif cookiecutter.email_provider == "smtp" %}
 Development prints email to the console, tests keep email in memory, and
 production sends through your SMTP relay. Set `EMAIL_HOST` in production,
-optionally set the other `EMAIL_*` relay values, and send
+optionally set the other `EMAIL_*` relay values. Set `DEFAULT_FROM_EMAIL` to
+the sender address for outgoing mail, and make sure your relay permits that
+sender. Send
 {%- if cookiecutter.use_celery != "none" %}
 messages asynchronously with `apps.core.tasks.send_email.delay(...)`.
 {%- else %}

@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 
+from django.conf import settings
 from django.core import mail
 
 from apps.core.tasks import send_email
@@ -17,5 +18,6 @@ def test_send_email_delivers_message_when_dispatched_eagerly(faker: Faker) -> No
 
     assert len(mail.outbox) == 1
     assert mail.outbox[0].body == message
+    assert mail.outbox[0].from_email == settings.DEFAULT_FROM_EMAIL
     assert mail.outbox[0].subject == subject
     assert mail.outbox[0].to == [recipient]

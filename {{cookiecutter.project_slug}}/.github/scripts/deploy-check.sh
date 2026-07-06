@@ -8,6 +8,9 @@ AWS_STORAGE_BUCKET_NAME=$(uuidgen) \
 CACHE_URL=locmemcache:// \
 CSRF_TRUSTED_ORIGINS=https://localhost \
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres \
+{%- if cookiecutter.email_provider != "none" %}
+DEFAULT_FROM_EMAIL=noreply@example.com \
+{%- endif %}
 DJANGO_ENV=prod \
 {%- if cookiecutter.email_provider == "smtp" %}
 EMAIL_HOST=smtp.example.com \
