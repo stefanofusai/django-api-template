@@ -141,7 +141,7 @@ markers auto-applied by `tests/conftest.py`.
 - `{{cookiecutter.project_slug}}/tests/integration/api/schema_test.py`
 - `{{cookiecutter.project_slug}}/tests/integration/api/docs_gating_test.py`
   (create)
-- `{{cookiecutter.project_slug}}/tests/integration/api/prod_docs_urls.py`
+- `{{cookiecutter.project_slug}}/tests/integration/api/protected_docs_urls.py`
   (create — helper urlconf, not a test module)
 - `{{cookiecutter.project_slug}}/tests/unit/api/pagination_test.py`
 
@@ -190,7 +190,7 @@ passes (with the internal-API cases still executing).
 
 ### Step 2: Prove staff gating denies anonymous docs access
 
-Create `tests/integration/api/prod_docs_urls.py` (helper urlconf that
+Create `tests/integration/api/protected_docs_urls.py` (helper urlconf that
 mirrors the production wiring — decorator resolved via `import_string`
 exactly like `api.py` does):
 
@@ -215,7 +215,7 @@ fixture; `admin/` is not in this urlconf, so assert the redirect
 *target prefix* only):
 
 1. `test_api_docs_redirect_anonymous_user_when_decorator_requires_staff`
-   — `@override_settings(ROOT_URLCONF="tests.integration.api.prod_docs_urls")`;
+   — `@override_settings(ROOT_URLCONF="tests.integration.api.protected_docs_urls")`;
    `client.get("/api/docs")` → status 302 and
    `response["Location"].startswith("/admin/login/")`.
 2. `test_api_docs_return_ok_for_staff_user_when_decorator_requires_staff`

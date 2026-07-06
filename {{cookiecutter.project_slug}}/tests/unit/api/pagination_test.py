@@ -1,8 +1,11 @@
 import importlib
 import importlib.util
+import math
+from collections.abc import Iterator
 from types import ModuleType
 
 import ninja.conf
+import pytest
 from django.test import override_settings
 
 from apps.api import pagination
@@ -10,9 +13,17 @@ from apps.api import pagination
 TEST_MAX_LIMIT = 500
 
 
-@override_settings(NINJA_PAGINATION_MAX_LIMIT=TEST_MAX_LIMIT)
-def test_bounded_pagination_caps_limit_at_max_limit_when_setting_is_finite() -> None:
+@pytest.fixture
+def finite_pagination_max_limit() -> Iterator[None]:
+    with override_settings(NINJA_PAGINATION_MAX_LIMIT=TEST_MAX_LIMIT):
+        importlib.reload(ninja.conf)
+        yield
+
     importlib.reload(ninja.conf)
+
+
+@pytest.mark.usefixtures("finite_pagination_max_limit")
+def test_bounded_pagination_caps_limit_at_max_limit_when_setting_is_finite() -> None:
     spec = importlib.util.spec_from_file_location(
         "_pagination_with_finite_max_limit",
         pagination.__file__,
@@ -30,6 +41,8 @@ def test_bounded_pagination_caps_limit_at_max_limit_when_setting_is_finite() -> 
 
 
 def test_bounded_pagination_caps_limit_at_per_page_when_max_limit_is_unset() -> None:
+    assert math.isinf(ninja.conf.settings.PAGINATION_MAX_LIMIT)
+
     input_fields = pagination.BoundedLimitOffsetPagination.Input.model_fields
 
     limit_field = input_fields["limit"]
