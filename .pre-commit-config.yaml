@@ -83,6 +83,12 @@ repos:
   # Repo invariants
   - repo: local
     hooks:
+      - id: dockerfile-prod-env
+        name: dockerfile production collectstatic env matches prod settings
+        entry: python scripts/check_dockerfile_prod_env.py
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: postgres-image-pin
         name: postgres image pins agree across compose and workflows
         entry: python scripts/check_postgres_image.py
