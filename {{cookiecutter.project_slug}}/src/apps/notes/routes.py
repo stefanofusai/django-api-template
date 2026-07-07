@@ -5,16 +5,24 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from ninja import Router, Status
 from ninja.pagination import paginate
+{%- if cookiecutter.api_auth == "session" %}
 from ninja.security import django_auth
+{%- endif %}
 
+{% if cookiecutter.api_auth == "token" -%}
+from apps.api.auth import bearer_token_auth
+{% endif -%}
 from apps.api.pagination import BoundedLimitOffsetPagination
 from apps.api.schemas import ErrorSchema
 
 from .models import Note
 from .schemas import NoteInSchema, NoteOutSchema
 
+{% if cookiecutter.api_auth == "token" -%}
+router = Router(auth=bearer_token_auth, tags=["notes"])
+{% else -%}
 router = Router(auth=django_auth, tags=["notes"])
-
+{% endif %}
 
 @router.post("", response={201: NoteOutSchema, 401: ErrorSchema, 403: ErrorSchema})
 def create_note(request: HttpRequest, payload: NoteInSchema) -> Status[Note]:

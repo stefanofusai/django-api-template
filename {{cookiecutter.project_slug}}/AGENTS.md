@@ -117,6 +117,11 @@
 - The API has no default auth. Endpoints requiring protection must add ninja
   auth (global `auth=` on the API instance, or per-router/per-operation);
   never ship a mutating endpoint unauthenticated.
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+- The example notes API's opaque bearer-token auth (`apps.api.auth.BearerTokenAuth`)
+  is an example auth mode, not a general-purpose credential system. New mutating
+  endpoints still need their own explicit auth wired in.
+{%- endif %}
 {%- if cookiecutter.use_celery != "none" %}
 - Celery results are opt-in per task: use `@shared_task(ignore_result=False)`
   when a task's result must be persisted; tasks are at-least-once

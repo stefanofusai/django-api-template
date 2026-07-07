@@ -1,4 +1,8 @@
 from typing import TYPE_CHECKING
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+
+from apps.core.models import Token
+{%- endif %}
 
 if TYPE_CHECKING:
     from ninja.testing import TestClient
@@ -11,20 +15,44 @@ class AuthenticatedTestClient:
     def __init__(self, client: TestClient, user: User) -> None:
         self._client = client
         self.user = user
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+        raw_token, _ = Token.issue(name="test token", user=user)
+        self._headers = {"Authorization": f"Bearer {raw_token}"}
+{%- endif %}
 
     def delete(self, path: str) -> NinjaResponse:
+        {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+        return self._client.delete(path, headers=self._headers)
+        {%- else %}
         return self._client.delete(path, user=self.user)
+        {%- endif %}
 
     def get(
         self, path: str, query_params: dict[str, object] | None = None
     ) -> NinjaResponse:
+        {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+        return self._client.get(path, headers=self._headers, query_params=query_params)
+        {%- else %}
         return self._client.get(path, query_params=query_params, user=self.user)
+        {%- endif %}
 
     def patch(self, path: str, json: dict[str, object] | None = None) -> NinjaResponse:
+        {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+        return self._client.patch(path, headers=self._headers, json=json)
+        {%- else %}
         return self._client.patch(path, json=json, user=self.user)
+        {%- endif %}
 
     def post(self, path: str, json: dict[str, object] | None = None) -> NinjaResponse:
+        {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+        return self._client.post(path, headers=self._headers, json=json)
+        {%- else %}
         return self._client.post(path, json=json, user=self.user)
+        {%- endif %}
 
     def put(self, path: str, json: dict[str, object] | None = None) -> NinjaResponse:
+        {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+        return self._client.put(path, headers=self._headers, json=json)
+        {%- else %}
         return self._client.put(path, json=json, user=self.user)
+        {%- endif %}

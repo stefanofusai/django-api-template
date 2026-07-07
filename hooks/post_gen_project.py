@@ -4,6 +4,7 @@ import re
 import shutil
 import subprocess
 
+API_AUTH = {{ cookiecutter.api_auth | tojson }}
 COMPOSE_MIN_VERSION = (5, 3, 0)
 COMPOSE_VERSION_WARNING = (
     "WARNING: Docker Compose 5.3.0 or newer is required for the generated "
@@ -59,6 +60,15 @@ REMOVED_PATHS = [
     *(
         ["src/apps/core/tasks.py", "tests/core/unit/tasks_test.py"]
         if USE_CELERY == "none"
+        else []
+    ),
+    *(
+        [
+            "src/apps/api/auth.py",
+            "src/apps/core/migrations/0002_token.py",
+            "tests/api/unit/auth_test.py",
+        ]
+        if not (USE_EXAMPLE_API == "yes" and API_AUTH == "token")
         else []
     ),
     *(

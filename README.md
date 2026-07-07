@@ -86,6 +86,7 @@ uvx cookiecutter gh:stefanofusai/django-api-template
 | `author_email` | `john.doe@example.com` | Package author and maintainer email. |
 | `github_username` | `johndoe` | Badge and Dependabot assignee username. |
 | `domain_name` | `example.com` | Deployment domain pre-filled into `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, and `TRAEFIK_DOMAIN`. |
+| `api_auth` | `session` | Authentication used by the example notes API: `session` (Django session auth with CSRF) or `token` (opaque bearer tokens); only takes effect when `use_example_api=yes`. |
 | `behind_proxy` | `yes` | Trust an upstream TLS-terminating proxy's `X-Forwarded-Proto`; use `no` only for plain-HTTP private-network production. |
 | `email_provider` | `resend` | Production email provider: `resend`, `smtp`, or `none`. |
 | `postgres` | `compose` | Run production Postgres as a bundled Compose service, or point `DATABASE_URL` at an external/managed Postgres-compatible database. |

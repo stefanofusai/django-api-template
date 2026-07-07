@@ -6,6 +6,7 @@
     "author_email": "john.doe@example.com",
     "github_username": "johndoe",
     "domain_name": "example.com",
+    "api_auth": ["session", "token"],
     "behind_proxy": ["yes", "no"],
     "email_provider": ["resend", "smtp", "none"],
     "postgres": ["compose", "external"],
@@ -24,6 +25,11 @@
         "author_email": "Project author email",
         "github_username": "GitHub username used for Dependabot assignees",
         "domain_name": "Bare deployment hostname used in generated environment defaults",
+        "api_auth": {
+            "__prompt__": "Authentication used by the example notes API",
+            "session": "Django session auth with CSRF, matching today's behavior",
+            "token": "Opaque bearer tokens for non-browser clients"
+        },
         "behind_proxy": {
             "__prompt__": "Production trusts an upstream proxy's X-Forwarded-Proto header",
             "yes": "A reverse proxy terminates TLS and sets X-Forwarded-Proto (required for bundled Traefik)",
