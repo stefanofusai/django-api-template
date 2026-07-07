@@ -70,7 +70,7 @@ lands) — shell scripts are linted directly via
 | 018 | Remove dead mypy/django-stubs config (+ ty-needs-stubs experiment) | P3 | S | — | DONE |
 | 019 | Browser-surface hardening: bound request ID + signal-dispatch test (do), CSP (spike) | P3 | S | — | DONE |
 | 020 | Design spike: wire the example API to the task queue (enqueue-from-request) | P3 (spike) | M | — | DONE |
-| 021 | Spike: enforce `skills-lock.json` hashes so `.agents/` skills can't drift | P3 (spike) | S | — | TODO |
+| 021 | Spike: enforce `skills-lock.json` hashes so `.agents/` skills can't drift | P3 (spike) | S | — | DONE |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) |
 REJECTED (one-line rationale).
