@@ -6,7 +6,6 @@
 .git/
 .github/
 .idea/
-.mypy_cache/
 .pytest_cache/
 .ruff_cache/
 .ty/
