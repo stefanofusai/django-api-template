@@ -94,10 +94,14 @@
 - Keep generated-project documentation aligned with files under
   `{{cookiecutter.project_slug}}/`.
 - When adding, renaming, or removing a job in `.github/workflows/ci.yaml`,
-  update the `main` branch protection required status checks to match (the
-  check name is the job's rendered `name`, such as `Bake example-api`). New
-  jobs are not enforced until added, and stale entries block merges until
-  removed.
+  update the GitHub `main` branch protection required status checks in the
+  upstream repository to match. Use each job's rendered `name`, including every
+  matrix-expanded check such as `Bake example-api`; new jobs are not enforced
+  until added, and stale entries block merges until removed.
+- When adding, renaming, or removing generated-project workflow jobs under
+  `{{cookiecutter.project_slug}}/.github/workflows/`, document the required
+  downstream branch-protection check names for generated repositories that use
+  those workflows.
 - Keep operational constants fixed in generated code unless there is a real
   deployment need to configure them.
 - Add environment variables only for secrets, deployment topology, or resource
