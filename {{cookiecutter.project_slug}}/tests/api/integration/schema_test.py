@@ -45,15 +45,16 @@ def test_api_schema_conforms_to_openapi_contract(case: Case) -> None:
 {%- if cookiecutter.use_example_api == "no" %}
 
 
-# The v1 API currently exposes zero routes, so schemathesis has no operations
-# to parametrize against `/api/v1/openapi.json` (`schema.parametrize()` fails
-# the test outright with "does not match any API operations" rather than
-# skipping). Once plan 009 adds v1 routes, fold this back into a single
-# fixture parametrized over both `/api/openapi.json` and
-# `/api/v1/openapi.json`, as the internal-API test above already exercises.
+# The v1 API exposes zero routes until the first business endpoint is added,
+# so schemathesis has no operations to parametrize against
+# `/api/v1/openapi.json` (`schema.parametrize()` fails outright with "does not
+# match any API operations" rather than skipping). Assert the empty schema is
+# still well-formed and served; fold this into the parametrized fixture above
+# once v1 gains routes.
 @pytest.mark.django_db
-def test_v1_openapi_schema_loads_into_schemathesis_when_template_is_fresh() -> None:
+def test_v1_openapi_schema_is_well_formed_when_template_is_fresh() -> None:
     v1_schema = schemathesis.openapi.from_wsgi("/api/v1/openapi.json", application)
 
-    assert v1_schema is not None
+    assert v1_schema.raw_schema["info"]["version"] == "1.0.0"
+    assert v1_schema.raw_schema["paths"] == {}
 {%- endif %}

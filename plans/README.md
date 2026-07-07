@@ -51,7 +51,7 @@ lands) — shell scripts are linted directly via
 | 002 | Fix broken restore runbook + ship `postgres-restore.sh` | P1 | S | — | DONE |
 | 003 | Prune `django-celery-expert` skill when `use_celery=none` | P1 | S | — | DONE |
 | 004 | Add gitleaks secret scanner to baked pre-commit | P2 | S | — | TODO |
-| 005 | Test-suite hygiene (dead test, vacuous assert, dangling ref, brittle metadata) | P2 | S | — | TODO |
+| 005 | Test-suite hygiene (dead test, vacuous assert, dangling ref, brittle metadata) | P2 | S | — | DONE |
 | 006 | Add shellcheck to baked + root pre-commit stacks | P2 | S | — | TODO |
 | 007 | Gate HTTPS-trust settings **and `FORWARDED_ALLOW_IPS`** on a `behind_proxy` knob | P2 | M | — | TODO |
 | 008 | Reject the default (slug) DB password in production | P2 | S | — | TODO |

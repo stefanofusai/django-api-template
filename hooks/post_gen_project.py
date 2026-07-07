@@ -44,7 +44,6 @@ REMOVED_PATHS = [
             ".docker/scripts/celery-worker.sh",
             "src/config/celery.py",
             "src/config/settings/components/celery.py",
-            "tests/config/unit/celery_test.py",
         ]
         if USE_CELERY == "none"
         else []
