@@ -42,7 +42,10 @@ REMOVED_PATHS = [
         else []
     ),
     *(
-        [".docker/scripts/postgres-backup.sh"]
+        [
+            ".docker/scripts/postgres-backup.sh",
+            ".docker/scripts/postgres-restore.sh",
+        ]
         if POSTGRES != "compose"
         else []
     ),

@@ -298,9 +298,7 @@ To restore, stop the `api` service and any worker services first, then
 run:
 
 ```shell
-docker compose -f .docker/compose/prod.yaml --env-file=.env exec -T postgres \
-    pg_restore --clean --if-exists --dbname="$POSTGRES_DB" --username="$POSTGRES_USER" \
-    < /var/backups/<project>/<stamp>.dump
+./.docker/scripts/postgres-restore.sh /var/backups/<project>/<stamp>.dump
 ```
 
 Rehearse restores periodically so the procedure is proven before it is
