@@ -68,7 +68,7 @@ lands) — shell scripts are linted directly via
 | 016 | CI/build hygiene: pre-commit cache, dockerignore `.agents/`, `$$POSTGRES_USER` fix | P3 | S | — | DONE |
 | 017 | Scaffolding polish (`.editorconfig`, generated `SECURITY.md`, README arch map, `traefik_tls` prompt) | P3 | S | — | DONE |
 | 018 | Remove dead mypy/django-stubs config (+ ty-needs-stubs experiment) | P3 | S | — | DONE |
-| 019 | Browser-surface hardening: bound request ID + signal-dispatch test (do), CSP (spike) | P3 | S | — | TODO |
+| 019 | Browser-surface hardening: bound request ID + signal-dispatch test (do), CSP (spike) | P3 | S | — | DONE |
 | 020 | Design spike: wire the example API to the task queue (enqueue-from-request) | P3 (spike) | M | — | TODO |
 | 021 | Spike: enforce `skills-lock.json` hashes so `.agents/` skills can't drift | P3 (spike) | S | — | TODO |
 
