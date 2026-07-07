@@ -93,6 +93,11 @@
   generated project surface.
 - Keep generated-project documentation aligned with files under
   `{{cookiecutter.project_slug}}/`.
+- When adding, renaming, or removing a job in `.github/workflows/ci.yaml`,
+  update the `main` branch protection required status checks to match (the
+  check name is the job's rendered `name`, such as `Bake example-api`). New
+  jobs are not enforced until added, and stale entries block merges until
+  removed.
 - Keep operational constants fixed in generated code unless there is a real
   deployment need to configure them.
 - Add environment variables only for secrets, deployment topology, or resource
