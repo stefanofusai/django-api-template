@@ -1,4 +1,4 @@
-# Plan 002: Gate HTTPS-trust settings on a `behind_proxy` knob so non-proxied prod deploys don't trust a spoofable header
+# Plan 007: Gate HTTPS-trust settings on a `behind_proxy` knob so non-proxied prod deploys don't trust a spoofable header
 
 > **Executor instructions**: Follow this plan step by step. Run every
 > verification command and confirm the expected result before moving to the
@@ -9,10 +9,19 @@
 > maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 7fef138..HEAD -- "{{cookiecutter.project_slug}}/src/config/settings/environments/prod.py" cookiecutter.json "{{cookiecutter.project_slug}}/README.md" "{{cookiecutter.project_slug}}/.env.example" .github/workflows/ci.yaml`
+> `git diff --stat ae42991..HEAD -- "{{cookiecutter.project_slug}}/src/config/settings/environments/prod.py" "{{cookiecutter.project_slug}}/.docker/compose/prod.yaml" cookiecutter.json "{{cookiecutter.project_slug}}/README.md" "{{cookiecutter.project_slug}}/.env.example" .github/workflows/ci.yaml`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts against the live code before proceeding; on a
 > mismatch, treat it as a STOP condition.
+
+## Status
+
+- **Priority**: P2
+- **Effort**: M
+- **Risk**: MED (touches prod security settings; default bake must stay byte-identical)
+- **Depends on**: none (but coordinates with plan 010 — both add a case to the root `ci.yaml` bake matrix; land one, then re-check the matrix)
+- **Category**: security
+- **Planned at**: commit `ae42991`, 2026-07-07 (all excerpts re-verified against live code same day)
 
 ## Repository context (read before anything else)
 
@@ -152,6 +161,10 @@ and reuse its variable set verbatim for manual runs.
 - `cookiecutter.json` — add the `behind_proxy` knob and its `__prompts__` entry.
 - `{{cookiecutter.project_slug}}/src/config/settings/environments/prod.py` —
   gate the HTTPS-trust block on the new condition.
+- `{{cookiecutter.project_slug}}/.docker/compose/prod.yaml` — gate the
+  `FORWARDED_ALLOW_IPS` env var on the same condition (see Step 5b). This dir is
+  **rendered** (only `.github/workflows/*` and `.agents/*` are copied unrendered),
+  so Jinja is allowed here.
 - `{{cookiecutter.project_slug}}/README.md` — document the knob and the
   no-proxy mode in the Production/Design-Decisions section.
 - `.github/workflows/ci.yaml` (repo root) — add one bake-matrix case exercising
@@ -190,9 +203,12 @@ two options rather than guessing.** Otherwise proceed.
 
 ### Step 1: Add the `behind_proxy` knob to `cookiecutter.json`
 
-Add the key in alphabetical position among the boolean-style knobs (it sorts
-before `postgres`; place it consistently with the existing ordering — the file
-groups metadata keys first, then the choice knobs). Add:
+The file groups metadata keys first (`project_name` … `domain_name`), then the
+choice knobs in alphabetical order (`email_provider`, `postgres`, `redis`,
+`traefik_tls`, `use_*`). `behind_proxy` sorts alphabetically **before
+`email_provider`**, so insert it as the FIRST choice knob — immediately after
+the `"domain_name"` line — and insert its `__prompts__` entry immediately
+before the `email_provider` prompt entry. Add:
 
 ```json
 "behind_proxy": ["yes", "no"],
@@ -213,11 +229,27 @@ Match the exact indentation and quoting style already in `cookiecutter.json`.
 **Verify**: `uvx cookiecutter . --no-input -o /tmp/bake-default` succeeds and
 `python -c "import json; json.load(open('cookiecutter.json'))"` exits 0.
 
-### Step 2: Gate the HTTPS-trust block in `prod.py`
+### Step 2: Gate the HTTPS-trust settings in `prod.py` — TWO separate gates
 
-Wrap the scheme-dependent settings in a single conditional. The gate is true
-when Traefik is bundled (always a trusted proxy) **or** the operator opted into
-`behind_proxy=yes`:
+The file orders top-level assignments alphabetically, and Step 3 requires the
+default render to be byte-identical to today's file. Both constraints together
+mean you must NOT move any line: wrap each scheme-dependent region **in place**
+with the same condition. That yields **two** `{% if %}` gates:
+
+**Gate 1** — around `CSRF_COOKIE_SECURE = True` alone (it sits at its
+alphabetical position between `API_DOCS_DECORATOR` and `CSRF_TRUSTED_ORIGINS`;
+do not move it):
+
+```python
+{%- if cookiecutter.use_traefik == "yes" or cookiecutter.behind_proxy == "yes" %}
+CSRF_COOKIE_SECURE = True
+{%- endif %}
+```
+
+**Gate 2** — around the contiguous block from `SECURE_HSTS_INCLUDE_SUBDOMAINS`
+through `SESSION_COOKIE_SECURE` (live lines 31-41: the three `SECURE_HSTS_*`
+lines, the 4-line X-Forwarded-Proto comment, `SECURE_PROXY_SSL_HEADER`,
+`SECURE_REDIRECT_EXEMPT`, `SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`):
 
 ```python
 {%- if cookiecutter.use_traefik == "yes" or cookiecutter.behind_proxy == "yes" %}
@@ -231,24 +263,23 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_REDIRECT_EXEMPT = [r"^api/health$", r"^api/ready$"]
 SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
 {%- endif %}
 ```
 
-Also gate the two `Secure`-cookie flags on the same condition, because without
-HTTPS reaching the app the browser will never send them (breaking admin login):
-
-- Move `CSRF_COOKIE_SECURE = True` and `SESSION_COOKIE_SECURE = True` inside the
-  same `{% if %}` gate (keep the alphabetical placement of surviving keys — the
-  file orders top-level assignments alphabetically within the block; verify the
-  render still reads cleanly).
+Rationale for gating the cookie flags too: without HTTPS reaching the app the
+browser will never send `Secure` cookies, breaking admin login in a
+deliberately-plain-HTTP deployment.
 
 Keep **unconditional**: `SECURE_CONTENT_TYPE_NOSNIFF = True`, the whitenoise
 middleware insert, `CSRF_TRUSTED_ORIGINS`, the JSON logging formatter, and the
 staticfiles storage — these are scheme-independent.
 
-**Important**: preserve every existing `# noqa: F821  # ty: ignore[...]`
-marker on the lines you move; they are required by ruff/ty because of the
-shared settings namespace.
+**Note on lint markers**: none of the gated lines carries a
+`# noqa: F821  # ty: ignore[...]` marker today (those markers live only on
+lines that *reference* component-defined names, e.g. `LOGGING`, `MIDDLEWARE`,
+`STORAGES` — all of which stay unconditional). Do not add markers to the gated
+lines, and do not touch the existing ones.
 
 **Verify**:
 ```
@@ -270,17 +301,27 @@ grep -c "SECURE_PROXY_SSL_HEADER" /tmp/bake-ty/my-project/src/config/settings/en
 ### Step 3: Byte-identity check for existing bakes
 
 The default (`behind_proxy=yes`) render of `prod.py` must be **byte-identical**
-to the pre-plan file (aside from the Jinja you added collapsing away). Confirm:
+to what a default bake produced before your edits. Compare rendered output to
+rendered output — do NOT diff against the raw template file from git, because
+the template contains *other* Jinja (email/S3 blocks) that renders differently
+from its source and would produce spurious diffs.
+
+**Before touching any file** (do this first if you have not already):
 
 ```
-diff <(git show 7fef138:"{{cookiecutter.project_slug}}/src/config/settings/environments/prod.py" | \
-       sed -n '/API_DOCS_DECORATOR/,$p') \
-     <(sed -n '/API_DOCS_DECORATOR/,$p' /tmp/bake-default/my-project/src/config/settings/environments/prod.py)
+uvx cookiecutter . --no-input -o /tmp/bake-before
+cp /tmp/bake-before/my-project/src/config/settings/environments/prod.py /tmp/prod-before.py
 ```
 
-**Verify**: no differences in the rendered default output for the security
-block. (If the git-show path form fails in your shell, instead bake the repo
-at 7fef138 into a temp dir and diff the two rendered `prod.py` files.)
+After Steps 1-2:
+
+```
+uvx cookiecutter . --no-input -o /tmp/bake-default
+diff /tmp/prod-before.py /tmp/bake-default/my-project/src/config/settings/environments/prod.py
+```
+
+**Verify**: `diff` prints nothing (exit 0). If you forgot the before-snapshot,
+`git stash` your edits, bake, snapshot, `git stash pop`, and diff.
 
 ### Step 4: Confirm no hook change is needed
 
@@ -315,6 +356,44 @@ weaken the security gate for the default (proxied) deployment. If you cannot
 decide, STOP and report.
 
 **Verify**: default bake deploy check exits 0; document the no-proxy behavior.
+
+### Step 5b: Gate the ASGI-layer proxy-header trust in `prod.yaml`
+
+`{{cookiecutter.project_slug}}/.docker/compose/prod.yaml` currently sets, on the
+`api` service, **unconditionally** (today's file):
+
+```yaml
+    environment:
+      DJANGO_ENV: prod
+      FORWARDED_ALLOW_IPS: "*"
+```
+
+`FORWARDED_ALLOW_IPS: "*"` is the ASGI-server (uvicorn/gunicorn) companion to
+`SECURE_PROXY_SSL_HEADER`: it tells the server to trust `X-Forwarded-*` headers
+(client IP, scheme) from **any** upstream. It has the same trust-boundary
+problem as the settings-level header trust — gating one without the other leaves
+the no-proxy bake trusting spoofable forwarded headers on its `127.0.0.1:8000`
+port. Gate it on the same condition as Step 2:
+
+```yaml
+    environment:
+      DJANGO_ENV: prod
+{%- if cookiecutter.use_traefik == "yes" or cookiecutter.behind_proxy == "yes" %}
+      FORWARDED_ALLOW_IPS: "*"
+{%- endif %}
+```
+
+When the gate is false the line is omitted entirely, so the ASGI server falls
+back to its safe default (trust only `127.0.0.1`).
+
+**Verify**:
+```
+uvx cookiecutter . --no-input -o /tmp/bake-np use_traefik=no behind_proxy=no
+grep -c "FORWARDED_ALLOW_IPS" /tmp/bake-np/my-project/.docker/compose/prod.yaml
+```
+→ `0`. Default bake and `use_traefik=yes behind_proxy=no` bake → `1`. Confirm
+the rendered `environment:` block still has valid YAML indentation in both
+states (the `DJANGO_ENV: prod` line must always remain).
 
 ### Step 6: Add a CI bake-matrix case for the no-proxy mode
 
@@ -365,8 +444,9 @@ ALL must hold:
 
 - [ ] `cookiecutter.json` has a `behind_proxy` key (default `yes`) and a `__prompts__` entry; `json.load` succeeds.
 - [ ] Default bake and `use_traefik=yes behind_proxy=no` bake: `grep -c SECURE_PROXY_SSL_HEADER prod.py` == 1.
-- [ ] `use_traefik=no behind_proxy=no` bake: `grep -c SECURE_PROXY_SSL_HEADER prod.py` == 0, and `grep -c "SECURE_SSL_REDIRECT\|SESSION_COOKIE_SECURE\|SECURE_HSTS_SECONDS" prod.py` == 0.
-- [ ] Default bake `prod.py` security block is byte-identical to 7fef138 (Step 3).
+- [ ] `use_traefik=no behind_proxy=no` bake: `grep -c SECURE_PROXY_SSL_HEADER prod.py` == 0, and `grep -c "SECURE_SSL_REDIRECT\|SESSION_COOKIE_SECURE\|SECURE_HSTS_SECONDS\|CSRF_COOKIE_SECURE" prod.py` == 0 (all four gated names absent).
+- [ ] `FORWARDED_ALLOW_IPS` gating (Step 5b): default bake and `use_traefik=yes behind_proxy=no` bake → `grep -c FORWARDED_ALLOW_IPS prod.yaml` == 1; `use_traefik=no behind_proxy=no` bake → == 0. Rendered `environment:` block is valid YAML in all three.
+- [ ] Default bake `prod.py` is byte-identical to the pre-edit rendered snapshot (Step 3).
 - [ ] Default bake deploy security check exits 0; baked pytest 100% pass; baked pre-commit exit 0.
 - [ ] `.github/workflows/ci.yaml` has the `no-proxy` matrix case and actionlint passes.
 - [ ] README documents the knob.
@@ -382,7 +462,8 @@ Stop and report (do not improvise) if:
 - The live `prod.py` no longer matches the "Current state" excerpt.
 - Gating the cookie/redirect settings would require touching `dev.py`/`ci.py`
   or a component file (it should not).
-- The default (`behind_proxy=yes`) render is NOT byte-identical to 7fef138.
+- The default (`behind_proxy=yes`) render is NOT byte-identical to the
+  pre-edit rendered snapshot (Step 3).
 - Making `deploy-check.sh` pass for the no-proxy bake would require weakening
   the security gate for the default proxied deployment.
 

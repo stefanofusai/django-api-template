@@ -1,4 +1,4 @@
-# Plan 001: Add a gitleaks secret scanner to the baked project's pre-commit stack
+# Plan 004: Add a gitleaks secret scanner to the baked project's pre-commit stack
 
 > **Executor instructions**: Follow this plan step by step. Run every
 > verification command and confirm the expected result before moving to the
@@ -8,10 +8,19 @@
 > maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 7fef138..HEAD -- "{{cookiecutter.project_slug}}/.pre-commit-config.yaml" "{{cookiecutter.project_slug}}/AGENTS.md" "{{cookiecutter.project_slug}}/README.md"`
+> `git diff --stat ae42991..HEAD -- "{{cookiecutter.project_slug}}/.pre-commit-config.yaml" README.md`
 > If any in-scope file changed since this plan was written, compare the
 > "Current state" excerpts against the live code before proceeding; on a
 > mismatch, treat it as a STOP condition.
+
+## Status
+
+- **Priority**: P2
+- **Effort**: S
+- **Risk**: LOW
+- **Depends on**: none
+- **Category**: security
+- **Planned at**: commit `ae42991`, 2026-07-07 (re-verified against live code same day)
 
 ## Repository context (read before anything else)
 
@@ -115,9 +124,13 @@ environment lacks `uv` on PATH — that is a STOP condition (you cannot verify).
 - `{{cookiecutter.project_slug}}/.pre-commit-config.yaml` — add the gitleaks repo block.
 - `{{cookiecutter.project_slug}}/.gitleaks.toml` — **create only if** Step 3
   surfaces false positives (see Step 4). Otherwise do not create it.
-- `{{cookiecutter.project_slug}}/README.md` — add `gitleaks` to the one-line
-  inventory of pre-commit tools in the "What You Get" list (keep the existing
-  alphabetical order of that comma-separated list).
+- `README.md` (**repo root** — the template's own README, a normal editable
+  file) — add `gitleaks` to the one-line inventory of pre-commit tools at
+  `README.md:16` (the line beginning "actionlint, gitlint, markdownlint,
+  Ruff, Ty, uv-audit, yamlfmt, yamllint, and other pre-commit checks"). Keep
+  the existing alphabetical order of that comma-separated list. NOTE: the
+  *generated* project's README (`{{cookiecutter.project_slug}}/README.md`) has
+  no such inventory line — do not hunt for one there.
 
 **Out of scope** (do NOT touch, even though they look related):
 - The repo-root `.pre-commit-config.yaml` (the template's own hooks). Adding
@@ -126,8 +139,10 @@ environment lacks `uv` on PATH — that is a STOP condition (you cannot verify).
   maintainer wants it there too, that is a separate follow-up — note it in
   Maintenance notes, do not do it here.
 - `.github/dependabot.yaml` — no change needed (grouped `*` pattern covers it).
-- Any `.github/workflows/*` file — copied without rendering; the baked
-  pre-commit already runs inside `ci.yaml`'s `bake` job.
+- Any `.github/workflows/*` file — the generated ones are copied without
+  rendering, and the **repo-root** `.github/workflows/ci.yaml` (the template's
+  own CI) already runs the baked pre-commit inside its `bake` job, so the new
+  hook is exercised on every push with no workflow change.
 
 ## Git workflow
 
@@ -151,8 +166,9 @@ Record the exact tag you will use; it goes in the `rev:` field in Step 2.
 ### Step 2: Add the gitleaks repo block to the baked pre-commit config
 
 In `{{cookiecutter.project_slug}}/.pre-commit-config.yaml`, add a new repo
-block under the `# Git` section, immediately after the `gitlint` block and
-before the `# Generic checks and fixes` comment. Use the tag from Step 1:
+block under the `# Git` section, **immediately BEFORE the existing `gitlint`
+block** (directly under the `# Git` comment). Use the tag from Step 1 —
+`v8.30.0` below is a placeholder, replace it with the Step 1 tag:
 
 ```yaml
   - repo: https://github.com/gitleaks/gitleaks
@@ -162,16 +178,14 @@ before the `# Generic checks and fixes` comment. Use the tag from Step 1:
 ```
 
 Placement rationale: gitleaks is a git/secret-oriented hook, so it belongs in
-the `# Git` section. Within that section there is one repo per tool; keep
-`gitlint` first (its repo/host sorts before `gitleaks`' only if you sort by
-tool name — here `gitleaks` < `gitlint` alphabetically, so **gitleaks goes
-BEFORE gitlint**). Order the two repos so the tool names are alphabetical:
-`gitleaks` block first, then the existing `gitlint` block.
+the `# Git` section, and `gitleaks` < `gitlint` alphabetically (they share
+`gitl`, then `e` < `i`), so the gitleaks block goes first. (The file does not
+alphabetize repo blocks perfectly in every section, but AGENTS.md's
+alphabetization rule is the tiebreaker here.)
 
-**Verify** (syntax + hook resolves):
-`cd /tmp/bake/my-project` is not valid yet — first re-bake in Step 3. For now
-just confirm the file still parses as YAML by eye and the `{%- ... %}` Jinja
-blocks elsewhere are untouched.
+**Verify**: this step has no standalone check — the bake in Step 3 is the
+verification (a malformed YAML or unresolvable hook fails there). Confirm only
+that you did not touch any `{%- ... %}` Jinja block elsewhere in the file.
 
 ### Step 3: Bake and run the full baked pre-commit suite
 
@@ -214,14 +228,14 @@ allowlist to silence a finding you have not confirmed is a placeholder.
 
 ### Step 5: Update the README inventory line
 
-In `{{cookiecutter.project_slug}}/README.md`, find the "What You Get" bullet
-that lists the pre-commit tools (currently begins "actionlint, gitlint,
+In the **repo-root** `README.md` (the template's own README), find the bullet
+at line 16 that lists the pre-commit tools (begins "actionlint, gitlint,
 markdownlint, Ruff, Ty, uv-audit, yamlfmt, yamllint, and other pre-commit
 checks"). Insert `gitleaks` in its correct alphabetical position (between
 `actionlint` and `gitlint`).
 
-**Verify**: `grep -n "gitleaks" "{{cookiecutter.project_slug}}/README.md"` →
-one match in the inventory line.
+**Verify**: `grep -n "gitleaks" README.md` → one match in the inventory line
+(run from the repo root).
 
 ### Step 6: Regression-check the template's own root pre-commit
 
@@ -257,7 +271,7 @@ Machine-checkable. ALL must hold:
 - [ ] A fresh default bake's `git add -A && uv run pre-commit run --all-files` exits 0 with `gitleaks....Passed`.
 - [ ] A fresh minimal bake's gitleaks hook passes.
 - [ ] Root `uvx pre-commit run --all-files` exits 0.
-- [ ] `README.md` inventory line includes `gitleaks`.
+- [ ] Repo-root `README.md:16` inventory line includes `gitleaks` (`grep -c gitleaks README.md` ≥ 1 from the repo root).
 - [ ] No files outside the in-scope list are modified (`git status`).
 - [ ] `plans/README.md` status row updated.
 
@@ -266,7 +280,7 @@ Machine-checkable. ALL must hold:
 Stop and report back (do not improvise) if:
 
 - The "Current state" excerpt of `.pre-commit-config.yaml` no longer matches
-  the live file (drift since 7fef138).
+  the live file (drift since ae42991).
 - gitleaks reports what appears to be a **real** secret in the template.
 - `uv`/`uvx` is unavailable or a bake fails to produce `uv.lock` — you cannot
   verify without it.

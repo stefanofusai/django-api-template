@@ -1,4 +1,4 @@
-# Plan 004: Design spike — an `api_auth` bake knob for token/API-key auth (non-browser clients)
+# Plan 013: Design spike — an `api_auth` bake knob for token/API-key auth (non-browser clients)
 
 > **Executor instructions**: This is a **design/spike plan**, not a
 > build-everything plan. Your deliverable is (1) a written design proposal and
@@ -10,19 +10,34 @@
 > this plan's status row in `plans/README.md` when the proposal is written.
 >
 > **Drift check (run first)**:
-> `git diff --stat 7fef138..HEAD -- "{{cookiecutter.project_slug}}/src/apps/notes/routes.py" "{{cookiecutter.project_slug}}/src/config/settings/components/authentication.py" "{{cookiecutter.project_slug}}/pyproject.toml"`
+> `git diff --stat ae42991..HEAD -- "{{cookiecutter.project_slug}}/src/apps/notes/routes.py" "{{cookiecutter.project_slug}}/src/config/settings/components/authentication.py" "{{cookiecutter.project_slug}}/pyproject.toml"`
 > Compare "Current state" against the live code before starting; on a mismatch,
 > note it in the proposal.
+>
+> **Naming caution**: your deliverable is a NEW file,
+> `plans/013-api-auth-DESIGN.md`. Do not overwrite this plan file
+> (`plans/013-api-auth-knob-spike.md`) — they share the number 013 by design.
+
+## Status
+
+- **Priority**: P2 (spike)
+- **Effort**: M
+- **Risk**: LOW (no committed files change; deliverable is a design doc + scratch PoC)
+- **Depends on**: none
+- **Category**: direction
+- **Planned at**: commit `ae42991`, 2026-07-07 (re-verified against live code same day)
 
 ## Repository context (read before anything else)
 
 This is a **Cookiecutter template**. Source is under `{{cookiecutter.project_slug}}/`
 (**quote in shell**). Files contain Jinja. The template's philosophy is
-deliberate minimalism: per its README, it "ships no CORS or throttling
-defaults; add them when a real consumer and policy exist," and "The API has no
-default auth. Endpoints requiring protection must add ninja auth." Respect that
-stance — the goal here is to make token auth an **opt-in, worked example**, not
-to impose it.
+deliberate minimalism, documented in two places: the **repo-root**
+`README.md:57` ("The template deliberately ships no CORS or throttling
+defaults; add them when a real consumer and policy exist") and the generated
+`AGENTS.md:93-95` ("The API has no default auth. Endpoints requiring
+protection must add ninja auth … never ship a mutating endpoint
+unauthenticated"). Respect that stance — the goal here is to make token auth
+an **opt-in, worked example**, not to impose it.
 
 - Bake variables live in `cookiecutter.json` (+ `__prompts__`). File deletion by
   knob happens in `hooks/post_gen_project.py`.
@@ -34,8 +49,8 @@ to impose it.
 
 This is a template for a **Django Ninja API service**, yet the only
 demonstrated authentication is `django_auth` (session cookie + CSRF), used by
-the example notes router (`apps/notes/routes.py:14`,
-`router = Router(auth=django_auth, ...)`). Session+CSRF auth is designed for
+the example notes router (`apps/notes/routes.py:16`,
+`router = Router(auth=django_auth, tags=["notes"])`). Session+CSRF auth is designed for
 browser clients sharing a cookie jar and origin. The *primary* consumers of an
 API service — mobile apps, CLIs, backend-to-backend integrations — cannot
 easily use it: they have no cookie jar and no CSRF token. Peer templates close
@@ -99,7 +114,7 @@ grounded in the constraints above:
 
 ## Deliverables
 
-1. **`plans/004-api-auth-DESIGN.md`** (create): the proposal — recommendation
+1. **`plans/013-api-auth-DESIGN.md`** (create): the proposal — recommendation
    per question above, the proposed `cookiecutter.json` knob + `__prompts__`
    text, the file inventory a follow-up build plan would touch, the
    `hooks/post_gen_project.py` deletions the knob implies, the CI matrix
@@ -124,7 +139,7 @@ grounded in the constraints above:
 ## Scope
 
 **In scope**:
-- `plans/004-api-auth-DESIGN.md` (create — the proposal).
+- `plans/013-api-auth-DESIGN.md` (create — the proposal).
 - A scratch proof-of-concept under `/tmp/` (not committed to the template).
 - Updating this plan's status row in `plans/README.md`.
 
@@ -162,7 +177,7 @@ it**. Keep it faithful to the template's conventions (model `__str__`,
 
 ### Step 3: Write the design proposal
 
-Populate `plans/004-api-auth-DESIGN.md` with: the recommendation and why; the
+Populate `plans/013-api-auth-DESIGN.md` with: the recommendation and why; the
 proposed knob + prompts; the (`use_example_api` × `api_auth`) composition
 decision; the full file inventory + hook deletions a build plan would need; the
 CI matrix additions; the PoC diffs as an appendix; and the **open questions for
@@ -176,13 +191,13 @@ alone, decide yes/no and — if yes — hand a follow-up build plan to an execut
 
 Do not proceed to modify the committed template. Report the recommendation and
 the open questions. The maintainer's answers become the inputs to a follow-up
-build plan (`005-…`).
+build plan (a new `plans/0NN-…` file at the next free number).
 
 ## Done criteria
 
 ALL must hold:
 
-- [ ] `plans/004-api-auth-DESIGN.md` exists and answers all six design questions with a clear recommendation.
+- [ ] `plans/013-api-auth-DESIGN.md` exists and answers all six design questions with a clear recommendation.
 - [ ] A scratch PoC exists and its `uv run pytest` passes at 100% coverage (paste the command output into the DESIGN doc).
 - [ ] The DESIGN doc lists the exact file inventory + hook deletions + CI matrix a build plan would need.
 - [ ] The DESIGN doc has an explicit "open questions for the maintainer" section.

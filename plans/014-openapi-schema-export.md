@@ -1,4 +1,4 @@
-# Plan 003: Ship an `export_openapi_schema` command and a CI job that publishes the schema artifact
+# Plan 014: Ship an `export_openapi_schema` command and a CI job that publishes the schema artifact
 
 > **Executor instructions**: Follow this plan step by step. Run every
 > verification command and confirm the expected result before moving on. If
@@ -7,9 +7,18 @@
 > reviewer dispatched you and told you they maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat 7fef138..HEAD -- "{{cookiecutter.project_slug}}/src/apps/api" "{{cookiecutter.project_slug}}/pyproject.toml" .github/workflows/ci.yaml`
+> `git diff --stat ae42991..HEAD -- "{{cookiecutter.project_slug}}/src/apps/api" "{{cookiecutter.project_slug}}/pyproject.toml" .github/workflows/ci.yaml`
 > If any in-scope file changed since this plan was written, compare "Current
 > state" against the live code before proceeding; on a mismatch, STOP.
+
+## Status
+
+- **Priority**: P3
+- **Effort**: S–M
+- **Risk**: LOW
+- **Depends on**: none
+- **Category**: dx
+- **Planned at**: commit `ae42991`, 2026-07-07 (re-verified against live code same day)
 
 ## Repository context (read before anything else)
 
@@ -198,9 +207,11 @@ touches the ORM (it does not — omit the marker unless a test fails without it)
 
 Create `{{cookiecutter.project_slug}}/.github/workflows/openapi.yaml` (plain
 YAML — no Jinja, since this dir is copied unrendered). Model it on
-`migrations-check.yaml` / `dependency-audit.yaml` (same checkout / setup-python
-from `pyproject.toml` / setup-uv / `uv sync --group=ci --locked
---no-default-groups`). Steps:
+**`migrations-check.yaml`** — it has the full setup chain to copy (checkout,
+setup-python with `python-version-file: pyproject.toml`, setup-uv, then
+`uv sync --group=ci --locked --no-default-groups`). Do NOT model the install
+step on `dependency-audit.yaml`: that workflow has no `uv sync` step (it runs
+`uv audit` directly). Steps:
 
 1. Install ci deps.
 2. Export both schemas to files:
@@ -210,16 +221,21 @@ from `pyproject.toml` / setup-uv / `uv sync --group=ci --locked
    `CACHE_URL: locmemcache://`, `SECRET_KEY`, `ALLOWED_HOSTS`, a parse-only
    `DATABASE_URL` — no Postgres service is needed because the command makes no
    DB connection; confirm this by running Step 1 with an unreachable DB host).
-3. Upload both files via `actions/upload-artifact` (pin to the same major style
-   as other actions in the repo, e.g. `@v4.x` — check the latest and match the
-   pinning convention).
+3. Upload both files via `actions/upload-artifact`. Pin to an **exact
+   version** (`@vX.Y.Z`), matching the repo's convention — every action here
+   is exact-pinned (`actions/checkout@v6.0.3`, `actions/setup-python@v6.2.0`,
+   `astral-sh/setup-uv@v8.2.0`); never use a floating `@vX` / `@vX.x` ref.
+   Use the latest release tag (check the upstream releases page; if you have
+   no web access, note in your report that the pin needs confirming).
 
 Match the `name:`, `on:` (pull_request + push to main), and `concurrency:`
 blocks used by the other baked workflows exactly.
 
-**Verify**: repo-root `uvx pre-commit run actionlint check-github-workflows
---all-files` exits 0 (this lints the template's tracked copy of the baked
-workflow). Also confirm no Jinja crept into the file:
+**Verify**: bake and run the BAKED pre-commit's workflow linters —
+`cd /tmp/bake/my-project && git add -A && uv run pre-commit run actionlint
+check-github-workflows --all-files` exits 0. (The repo-root pre-commit
+`exclude`s the whole template dir, so root actionlint never sees this file —
+do not rely on it.) Also confirm no Jinja crept into the file:
 `grep -c "cookiecutter" "{{cookiecutter.project_slug}}/.github/workflows/openapi.yaml"` → 0.
 
 ### Step 4: Confirm the DB-independence claim
