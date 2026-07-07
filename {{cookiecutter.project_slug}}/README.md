@@ -545,8 +545,9 @@ uv run pre-commit run ruff-check --all-files
 uv run pre-commit run ty --all-files
 ```
 
-CI runs tests, deploy checks, pre-commit, dependency audit, and Docker image
-build validation through GitHub Actions.
+CI runs tests, deploy checks, pre-commit, dependency audit, prod and dev Docker
+image builds, and a production-stack boot smoke that probes liveness and
+readiness through GitHub Actions.
 
 ## Verification
 

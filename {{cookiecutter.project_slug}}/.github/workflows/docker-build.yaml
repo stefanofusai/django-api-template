@@ -16,12 +16,56 @@ jobs:
         uses: actions/checkout@v6.0.3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.1.0
-      - name: Build image
+      - name: Build production image
         uses: docker/build-push-action@v7.2.0
         with:
           context: .
           file: .docker/Dockerfile
           push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=prod
+          cache-to: type=gha,mode=max,scope=prod
           build-args: UV_DEPENDENCY_GROUP=prod
+      - name: Build development image
+        uses: docker/build-push-action@v7.2.0
+        with:
+          context: .
+          file: .docker/Dockerfile
+          push: false
+          cache-from: type=gha,scope=dev
+          cache-to: type=gha,mode=max,scope=dev
+          build-args: UV_DEPENDENCY_GROUP=dev
+  smoke:
+    name: Docker smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.3
+      - name: Install Docker Compose with pre_start support
+        run: |
+          mkdir -p ~/.docker/cli-plugins
+          curl -fsSL \
+            https://github.com/docker/compose/releases/download/v5.3.0/docker-compose-linux-x86_64 \
+            -o ~/.docker/cli-plugins/docker-compose
+          echo "fffb010206c952ee5e45d0cd05dc88d3ca063c4634d40eaad6b72677c4c7bbf0  $HOME/.docker/cli-plugins/docker-compose" | sha256sum -c -
+          chmod +x ~/.docker/cli-plugins/docker-compose
+          docker compose version
+      - name: Prepare production env file
+        run: |
+          cp .env.example .env
+          ./.github/scripts/docker-smoke.sh
+      - name: Boot production stack
+        run: docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --build --wait --wait-timeout=300
+      - name: Probe liveness and readiness from inside the api container
+        run: |
+          docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/health
+          docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/ready
+      - name: Assert service states
+        run: |
+          docker compose -f .docker/compose/prod.yaml --env-file=.env ps
+          test -z "$(docker compose -f .docker/compose/prod.yaml --env-file=.env ps -q --status=exited)"
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose -f .docker/compose/prod.yaml --env-file=.env logs
+      - name: Tear down
+        if: always()
+        run: docker compose -f .docker/compose/prod.yaml --env-file=.env down -v
