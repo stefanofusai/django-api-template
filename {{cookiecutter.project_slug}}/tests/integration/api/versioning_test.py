@@ -1,6 +1,8 @@
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
+from django.urls import reverse
+
 if TYPE_CHECKING:
     from django.test import Client
 {%- if cookiecutter.use_example_api == "no" %}
@@ -9,7 +11,7 @@ if TYPE_CHECKING:
 
 
 def test_v1_api_exposes_openapi_schema_at_versioned_path(client: Client) -> None:
-    response = client.get("/api/v1/openapi.json")
+    response = client.get(reverse("v1:openapi-json"))
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["info"]["version"] == "1.0.0"
@@ -26,6 +28,7 @@ def test_v1_api_serves_empty_openapi_schema_when_template_is_fresh(
 
 
 def test_v1_api_serves_no_routes_when_template_is_fresh(client: Client) -> None:
+    # No route exists at this path, so there is nothing for reverse() to resolve.
     response = client.get("/api/v1/does-not-exist")
 
     assert response.status_code == HTTPStatus.NOT_FOUND
@@ -35,7 +38,7 @@ def test_v1_api_serves_no_routes_when_template_is_fresh(client: Client) -> None:
 def test_v1_api_exposes_notes_paths_when_example_api_is_enabled(
     client: Client,
 ) -> None:
-    response = client.get("/api/v1/openapi.json")
+    response = client.get(reverse("v1:openapi-json"))
 
     assert response.status_code == HTTPStatus.OK
     paths = response.json()["paths"]

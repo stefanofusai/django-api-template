@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from django.test import override_settings
+from django.urls import reverse
 
 from tests.factories import UserFactory
 
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 def test_api_docs_redirect_anonymous_user_when_decorator_requires_staff(
     client: Client,
 ) -> None:
-    response = client.get("/api/docs")
+    response = client.get(reverse("prod-docs:openapi-view"))
 
     assert response.status_code == HTTPStatus.FOUND
     assert response["Location"].startswith("/admin/login/")
@@ -34,7 +35,7 @@ def test_api_docs_return_ok_for_staff_user_when_decorator_requires_staff(
     staff_user = UserFactory.create(is_staff=True)
     client.force_login(staff_user)
 
-    response = client.get("/api/docs")
+    response = client.get(reverse("prod-docs:openapi-view"))
 
     assert response.status_code == HTTPStatus.OK
 
@@ -44,7 +45,7 @@ def test_api_docs_return_ok_for_staff_user_when_decorator_requires_staff(
 def test_openapi_schema_redirects_anonymous_user_when_decorator_requires_staff(
     client: Client,
 ) -> None:
-    response = client.get("/api/openapi.json")
+    response = client.get(reverse("prod-docs:openapi-json"))
 
     assert response.status_code == HTTPStatus.FOUND
     assert response["Location"].startswith("/admin/login/")

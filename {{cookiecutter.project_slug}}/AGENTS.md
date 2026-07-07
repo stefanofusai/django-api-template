@@ -123,6 +123,8 @@
 - Keep fixed literals only when they are the behavior under test.
 - Test names must follow `test_<subject>_<expected_behavior>_when_<condition>`, using `for_<scenario>` when it reads better.
 - Keep test functions alphabetized within each file.
+- Test API endpoints through the ninja `TestClient` fixtures (`internal_api_client`, `v1_api_client`, `authenticated_client`) using `response.data` and router-relative paths; pass `user=` (or use `authenticated_client`) for authenticated endpoints.
+- When a test must use Django's test `client` for full-URL/routing behavior, resolve URLs with `django.urls.reverse(...)` instead of hardcoding paths, and read the body via `response.json()`.
 
 ## Pre-Commit And Type Checking
 

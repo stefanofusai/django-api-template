@@ -3,20 +3,17 @@ import uuid
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
-from ninja import Router, Schema, Status
+from ninja import Router, Status
 from ninja.pagination import paginate
 from ninja.security import django_auth
 
 from apps.api.pagination import BoundedLimitOffsetPagination
+from apps.api.schemas import ErrorSchema
 
 from .models import Note
 from .schemas import NoteInSchema, NoteOutSchema
 
 router = Router(auth=django_auth, tags=["notes"])
-
-
-class ErrorSchema(Schema):
-    detail: str
 
 
 @router.post("", response={201: NoteOutSchema, 401: ErrorSchema, 403: ErrorSchema})
