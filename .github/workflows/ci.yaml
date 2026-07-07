@@ -24,7 +24,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready --username=$$POSTGRES_USER" --health-interval=5s --health-retries=5 --health-timeout=5s
+          --health-cmd="pg_isready --username=$POSTGRES_USER" --health-interval=5s --health-retries=5 --health-timeout=5s
     strategy:
       fail-fast: false
       matrix:
@@ -90,6 +90,11 @@ jobs:
           python-version: "3.14"
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
+      - name: Cache pre-commit environments
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('{{cookiecutter.project_slug}}/.pre-commit-config.yaml') }}
       - name: Bake project
         run: uvx cookiecutter . -o /tmp/bake --no-input ${{ matrix.extra-args }}
       - name: Assert lockfile exists
@@ -280,5 +285,10 @@ jobs:
           python-version: "3.14"
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
+      - name: Cache pre-commit environments
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-root-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Run pre-commit
         run: uvx pre-commit run --all-files

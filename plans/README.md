@@ -65,7 +65,7 @@ lands) — shell scripts are linted directly via
 | 024 | `manage.sh` wrapper for prod management commands (`createsuperuser` day-one op) | P3 | S | — | TODO |
 | 014 | `export_openapi_schema` command + schema-artifact CI job | P3 | S–M | — | TODO |
 | 015 | Generated-project Docker boot smoke + dev-image build | P3 | M | — | TODO |
-| 016 | CI/build hygiene: pre-commit cache, dockerignore `.agents/`, `$$POSTGRES_USER` fix | P3 | S | — | TODO |
+| 016 | CI/build hygiene: pre-commit cache, dockerignore `.agents/`, `$$POSTGRES_USER` fix | P3 | S | — | DONE |
 | 017 | Scaffolding polish (`.editorconfig`, generated `SECURITY.md`, README arch map, `traefik_tls` prompt) | P3 | S | — | TODO |
 | 018 | Remove dead mypy/django-stubs config (+ ty-needs-stubs experiment) | P3 | S | — | TODO |
 | 019 | Browser-surface hardening: bound request ID + signal-dispatch test (do), CSP (spike) | P3 | S | — | TODO |
