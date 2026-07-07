@@ -2,7 +2,7 @@ import os
 
 {% if cookiecutter.use_celery != "none" -%}
 # Importing this package is what configures Django for every process:
-# gunicorn (config.wsgi) and celery (-A config) both import it before
+# gunicorn (config.asgi) and celery (-A config) both import it before
 # touching settings. The celery import below must stay AFTER setdefault.
 {% else -%}
 # Importing this package is what configures Django for the web process.

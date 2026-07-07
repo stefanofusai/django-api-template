@@ -70,12 +70,16 @@ prod = [
     "django-storages[s3]==1.14.6",
 {%- endif %}
     "gunicorn==26.0.0",
+    "uvicorn-worker==0.4.0",
     "whitenoise==6.12.0",
 ]
 
 [tool.coverage.run]
 branch = true
 omit = [
+    # Production ASGI entrypoint, exercised only by Gunicorn at runtime; the
+    # API contract test loads config.wsgi instead (see schema_test.py).
+    "src/config/asgi.py",
 {%- if cookiecutter.use_sentry == "yes" %}
     "src/config/settings/components/sentry.py",
 {%- endif %}

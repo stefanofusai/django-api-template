@@ -33,9 +33,9 @@ django-structlog, Docker Compose, pytest, Ruff, Ty, and uv.
 
 ```text
 {% if cookiecutter.use_celery != "none" -%}
-src/config/          Django settings, URLs, Celery app, WSGI entrypoint
+src/config/          Django settings, URLs, Celery app, ASGI entrypoint
 {%- else %}
-src/config/          Django settings, URLs, WSGI entrypoint
+src/config/          Django settings, URLs, ASGI entrypoint
 {%- endif %}
 src/apps/core/       shared abstract model bases
 src/apps/api/        Django Ninja API, schemas, pagination, request metadata
@@ -222,6 +222,10 @@ Start the production stack:
 ```shell
 docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --wait
 ```
+
+Production serves Django through ASGI (`config.asgi`) using Gunicorn with
+Uvicorn workers. Sync and async Django Ninja operations can coexist; use async
+handlers only with async-safe libraries or Django's async ORM APIs.
 
 {% if cookiecutter.use_traefik == "yes" and cookiecutter.traefik_tls == "letsencrypt" -%}
 The production stack includes Traefik. Traefik terminates TLS with Let's

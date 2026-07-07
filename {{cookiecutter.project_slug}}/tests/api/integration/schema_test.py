@@ -2,6 +2,10 @@ import pytest
 import schemathesis
 from schemathesis import Case
 
+# Production serves ASGI (config.asgi), but the OpenAPI schema is identical
+# under either protocol and Schemathesis' ASGI transport runs the ASGI
+# lifespan protocol, which Django's ASGIHandler rejects. Load the WSGI app
+# for the contract test.
 from config.wsgi import application
 {%- if cookiecutter.use_example_api == "yes" %}
 

@@ -8,5 +8,6 @@ exec gunicorn \
     --no-control-socket \
     --pythonpath=src \
     --timeout="$GUNICORN_TIMEOUT" \
+    --worker-class=uvicorn_worker.UvicornWorker \
     --workers="$GUNICORN_WORKERS" \
-    config.wsgi
+    config.asgi:application
