@@ -23,10 +23,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready --username=$$POSTGRES_USER"
-          --health-interval=5s
-          --health-retries=5
-          --health-timeout=5s
+          --health-cmd="pg_isready --username=$$POSTGRES_USER" --health-interval=5s --health-retries=5 --health-timeout=5s
     strategy:
       fail-fast: false
       matrix:
@@ -93,16 +90,9 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
         run: uv run pytest
-      - name: Check missing migrations
+      - name: Run migration checks
         working-directory: /tmp/bake/${{ matrix.slug }}
-        env:
-          ALLOWED_HOSTS: localhost
-          CACHE_URL: locmemcache://
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-          DEFAULT_FROM_EMAIL: noreply@example.com
-          DJANGO_ENV: ci
-          SECRET_KEY: ci-secret-for-migrations-0123456789-abcdefghijklmnopqrstuvwxyz
-        run: uv run manage.py makemigrations --check --dry-run
+        run: ./.github/scripts/migrations-check.sh
       - name: Run pre-commit
         working-directory: /tmp/bake/${{ matrix.slug }}
         run: |

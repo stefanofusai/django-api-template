@@ -1,4 +1,4 @@
-name: Migrations
+name: Migration Checks
 on:
   pull_request:
   push:
@@ -8,8 +8,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  makemigrations:
-    name: Makemigrations check
+  migrations-check:
+    name: Migration checks
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -34,12 +34,5 @@ jobs:
         uses: astral-sh/setup-uv@v8.2.0
       - name: Install dependencies
         run: uv sync --group=ci --locked --no-default-groups
-      - name: Check missing migrations
-        env:
-          ALLOWED_HOSTS: localhost
-          CACHE_URL: locmemcache://
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-          DEFAULT_FROM_EMAIL: noreply@example.com
-          DJANGO_ENV: ci
-          SECRET_KEY: ci-secret-for-migrations-0123456789-abcdefghijklmnopqrstuvwxyz
-        run: uv run --group=ci --locked --no-default-groups manage.py makemigrations --check --dry-run
+      - name: Run migration checks
+        run: ./.github/scripts/migrations-check.sh
