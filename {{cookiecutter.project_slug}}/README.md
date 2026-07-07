@@ -193,6 +193,11 @@ Browse the versioned business API docs:
 ```shell
 open http://localhost:8000/api/v1/docs
 ```
+{%- if cookiecutter.use_example_api == "yes" %}
+
+Try the example `notes` resource (session-authenticated CRUD) documented at
+`/api/v1/docs`.
+{%- endif %}
 
 API docs and the OpenAPI schema are public in development and staff-only in
 production (`API_DOCS_DECORATOR`). The API itself ships unauthenticated: when

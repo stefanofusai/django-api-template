@@ -21,6 +21,8 @@ Compose deployment defaults, and CI gates for the baked project.
 - `django-split-settings` with `ci`, `dev`, and `prod` overlays
 - Optional Celery worker and beat services, chosen at bake time
 - Optional email stack: Resend API, SMTP, or no production email provider
+- Optional example `notes` resource demonstrating the model-to-tests vertical
+  slice
 - Optional S3-compatible media storage
 - Optional Sentry integration
 - Optional Traefik ingress with Let's Encrypt or operator-provided TLS
@@ -87,6 +89,7 @@ uvx cookiecutter gh:stefanofusai/django-api-template
 | `redis` | `compose` | Run production Redis as a bundled Compose service, or point `CACHE_URL` and `CELERY_BROKER_URL` at external Redis-protocol providers. |
 | `traefik_tls` | `letsencrypt` | Use `external` to serve an operator-provided PEM pair instead of running ACME; ignored when `use_traefik=no`. |
 | `use_celery` | `worker+beat` | Celery services to include: `worker+beat`, `worker`, or `none`. |
+| `use_example_api` | `no` | Include the example `notes` model, router, and tests demonstrating the full API pattern. |
 | `use_s3_media` | `yes` | Store production media on S3-compatible object storage. |
 | `use_sentry` | `yes` | Include the production Sentry integration. |
 | `use_traefik` | `yes` | Include the bundled Traefik reverse proxy. |

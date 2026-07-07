@@ -35,6 +35,10 @@ jobs:
             project_name: My Project
             extra-args: ""
             slug: my-project
+          - case: example-api
+            project_name: My Project
+            extra-args: use_example_api=yes
+            slug: my-project
           - case: external-backing
             project_name: My Project
             extra-args: postgres=external redis=external use_traefik=no

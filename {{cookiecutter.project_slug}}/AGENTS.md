@@ -66,6 +66,10 @@
 - Keep classes and functions grouped separately.
 - Put private helper utilities at the bottom of the file under a `# Utils` heading, alphabetized there.
 - Respect semantic ordering constraints, such as Django model fields, inheritance dependencies, decorators, framework-required signatures, and import-time behavior.
+- Order model fields logically, not alphabetically. Declare timestamp fields first, including ones not inherited from `CreatedAtUpdatedAtModel` such as a `deleted_at` soft-delete field, then relations, then scalar attributes, with large `TextField` bodies last.
+- Order Django Ninja schema fields to match their model's field order, not alphabetically.
+- Order factory fields to match their model's field order, not alphabetically; order factories and their `register(...)` calls to follow model/dependency order (a factory referenced by another via `SubFactory` comes first).
+- Lead Django admin `list_display` with timestamp fields (`created_at`, `updated_at`), then the remaining columns.
 - Alphabetize parameters in tests, helper functions, and Django Ninja endpoints when framework conventions do not require a leading parameter such as `self`, `request`, `sender`, or Django admin's `request, queryset`.
 
 ## Django And Configuration

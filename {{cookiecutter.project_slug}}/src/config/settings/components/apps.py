@@ -20,4 +20,7 @@ INSTALLED_APPS = [
     # Project
     "apps.api",
     "apps.core",
+{%- if cookiecutter.use_example_api == "yes" %}
+    "apps.notes",
+{%- endif %}
 ]

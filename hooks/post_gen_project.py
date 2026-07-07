@@ -12,6 +12,7 @@ EMAIL_PROVIDER = {{ cookiecutter.email_provider | tojson }}
 POSTGRES = {{ cookiecutter.postgres | tojson }}
 TRAEFIK_TLS = {{ cookiecutter.traefik_tls | tojson }}
 USE_CELERY = {{ cookiecutter.use_celery | tojson }}
+USE_EXAMPLE_API = {{ cookiecutter.use_example_api | tojson }}
 USE_SENTRY = {{ cookiecutter.use_sentry | tojson }}
 USE_TRAEFIK = {{ cookiecutter.use_traefik | tojson }}
 
@@ -56,6 +57,14 @@ REMOVED_PATHS = [
         if not (USE_TRAEFIK == "yes" and TRAEFIK_TLS == "external")
         else []
     ),
+    *(
+        ["tests/integration/api/notes_test.py"]
+        if USE_EXAMPLE_API == "no"
+        else []
+    ),
+]
+REMOVED_DIRS = [
+    *(["src/apps/notes"] if USE_EXAMPLE_API == "no" else []),
 ]
 MARKDOWN_FILES = [
     "AGENTS.md",
@@ -66,6 +75,9 @@ MARKDOWN_FILES = [
 def main() -> None:
     for removed_path in REMOVED_PATHS:
         Path(removed_path).unlink()
+
+    for removed_dir in REMOVED_DIRS:
+        shutil.rmtree(removed_dir)
 
     for markdown_file in MARKDOWN_FILES:
         path = Path(markdown_file)

@@ -3,7 +3,7 @@ from ninja.testing import TestClient
 from pytest_factoryboy import register
 
 from apps.api.api import internal_api, v1_api
-from tests.factories import UserFactory
+from tests.factories import {% if cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
 
 TEST_TYPE_MARKERS = {
     "tests/integration/": pytest.mark.integration,
@@ -11,6 +11,9 @@ TEST_TYPE_MARKERS = {
 }
 
 register(UserFactory)
+{%- if cookiecutter.use_example_api == "yes" %}
+register(NoteFactory)
+{%- endif %}
 
 
 # Fixtures

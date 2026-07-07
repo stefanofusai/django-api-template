@@ -11,6 +11,7 @@
     "redis": ["compose", "external"],
     "traefik_tls": ["letsencrypt", "external"],
     "use_celery": ["worker+beat", "worker", "none"],
+    "use_example_api": ["no", "yes"],
     "use_s3_media": ["yes", "no"],
     "use_sentry": ["yes", "no"],
     "use_traefik": ["yes", "no"],
@@ -48,6 +49,11 @@
             "worker+beat": "Worker and scheduler services",
             "worker": "Worker service only",
             "none": "No Celery services or task module"
+        },
+        "use_example_api": {
+            "__prompt__": "Example notes API resource",
+            "no": "Ship an empty /api/v1/",
+            "yes": "Include the example notes model, router, and tests"
         },
         "use_s3_media": {
             "__prompt__": "Production media storage",
