@@ -47,7 +47,7 @@ lands) — shell scripts are linted directly via
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 001 | Make `postgres-backup.sh` fail safe + prune portably | P1 | S | — | TODO |
+| 001 | Make `postgres-backup.sh` fail safe + prune portably | P1 | S | — | DONE |
 | 002 | Fix broken restore runbook + ship `postgres-restore.sh` | P1 | S | — | TODO |
 | 003 | Prune `django-celery-expert` skill when `use_celery=none` | P1 | S | — | TODO |
 | 004 | Add gitleaks secret scanner to baked pre-commit | P2 | S | — | TODO |
