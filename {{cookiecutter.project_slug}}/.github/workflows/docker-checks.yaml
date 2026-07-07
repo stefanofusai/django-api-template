@@ -1,4 +1,4 @@
-name: Docker Build
+name: Docker Checks
 on:
   pull_request:
   push:
@@ -8,11 +8,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  docker-build:
-    name: Docker build
+  build-docker-images:
+    name: Build Docker images
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6.0.3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.1.0
@@ -34,11 +34,11 @@ jobs:
           cache-from: type=gha,scope=dev
           cache-to: type=gha,mode=max,scope=dev
           build-args: UV_DEPENDENCY_GROUP=dev
-  smoke:
-    name: Docker smoke
+  smoke-test-docker-compose:
+    name: Smoke test Docker Compose
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6.0.3
       - name: Install Docker Compose with pre_start support
         run: |
@@ -55,17 +55,17 @@ jobs:
           ./.github/scripts/docker-smoke.sh
       - name: Boot production stack
         run: docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --build --wait --wait-timeout=300
-      - name: Probe liveness and readiness from inside the api container
+      - name: Probe API container health
         run: |
           docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/health
           docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/ready
-      - name: Assert service states
+      - name: Check service states
         run: |
           docker compose -f .docker/compose/prod.yaml --env-file=.env ps
           test -z "$(docker compose -f .docker/compose/prod.yaml --env-file=.env ps -q --status=exited)"
-      - name: Dump logs on failure
+      - name: Dump Docker logs on failure
         if: failure()
         run: docker compose -f .docker/compose/prod.yaml --env-file=.env logs
-      - name: Tear down
+      - name: Tear down Docker Compose
         if: always()
         run: docker compose -f .docker/compose/prod.yaml --env-file=.env down -v

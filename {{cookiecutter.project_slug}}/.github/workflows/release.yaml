@@ -9,11 +9,11 @@ permissions:
   contents: read
   packages: write
 jobs:
-  release:
-    name: Build and push release image
+  publish-release-image:
+    name: Publish release image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6.0.3
       - name: Verify tag matches pyproject version
         run: |
@@ -31,10 +31,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Compute image name
+      - name: Compute GHCR image name
         id: image
         run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
-      - name: Build and push
+      - name: Build and push release image
         uses: docker/build-push-action@v7.2.0
         with:
           context: .

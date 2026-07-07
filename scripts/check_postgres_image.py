@@ -7,7 +7,7 @@ from pathlib import Path
 CANONICAL = Path("{{cookiecutter.project_slug}}/.docker/compose/prod.yaml")
 FILES = [
     Path("{{cookiecutter.project_slug}}/.docker/compose/dev.yaml"),
-    Path("{{cookiecutter.project_slug}}/.github/workflows/migrations-check.yaml"),
+    Path("{{cookiecutter.project_slug}}/.github/workflows/migration-checks.yaml"),
     Path("{{cookiecutter.project_slug}}/.github/workflows/tests.yaml"),
     Path(".github/workflows/ci.yaml"),
 ]

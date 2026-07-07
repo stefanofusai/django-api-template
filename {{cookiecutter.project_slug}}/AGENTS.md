@@ -73,6 +73,29 @@
 - Alphabetize parameters in tests, helper functions, and Django Ninja endpoints when framework conventions do not require a leading parameter such as `self`, `request`, `sender`, or Django admin's `request, queryset`.
 - When forwarding keyword arguments to a callee, pass them in the order the callee declares its parameters: declared parameters in signature order first, then arguments captured by `**kwargs`. For example, when wrapping a client whose method is `post(path, data=None, json=None, **request_params)`, pass `json=` (declared) before `user=` (a `**request_params` argument).
 
+## GitHub Actions Naming
+
+- Use `.yaml` for workflow files and name them with lower kebab-case basenames
+  that describe the workflow scope, for example `docker-checks.yaml` or
+  `openapi-schema-export.yaml`.
+- Keep each workflow `name:` as a Title Case noun phrase aligned with the file
+  basename, such as `Docker Checks`, `Dependency Audit`, or
+  `OpenAPI Schema Export`.
+- Use lower kebab-case job ids, and keep them stable because other workflow
+  fields may reference them through `needs`.
+- Use concise, user-facing job `name:` values because they become GitHub status
+  check names. Prefer action-oriented names such as `Audit dependencies`,
+  `Check deployment settings`, `Check migrations`, and
+  `Smoke test Docker Compose`.
+- For matrix jobs, put the matrix value at the end in parentheses.
+- Use sentence case imperative step names, for example
+  `Check out repository`, `Set up Python`, `Install dependencies`,
+  `Export OpenAPI schemas`, `Probe API container health`, and
+  `Tear down Docker Compose`.
+- When adding, renaming, or removing generated-project workflow jobs, update
+  repository branch protection required status checks to match each job's
+  rendered `name`.
+
 ## Django And Configuration
 
 - Respect `django-extra-checks`: models need `__str__`, `Meta.ordering`, admin registration, gettext verbose/help text, explicit FK `related_name` and `db_index`, choice constraints, and `UniqueConstraint` instead of `unique_together`.

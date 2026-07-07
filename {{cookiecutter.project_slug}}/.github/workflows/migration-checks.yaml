@@ -8,8 +8,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  migrations-check:
-    name: Migration checks
+  check-migrations:
+    name: Check migrations
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -25,7 +25,7 @@ jobs:
           - 5432:5432
         options: --health-cmd="pg_isready --username=$POSTGRES_USER" --health-interval=5s --health-retries=5 --health-timeout=5s
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6.0.3
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
@@ -35,5 +35,5 @@ jobs:
         uses: astral-sh/setup-uv@v8.2.0
       - name: Install dependencies
         run: uv sync --group=ci --locked --no-default-groups
-      - name: Run migration checks
+      - name: Check migrations
         run: ./.github/scripts/migrations-check.sh

@@ -8,11 +8,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  dependency-audit:
-    name: Dependency audit
+  audit-dependencies:
+    name: Audit dependencies
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6.0.3
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
@@ -20,5 +20,5 @@ jobs:
           python-version-file: pyproject.toml
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
-      - name: Run dependency audit
+      - name: Audit dependencies
         run: uv audit --locked --preview-features=audit-command

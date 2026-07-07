@@ -44,7 +44,7 @@ src/apps/notes/      example notes resource (model, router, schemas, tests)
 {%- endif %}
 tests/               unit and integration tests
 .docker/             Dockerfile, Compose files, entrypoint scripts
-.github/             dependency audit, deploy check, Docker build, migration check, pre-commit, and test workflows
+.github/             dependency audit, deployment checks, Docker checks, migration checks, pre-commit, and test workflows
 ```
 
 Settings use `django-split-settings` with reusable components and environment

@@ -87,6 +87,26 @@
   inheritance dependencies, decorators, framework-required signatures,
   Cookiecutter rendering behavior, and import-time behavior.
 
+## GitHub Actions Naming
+
+- Use `.yaml` for workflow files and name them with lower kebab-case basenames
+  that describe the workflow scope, for example `ci.yaml` or
+  `docker-checks.yaml`.
+- Keep each workflow `name:` as a Title Case noun phrase aligned with the file
+  basename, such as `Template CI`, `Docker Checks`, or
+  `OpenAPI Schema Export`.
+- Use lower kebab-case job ids, and keep them stable because other workflow
+  fields may reference them through `needs`.
+- Use concise, user-facing job `name:` values because they become GitHub status
+  check names. Prefer action-oriented names such as `Check migrations`,
+  `Build Docker images`, and `Smoke test Docker Compose`.
+- For matrix jobs, put the matrix value at the end in parentheses, for example
+  `Smoke test Docker Compose (${{ matrix.variant }})`.
+- Use sentence case imperative step names, for example
+  `Check out repository`, `Set up Python`, `Install dependencies`,
+  `Audit dependencies`, `Probe API container health`, and
+  `Tear down Docker Compose`.
+
 ## Template Maintenance
 
 - Keep root `README.md` aligned with `cookiecutter.json`, hooks, and the

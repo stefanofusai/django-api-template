@@ -82,7 +82,7 @@ jobs:
             extra-args: use_celery=worker
             slug: my-project
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6.0.3
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
@@ -108,7 +108,7 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
         run: uv run pytest
-      - name: Run migration checks
+      - name: Check migrations
         working-directory: /tmp/bake/${{ matrix.slug }}
         run: ./.github/scripts/migrations-check.sh
       - name: Run pre-commit
@@ -116,8 +116,8 @@ jobs:
         run: |
           git add -A
           uv run pre-commit run --all-files
-  bake-invalid:
-    name: Reject ${{ matrix.case }}
+  reject-invalid-input:
+    name: Reject invalid input (${{ matrix.case }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -134,7 +134,7 @@ jobs:
           - case: bad-slug
             extra-args: project_name='My  Project'
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6.0.3
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
@@ -142,7 +142,7 @@ jobs:
           python-version: "3.14"
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
-      - name: Bake must fail
+      - name: Verify invalid input is rejected
         run: |
           if uvx cookiecutter . -o /tmp/bake --no-input ${{ matrix.extra-args }}; then
             echo "expected bake to fail" && exit 1
@@ -150,11 +150,11 @@ jobs:
           if find /tmp/bake -mindepth 1 -maxdepth 1 -type d | grep .; then
             echo "expected no generated project directories" && exit 1
           fi
-  docker-build:
-    name: Docker build
+  build-docker-images:
+    name: Build Docker images
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6.0.3
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
@@ -184,8 +184,8 @@ jobs:
           cache-from: type=gha,scope=dev
           cache-to: type=gha,mode=max,scope=dev
           build-args: UV_DEPENDENCY_GROUP=dev
-  docker-compose-smoke:
-    name: Docker Compose smoke test (${{ matrix.variant }})
+  smoke-test-docker-compose:
+    name: Smoke test Docker Compose (${{ matrix.variant }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -196,7 +196,7 @@ jobs:
           - variant: minimal
             extra-args: use_celery=none email_provider=none use_sentry=no use_s3_media=no use_traefik=no
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6.0.3
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
@@ -250,41 +250,41 @@ jobs:
       - name: Boot production stack
         working-directory: /tmp/smoke/my-project
         run: docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --build --wait --wait-timeout=300
-      - name: Probe liveness and readiness from inside the api container
+      - name: Probe API container health
         working-directory: /tmp/smoke/my-project
         run: |
           docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/health
           docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/ready
-      - name: Probe through traefik
+      - name: Probe through Traefik
         if: matrix.variant == 'default'
         working-directory: /tmp/smoke/my-project
         run: |
           curl -fsS http://localhost/api/health
           curl -fsS http://localhost/api/ready
-      - name: Probe through host port
+      - name: Probe host port
         if: matrix.variant == 'minimal'
         working-directory: /tmp/smoke/my-project
         run: |
           curl -fsS http://127.0.0.1:8000/api/health
           curl -fsS http://127.0.0.1:8000/api/ready
-      - name: Assert default service states
+      - name: Check default service states
         if: matrix.variant == 'default'
         working-directory: /tmp/smoke/my-project
         run: |
           docker compose -f .docker/compose/prod.yaml --env-file=.env ps
           docker compose -f .docker/compose/prod.yaml --env-file=.env ps --format='{{.State}}' celery-beat | grep -x running
           test -z "$(docker compose -f .docker/compose/prod.yaml --env-file=.env ps -q --status=exited)"
-      - name: Assert minimal service states
+      - name: Check minimal service states
         if: matrix.variant == 'minimal'
         working-directory: /tmp/smoke/my-project
         run: |
           docker compose -f .docker/compose/prod.yaml --env-file=.env ps
           test -z "$(docker compose -f .docker/compose/prod.yaml --env-file=.env ps -q --status=exited)"
-      - name: Dump logs on failure
+      - name: Dump Docker logs on failure
         if: failure()
         working-directory: /tmp/smoke/my-project
         run: docker compose -f .docker/compose/prod.yaml --env-file=.env logs
-      - name: Tear down
+      - name: Tear down Docker Compose
         if: always()
         working-directory: /tmp/smoke/my-project
         run: docker compose -f .docker/compose/prod.yaml --env-file=.env down -v
@@ -292,7 +292,7 @@ jobs:
     name: Pre-commit
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6.0.3
       - name: Set up Python
         uses: actions/setup-python@v6.2.0

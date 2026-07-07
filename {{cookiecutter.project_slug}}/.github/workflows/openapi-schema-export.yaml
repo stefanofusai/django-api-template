@@ -1,4 +1,4 @@
-name: OpenAPI
+name: OpenAPI Schema Export
 on:
   pull_request:
   push:
@@ -8,11 +8,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  openapi:
-    name: OpenAPI
+  export-openapi-schemas:
+    name: Export OpenAPI schemas
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v6.0.3
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
