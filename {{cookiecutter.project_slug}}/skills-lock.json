@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "django-access-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/django-access-review/SKILL.md",
+      "computedHash": "f113820ea68a0a8d5b36b36a293da6caed8cb6f2d7115cfc12d63c448e1b7613"
+    },
     "django-celery-expert": {
       "source": "vintasoftware/django-ai-plugins",
       "sourceType": "github",
@@ -12,6 +18,18 @@
       "sourceType": "github",
       "skillPath": "plugins/django-expert/skills/SKILL.md",
       "computedHash": "a6b8c224017570496d688a526fcbea74025a01cc90d9afb0977bfcc1f76af306"
+    },
+    "django-perf-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/django-perf-review/SKILL.md",
+      "computedHash": "8f30431b3c007e2dfe7fea44f3805e2dff0f633c078512d33f9b7ebb4c71c19b"
+    },
+    "django-safe-migration": {
+      "source": "vintasoftware/django-ai-plugins",
+      "sourceType": "github",
+      "skillPath": "plugins/django-safe-migration/skills/django-safe-migration/SKILL.md",
+      "computedHash": "3d2cbf26efad43372917a71b27a1b1bee16e0be58dfed0ea3184d59c957eaa56"
     },
     "postgres": {
       "source": "planetscale/database-skills",

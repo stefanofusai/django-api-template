@@ -58,7 +58,7 @@ lands) — shell scripts are linted directly via
 | 009 | Require a password on the bundled Redis | P2 | S–M | — | TODO |
 | 010 | CI robustness: example-API-under-stripped-stack bake + Postgres image drift guard | P2 | S | — | TODO |
 | 011 | Notes-slice hardening: pagination e2e, composite index, auth'd contract pass, Hypothesis profile | P2 | M | — | TODO |
-| 012 | Vendor `django-safe-migration`, `django-perf-review`, `django-access-review` skills | P2 | S | — | TODO |
+| 012 | Vendor `django-safe-migration`, `django-perf-review`, `django-access-review` skills | P2 | S | — | DONE |
 | 022 | Release workflow + GHCR registry: immutable deploys, tag-repoint rollback | P2 | M | — | TODO |
 | 013 | Design spike: `api_auth` knob for token/API-key auth | P2 (spike) | M | — | TODO |
 | 023 | `postgres-backup.sh` subcommands: `backup` / `verify` (restore rehearsal vs throwaway container) | P3 | S–M | 001 (hard) | DONE |
