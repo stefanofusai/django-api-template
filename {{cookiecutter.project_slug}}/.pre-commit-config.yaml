@@ -34,7 +34,7 @@ repos:
         files: ^\.docker/Dockerfile\.dockerignore$
       - id: mixed-line-ending
       - id: name-tests-test
-        exclude: ^tests/factories\.py$|^tests/integration/api/protected_docs_urls\.py$|^tests/utils\.py$
+        exclude: ^tests/api/integration/protected_docs_urls\.py$|^tests/factories\.py$|^tests/utils\.py$
       - id: trailing-whitespace
   # Python
   - repo: https://github.com/adamchainz/django-upgrade

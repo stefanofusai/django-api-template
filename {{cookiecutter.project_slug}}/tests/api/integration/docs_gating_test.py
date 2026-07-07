@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.django_db
-@override_settings(ROOT_URLCONF="tests.integration.api.protected_docs_urls")
+@override_settings(ROOT_URLCONF="tests.api.integration.protected_docs_urls")
 def test_api_docs_redirect_anonymous_user_when_decorator_requires_staff(
     client: Client,
 ) -> None:
@@ -28,7 +28,7 @@ def test_api_docs_redirect_anonymous_user_when_decorator_requires_staff(
 
 
 @pytest.mark.django_db
-@override_settings(ROOT_URLCONF="tests.integration.api.protected_docs_urls")
+@override_settings(ROOT_URLCONF="tests.api.integration.protected_docs_urls")
 def test_api_docs_return_ok_for_staff_user_when_decorator_requires_staff(
     client: Client,
 ) -> None:
@@ -41,7 +41,7 @@ def test_api_docs_return_ok_for_staff_user_when_decorator_requires_staff(
 
 
 @pytest.mark.django_db
-@override_settings(ROOT_URLCONF="tests.integration.api.protected_docs_urls")
+@override_settings(ROOT_URLCONF="tests.api.integration.protected_docs_urls")
 def test_openapi_schema_redirects_anonymous_user_when_decorator_requires_staff(
     client: Client,
 ) -> None:

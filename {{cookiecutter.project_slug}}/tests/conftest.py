@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     from apps.core.models import User
 
 TEST_TYPE_MARKERS = {
-    "tests/integration/": pytest.mark.integration,
-    "tests/unit/": pytest.mark.unit,
+    "integration": pytest.mark.integration,
+    "unit": pytest.mark.unit,
 }
 
 register(UserFactory)
@@ -47,6 +47,8 @@ def authenticated_v1_api_client(
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     for item in items:
-        for nodeid_prefix, marker in TEST_TYPE_MARKERS.items():
-            if item.nodeid.startswith(nodeid_prefix):
+        segments = item.nodeid.split("/")
+
+        for segment, marker in TEST_TYPE_MARKERS.items():
+            if segment in segments:
                 item.add_marker(marker)

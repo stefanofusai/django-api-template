@@ -31,14 +31,14 @@ REMOVED_PATHS = [
             ".docker/scripts/celery-worker.sh",
             "src/config/celery.py",
             "src/config/settings/components/celery.py",
-            "tests/unit/config/celery_test.py",
+            "tests/config/unit/celery_test.py",
         ]
         if USE_CELERY == "none"
         else []
     ),
     *([".docker/scripts/celery-beat.sh"] if USE_CELERY == "worker" else []),
     *(
-        ["src/apps/core/tasks.py", "tests/unit/core/tasks_test.py"]
+        ["src/apps/core/tasks.py", "tests/core/unit/tasks_test.py"]
         if USE_CELERY == "none" or EMAIL_PROVIDER == "none"
         else []
     ),
@@ -57,14 +57,9 @@ REMOVED_PATHS = [
         if not (USE_TRAEFIK == "yes" and TRAEFIK_TLS == "external")
         else []
     ),
-    *(
-        ["tests/integration/api/notes_test.py"]
-        if USE_EXAMPLE_API == "no"
-        else []
-    ),
 ]
 REMOVED_DIRS = [
-    *(["src/apps/notes"] if USE_EXAMPLE_API == "no" else []),
+    *(["src/apps/notes", "tests/notes"] if USE_EXAMPLE_API == "no" else []),
 ]
 MARKDOWN_FILES = [
     "AGENTS.md",
