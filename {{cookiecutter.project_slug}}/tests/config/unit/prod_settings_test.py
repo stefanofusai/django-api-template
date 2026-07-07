@@ -1,0 +1,96 @@
+import os
+import subprocess
+import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from faker import Faker
+
+
+{% if cookiecutter.redis == "compose" -%}
+{% if cookiecutter.use_celery != "none" -%}
+def test_prod_settings_reject_mismatched_broker_password(faker: Faker) -> None:
+    result = _import_prod_settings(
+        faker,
+        {"CELERY_BROKER_URL": "redis://:wrong@redis:6379/1"},
+    )
+
+    assert result.returncode != 0
+    assert "CELERY_BROKER_URL password must match REDIS_PASSWORD." in result.stderr
+
+
+{% endif -%}
+def test_prod_settings_reject_mismatched_cache_password(faker: Faker) -> None:
+    result = _import_prod_settings(
+        faker,
+        {"CACHE_URL": "rediscache://:wrong@redis:6379/0"},
+    )
+
+    assert result.returncode != 0
+    assert "CACHE_URL password must match REDIS_PASSWORD." in result.stderr
+
+
+{% endif -%}
+{% if cookiecutter.postgres == "compose" -%}
+def test_prod_settings_reject_mismatched_database_password(faker: Faker) -> None:
+    result = _import_prod_settings(
+        faker,
+        {"DATABASE_URL": "postgres://my_project:wrong@postgres:5432/my_project"},
+    )
+
+    assert result.returncode != 0
+    assert "DATABASE_URL password must match POSTGRES_PASSWORD." in result.stderr
+
+
+{% endif -%}
+def test_prod_settings_reject_example_allowed_host(faker: Faker) -> None:
+    result = _import_prod_settings(
+        faker,
+        {"ALLOWED_HOSTS": "localhost,127.0.0.1,example.com"},
+    )
+
+    assert result.returncode != 0
+    assert "ALLOWED_HOSTS must not contain example.com in production." in result.stderr
+
+
+# Utils
+
+
+def _base_prod_env(faker: Faker) -> dict[str, str]:
+    postgres_password = faker.bothify(text="postgres-password-????????-########")
+    redis_password = faker.bothify(text="redis-password-????????-########")
+    sentry_key = faker.hexify(text="^" * 32)
+
+    return {
+        "ALLOWED_HOSTS": "localhost,127.0.0.1,api.example.test",
+        "AWS_STORAGE_BUCKET_NAME": faker.slug(),
+        "CACHE_URL": f"rediscache://:{redis_password}@redis:6379/0",
+        "CELERY_BROKER_URL": f"redis://:{redis_password}@redis:6379/1",
+        "CSRF_TRUSTED_ORIGINS": "https://api.example.test",
+        "DATABASE_URL": (
+            f"postgres://my_project:{postgres_password}@postgres:5432/my_project"
+        ),
+        "DEFAULT_FROM_EMAIL": "noreply@example.test",
+        "DJANGO_ENV": "prod",
+        "POSTGRES_PASSWORD": postgres_password,
+        "REDIS_PASSWORD": redis_password,
+        "RESEND_API_KEY": f"re_{faker.pystr(min_chars=24, max_chars=24)}",
+        "SECRET_KEY": faker.bothify(text="ci-secret-????????-########-????????"),
+        "SENTRY_DSN": f"https://{sentry_key}@sentry.example.com/1",
+    }
+
+
+def _import_prod_settings(
+    faker: Faker,
+    overrides: dict[str, str],
+) -> subprocess.CompletedProcess[str]:
+    env = os.environ | _base_prod_env(faker) | overrides
+    env["PYTHONPATH"] = "src"
+
+    return subprocess.run(
+        [sys.executable, "-c", "import config.settings"],
+        capture_output=True,
+        check=False,
+        env=env,
+        text=True,
+    )

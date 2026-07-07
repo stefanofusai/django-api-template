@@ -1,22 +1,46 @@
+{% if cookiecutter.redis == "compose" -%}
+from urllib.parse import unquote, urlsplit
+
+{% endif -%}
 from django.core.exceptions import ImproperlyConfigured
 
 from config.settings import env
+
+if "example.com" in ALLOWED_HOSTS:  # noqa: F821  # ty: ignore[unresolved-reference]
+    msg = "ALLOWED_HOSTS must not contain example.com in production."
+    raise ImproperlyConfigured(msg)
 
 if SECRET_KEY.startswith("django-insecure-"):  # noqa: F821  # ty: ignore[unresolved-reference]
     msg = "SECRET_KEY must be replaced with a securely generated value in production."
     raise ImproperlyConfigured(msg)
 
-if DATABASES["default"].get("PASSWORD") == "{{ cookiecutter.project_slug.replace('-', '_') }}":
+if DATABASES["default"].get("PASSWORD") == "{{ cookiecutter.project_slug.replace('-', '_') }}":  # noqa: F821  # ty: ignore[unresolved-reference]
     msg = "The default database password must be replaced with a securely generated value in production."
     raise ImproperlyConfigured(msg)
+{%- if cookiecutter.postgres == "compose" %}
+
+if DATABASES["default"].get("PASSWORD") != env("POSTGRES_PASSWORD"):  # noqa: F821  # ty: ignore[unresolved-reference]
+    msg = "DATABASE_URL password must match POSTGRES_PASSWORD."
+    raise ImproperlyConfigured(msg)
+{%- endif %}
 {%- if cookiecutter.redis == "compose" %}
 
 if env("REDIS_PASSWORD") == "{{ cookiecutter.project_slug.replace('-', '_') }}":
     msg = "The default Redis password must be replaced with a securely generated value in production."
     raise ImproperlyConfigured(msg)
+
+if unquote(urlsplit(env("CACHE_URL")).password or "") != env("REDIS_PASSWORD"):
+    msg = "CACHE_URL password must match REDIS_PASSWORD."
+    raise ImproperlyConfigured(msg)
+{%- if cookiecutter.use_celery != "none" %}
+
+if unquote(urlsplit(env("CELERY_BROKER_URL")).password or "") != env("REDIS_PASSWORD"):
+    msg = "CELERY_BROKER_URL password must match REDIS_PASSWORD."
+    raise ImproperlyConfigured(msg)
+{%- endif %}
 {%- endif %}
 
-{%- if cookiecutter.email_provider == "resend" %}
+{% if cookiecutter.email_provider == "resend" %}
 ANYMAIL = {"RESEND_API_KEY": env("RESEND_API_KEY")}
 {%- endif %}
 API_DOCS_DECORATOR = "django.contrib.admin.views.decorators.staff_member_required"

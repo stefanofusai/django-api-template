@@ -318,7 +318,7 @@ cookies `Secure`; do not expose this listener directly to the public internet.
 from `domain_name` when the project is baked. Bake with the real deployment
 hostname so the generated `.env.example` is production-ready, and keep
 `127.0.0.1` in `ALLOWED_HOSTS` because the container healthcheck probes over
-localhost.
+localhost. Production boot refuses `example.com` in `ALLOWED_HOSTS`.
 
 Before deploying, generate real secrets:
 

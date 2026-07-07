@@ -141,6 +141,7 @@ runtime-evaluated-decorators = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
+"tests/config/unit/prod_settings_test.py" = ["S603"]
 
 [tool.ty.environment]
 python = ".venv"

@@ -222,15 +222,30 @@ jobs:
         working-directory: /tmp/smoke/my-project
         run: |
           cp .env.example .env
-          sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(uuidgen)$(uuidgen)|" .env
+          postgres_password="$(uuidgen)"
+          redis_password="$(uuidgen)"
+          sed -i "s|^ALLOWED_HOSTS=.*|ALLOWED_HOSTS=localhost,127.0.0.1,api.example.test|" .env
           sed -i "s|^AWS_STORAGE_BUCKET_NAME=.*|AWS_STORAGE_BUCKET_NAME=$(uuidgen)|" .env
-          sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1|" .env
+          sed -i "s|^CACHE_URL=.*|CACHE_URL=rediscache://:$redis_password@redis:6379/0|" .env
+          sed -i "s|^CELERY_BROKER_URL=.*|CELERY_BROKER_URL=redis://:$redis_password@redis:6379/1|" .env
+          sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgres://my_project:$postgres_password@postgres:5432/my_project|" .env
+          sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$postgres_password|" .env
+          sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=$redis_password|" .env
           sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=$(uuidgen)|" .env
+          sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(uuidgen)$(uuidgen)|" .env
+          sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1|" .env
       - name: Prepare minimal production env file
         if: matrix.variant == 'minimal'
         working-directory: /tmp/smoke/my-project
         run: |
           cp .env.example .env
+          postgres_password="$(uuidgen)"
+          redis_password="$(uuidgen)"
+          sed -i "s|^ALLOWED_HOSTS=.*|ALLOWED_HOSTS=localhost,127.0.0.1,api.example.test|" .env
+          sed -i "s|^CACHE_URL=.*|CACHE_URL=rediscache://:$redis_password@redis:6379/0|" .env
+          sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgres://my_project:$postgres_password@postgres:5432/my_project|" .env
+          sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$postgres_password|" .env
+          sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=$redis_password|" .env
           sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(uuidgen)$(uuidgen)|" .env
       - name: Boot production stack
         working-directory: /tmp/smoke/my-project

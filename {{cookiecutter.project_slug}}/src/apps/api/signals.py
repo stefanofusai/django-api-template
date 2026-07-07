@@ -49,7 +49,7 @@ def _normalize_request_id(value: object) -> str:
 
     try:
         UUID(request_id)
-    
+
     except ValueError:
         return str(uuid4())
 

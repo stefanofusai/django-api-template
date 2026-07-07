@@ -122,7 +122,8 @@ Before production deploy:
 - Review `DATABASE_URL`, `CACHE_URL`, and `CELERY_BROKER_URL` when baking with
   external Postgres or Redis.
 - Bake with the real `domain_name` so `ALLOWED_HOSTS`,
-  `CSRF_TRUSTED_ORIGINS`, and `TRAEFIK_DOMAIN` are pre-filled.
+  `CSRF_TRUSTED_ORIGINS`, and `TRAEFIK_DOMAIN` are pre-filled; production boot
+  refuses `example.com` in `ALLOWED_HOSTS`.
 
 See the generated `.env.example` comments and the generated README's
 Production section for the full deployment checklist.
