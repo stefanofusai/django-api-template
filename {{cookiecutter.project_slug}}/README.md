@@ -288,7 +288,7 @@ against the running `postgres` service and prunes old dumps. Schedule it
 with host cron, for example:
 
 ```shell
-0 3 * * * cd /path/to/{{ cookiecutter.project_slug }} && ./.docker/scripts/postgres-backup.sh /var/backups/{{ cookiecutter.project_slug }}
+0 3 * * * cd /path/to/{{ cookiecutter.project_slug }} && ./.docker/scripts/postgres-backup.sh backup /var/backups/{{ cookiecutter.project_slug }}
 ```
 
 Copy dumps off-host; a dump left on the same disk as the database does
@@ -304,7 +304,10 @@ docker compose -f .docker/compose/prod.yaml --env-file=.env exec -T postgres \
 ```
 
 Rehearse restores periodically so the procedure is proven before it is
-needed under pressure. This is snapshot-based backup only: anything
+needed under pressure. Use
+`./.docker/scripts/postgres-backup.sh verify <dump>` to restore a dump into
+a throwaway container, never the live database; run it on a schedule that
+matches your risk tolerance. This is snapshot-based backup only: anything
 written after the last dump is lost, and there is no point-in-time
 recovery here. If your recovery point objective is measured in minutes
 rather than hours, move to managed Postgres (`postgres=external`)
