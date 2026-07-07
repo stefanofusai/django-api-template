@@ -29,31 +29,35 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --group=${UV_DEPENDENCY_GROUP} --locked --no-default-groups
 
-# Throwaway values: prod settings require these at import time, but nothing
-# reads them during collectstatic; the DATABASE_URL is parse-only - no
-# connection is made.
-RUN ALLOWED_HOSTS=localhost \
+# collectstatic only for the prod image: prod serves pre-collected static
+# via whitenoise (a prod-group dep), whereas dev serves static from source
+# through runserver_plus, so a dev build neither needs nor has whitenoise.
+# Throwaway env values: prod settings require them at import time but nothing
+# reads them during collectstatic; DATABASE_URL is parse-only (no connection).
+RUN if [ "$UV_DEPENDENCY_GROUP" = "prod" ]; then \
+        ALLOWED_HOSTS=localhost \
 {%- if cookiecutter.use_s3_media == "yes" %}
-    AWS_STORAGE_BUCKET_NAME=$(uuidgen) \
+        AWS_STORAGE_BUCKET_NAME=$(uuidgen) \
 {%- endif %}
-    CACHE_URL=locmemcache:// \
-    CSRF_TRUSTED_ORIGINS=https://localhost \
-    DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres \
+        CACHE_URL=locmemcache:// \
+        CSRF_TRUSTED_ORIGINS=https://localhost \
+        DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres \
 {%- if cookiecutter.email_provider != "none" %}
-    DEFAULT_FROM_EMAIL=noreply@example.com \
+        DEFAULT_FROM_EMAIL=noreply@example.com \
 {%- endif %}
-    DJANGO_ENV=prod \
+        DJANGO_ENV=prod \
 {%- if cookiecutter.email_provider == "smtp" %}
-    EMAIL_HOST=smtp.example.com \
+        EMAIL_HOST=smtp.example.com \
 {%- endif %}
 {%- if cookiecutter.email_provider == "resend" %}
-    RESEND_API_KEY=$(uuidgen) \
+        RESEND_API_KEY=$(uuidgen) \
 {%- endif %}
-    SECRET_KEY=$(uuidgen)$(uuidgen) \
+        SECRET_KEY=$(uuidgen)$(uuidgen) \
 {%- if cookiecutter.use_sentry == "yes" %}
-    SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1 \
+        SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1 \
 {%- endif %}
-    .venv/bin/python manage.py collectstatic --no-input
+        .venv/bin/python manage.py collectstatic --no-input; \
+    fi
 
 FROM base AS runtime
 
