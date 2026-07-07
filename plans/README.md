@@ -59,7 +59,7 @@ lands) — shell scripts are linted directly via
 | 010 | CI robustness: example-API-under-stripped-stack bake + Postgres image drift guard | P2 | S | — | DONE |
 | 011 | Notes-slice hardening: pagination e2e, composite index, auth'd contract pass, Hypothesis profile | P2 | M | — | DONE |
 | 012 | Vendor `django-safe-migration`, `django-perf-review`, `django-access-review` skills | P2 | S | — | DONE |
-| 022 | Release workflow + GHCR registry: immutable deploys, tag-repoint rollback | P2 | M | — | TODO |
+| 022 | Release workflow + GHCR registry: immutable deploys, tag-repoint rollback | P2 | M | — | DONE |
 | 013 | Design spike: `api_auth` knob for token/API-key auth | P2 (spike) | M | — | DONE |
 | 023 | `postgres-backup.sh` subcommands: `backup` / `verify` (restore rehearsal vs throwaway container) | P3 | S–M | 001 (hard) | DONE |
 | 024 | `manage.sh` wrapper for prod management commands (`createsuperuser` day-one op) | P3 | S | — | TODO |

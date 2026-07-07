@@ -232,6 +232,32 @@ Start the production stack:
 docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --wait
 ```
 
+For release-based deploys, bump `[project] version` in `pyproject.toml`,
+commit, tag `v<version>`, and push the tag. The release workflow publishes
+`ghcr.io/<owner>/<repo>:v<version>` and refuses tags that do not match the
+project version, keeping image tags aligned with Sentry release names.
+
+Deploy or roll back with one command from the project root:
+
+```shell
+./.docker/scripts/deploy.sh v<version>
+```
+
+The script updates `APP_VERSION` in `.env`, pulls the matching image, and
+replaces the containers. Rollback is the same command with the previous tag,
+for example `./.docker/scripts/deploy.sh v<previous>`. Usually the previous
+image is still cached on the host, so the pull is a no-op. Find earlier tags
+with `git tag --sort=-v:refname | head` or on the GHCR package page.
+
+Do not deploy releases with `up -d --build`; that builds source on the host
+instead of running the published artifact. Rolling back an image does not roll
+back the database: the production stack runs migrations before the API starts,
+so keep migrations backward-compatible at least one release back. If the GitHub
+repository name differs from `{{ cookiecutter.project_slug }}`, update the
+`image:` lines in `.docker/compose/prod.yaml` to match
+`ghcr.io/<owner>/<repo>`. Private GHCR packages require `docker login ghcr.io`
+on the host with a token that can read packages.
+
 Production serves Django through ASGI (`config.asgi`) using Gunicorn with
 Uvicorn workers. Sync and async Django Ninja operations can coexist; use async
 handlers only with async-safe libraries or Django's async ORM APIs.
