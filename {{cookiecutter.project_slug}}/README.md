@@ -39,9 +39,12 @@ src/config/          Django settings, URLs, ASGI entrypoint
 {%- endif %}
 src/apps/core/       shared abstract model bases
 src/apps/api/        Django Ninja API, schemas, pagination, request metadata
+{%- if cookiecutter.use_example_api == "yes" %}
+src/apps/notes/      example notes resource (model, router, schemas, tests)
+{%- endif %}
 tests/               unit and integration tests
 .docker/             Dockerfile, Compose files, entrypoint scripts
-.github/            CI, pre-commit, dependency audit, Docker build workflows
+.github/             dependency audit, deploy check, Docker build, migration check, pre-commit, and test workflows
 ```
 
 Settings use `django-split-settings` with reusable components and environment

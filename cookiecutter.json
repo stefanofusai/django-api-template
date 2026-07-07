@@ -46,7 +46,7 @@
             "external": "Use an external Redis-compatible cache or broker"
         },
         "traefik_tls": {
-            "__prompt__": "Traefik TLS certificate source",
+            "__prompt__": "Traefik TLS certificate source (ignored when use_traefik=no)",
             "letsencrypt": "Use Traefik ACME with Let's Encrypt",
             "external": "Use operator-provided PEM certificate files"
         },
