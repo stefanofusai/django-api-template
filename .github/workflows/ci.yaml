@@ -56,6 +56,10 @@ jobs:
             project_name: My Project
             extra-args: use_celery=none email_provider=none use_sentry=no use_s3_media=no use_traefik=no
             slug: my-project
+          - case: no-proxy
+            project_name: My Project
+            extra-args: use_traefik=no behind_proxy=no
+            slug: my-project
           - case: smtp
             project_name: My Project
             extra-args: email_provider=smtp

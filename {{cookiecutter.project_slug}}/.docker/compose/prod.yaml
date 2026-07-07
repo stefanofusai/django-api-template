@@ -27,7 +27,9 @@ services:
       - ../../.env
     environment:
       DJANGO_ENV: prod
+{%- if cookiecutter.use_traefik == "yes" or cookiecutter.behind_proxy == "yes" %}
       FORWARDED_ALLOW_IPS: "*"
+{%- endif %}
     healthcheck:
       test:
         - CMD

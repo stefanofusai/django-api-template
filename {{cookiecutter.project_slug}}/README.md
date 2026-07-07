@@ -258,10 +258,17 @@ has already removed the backend from rotation. Those pieces cover both sides of
 replacement: the new backend is not relied on until its HTTP health check
 passes, and the old backend keeps serving until gunicorn finishes draining.
 {%- else %}
+{%- if cookiecutter.behind_proxy == "yes" %}
 Bring your own ingress. The production `api` service publishes
 `127.0.0.1:8000:8000`; put your proxy on the host in front of that loopback
 listener. The proxy must forward `Host` and overwrite client-supplied
 `X-Forwarded-Proto` so Django can enforce HTTPS without redirect loops.
+{%- else %}
+The production `api` service publishes `127.0.0.1:8000:8000` for plain-HTTP
+private-network use with no trusted proxy in front. In this mode Django does
+not trust `X-Forwarded-Proto`, set HSTS, redirect HTTP to HTTPS, or mark
+cookies `Secure`; do not expose this listener directly to the public internet.
+{%- endif %}
 {%- endif %}
 
 `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, and `TRAEFIK_DOMAIN` are pre-filled

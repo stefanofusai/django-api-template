@@ -6,6 +6,7 @@
     "author_email": "john.doe@example.com",
     "github_username": "johndoe",
     "domain_name": "example.com",
+    "behind_proxy": ["yes", "no"],
     "email_provider": ["resend", "smtp", "none"],
     "postgres": ["compose", "external"],
     "redis": ["compose", "external"],
@@ -23,6 +24,11 @@
         "author_email": "Project author email",
         "github_username": "GitHub username used for Dependabot assignees",
         "domain_name": "Bare deployment hostname used in generated environment defaults",
+        "behind_proxy": {
+            "__prompt__": "Production trusts an upstream proxy's X-Forwarded-Proto header",
+            "yes": "A reverse proxy terminates TLS and sets X-Forwarded-Proto (required for bundled Traefik)",
+            "no": "App is served over plain HTTP with no trusted proxy (internal/private network only)"
+        },
         "email_provider": {
             "__prompt__": "Production email provider",
             "resend": "Resend API via django-anymail",
