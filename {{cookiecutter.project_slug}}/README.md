@@ -209,6 +209,12 @@ you add the first endpoint that needs protection, set a global auth class
 (`NinjaAPI(auth=...)`) or per-router auth; see
 <https://django-ninja.dev/guides/authentication/>.
 
+Export OpenAPI schema files for client generation:
+
+```shell
+python manage.py export_openapi_schema --api=v1 --output=openapi-v1.json
+```
+
 Use Django Admin:
 
 ```shell

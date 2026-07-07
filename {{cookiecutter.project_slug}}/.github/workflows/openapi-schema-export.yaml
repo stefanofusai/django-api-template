@@ -1,0 +1,42 @@
+name: OpenAPI
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  openapi:
+    name: OpenAPI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.3
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version-file: pyproject.toml
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.2.0
+      - name: Install dependencies
+        run: uv sync --group=ci --locked --no-default-groups
+      - name: Export OpenAPI schemas
+        env:
+          ALLOWED_HOSTS: localhost
+          CACHE_URL: locmemcache://
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+          DEFAULT_FROM_EMAIL: noreply@example.com
+          DJANGO_ENV: ci
+          SECRET_KEY: ci-secret-for-openapi-0123456789-abcdefghijklmnopqrstuvwxyz
+        run: |
+          uv run --group=ci --locked --no-default-groups manage.py export_openapi_schema --api=internal --output=openapi-internal.json
+          uv run --group=ci --locked --no-default-groups manage.py export_openapi_schema --api=v1 --output=openapi-v1.json
+      - name: Upload OpenAPI schemas
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: openapi-schemas
+          path: |
+            openapi-internal.json
+            openapi-v1.json
