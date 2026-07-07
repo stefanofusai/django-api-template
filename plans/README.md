@@ -62,7 +62,7 @@ lands) — shell scripts are linted directly via
 | 022 | Release workflow + GHCR registry: immutable deploys, tag-repoint rollback | P2 | M | — | DONE |
 | 013 | Design spike: `api_auth` knob for token/API-key auth | P2 (spike) | M | — | DONE |
 | 023 | `postgres-backup.sh` subcommands: `backup` / `verify` (restore rehearsal vs throwaway container) | P3 | S–M | 001 (hard) | DONE |
-| 024 | `manage.sh` wrapper for prod management commands (`createsuperuser` day-one op) | P3 | S | — | TODO |
+| 024 | `manage.sh` wrapper for prod management commands (`createsuperuser` day-one op) | P3 | S | — | DONE |
 | 014 | `export_openapi_schema` command + schema-artifact CI job | P3 | S–M | — | DONE |
 | 015 | Generated-project Docker boot smoke + dev-image build | P3 | M | — | DONE |
 | 016 | CI/build hygiene: pre-commit cache, dockerignore `.agents/`, `$$POSTGRES_USER` fix | P3 | S | — | DONE |

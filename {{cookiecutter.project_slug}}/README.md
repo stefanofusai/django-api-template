@@ -258,6 +258,14 @@ repository name differs from `{{ cookiecutter.project_slug }}`, update the
 `ghcr.io/<owner>/<repo>`. Private GHCR packages require `docker login ghcr.io`
 on the host with a token that can read packages.
 
+Run management commands against the running production stack through the
+wrapper script. The template deliberately ships no registration endpoints, so
+mint the first credential with:
+
+```shell
+./.docker/scripts/manage.sh createsuperuser
+```
+
 Production serves Django through ASGI (`config.asgi`) using Gunicorn with
 Uvicorn workers. Sync and async Django Ninja operations can coexist; use async
 handlers only with async-safe libraries or Django's async ORM APIs.
