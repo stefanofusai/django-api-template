@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import re
 import shutil
 import subprocess
@@ -23,7 +24,20 @@ UV_LOCK_WARNING = (
     "WARNING: uv.lock was not generated; CI, the ty hook, and uv-audit use "
     "--locked and will fail until you run uv lock"
 )
+
+MARKDOWN_FILES = [
+    "AGENTS.md",
+    "README.md",
+]
 REMOVED_PATHS = [
+    *(
+        [
+            ".docker/scripts/postgres-backup.sh",
+            ".docker/scripts/postgres-restore.sh",
+        ]
+        if POSTGRES != "compose"
+        else []
+    ),
     *(
         [
             ".docker/scripts/celery-beat.sh",
@@ -42,14 +56,6 @@ REMOVED_PATHS = [
         else []
     ),
     *(
-        [
-            ".docker/scripts/postgres-backup.sh",
-            ".docker/scripts/postgres-restore.sh",
-        ]
-        if POSTGRES != "compose"
-        else []
-    ),
-    *(
         ["src/config/settings/components/sentry.py"]
         if USE_SENTRY == "no"
         else []
@@ -61,13 +67,13 @@ REMOVED_PATHS = [
     ),
 ]
 REMOVED_DIRS = [
+    *(
+        [".agents/skills/django-celery-expert"]
+        if USE_CELERY == "none"
+        else []
+    ),
     *(["src/apps/notes", "tests/notes"] if USE_EXAMPLE_API == "no" else []),
 ]
-MARKDOWN_FILES = [
-    "AGENTS.md",
-    "README.md",
-]
-
 
 def main() -> None:
     for removed_path in REMOVED_PATHS:
@@ -75,6 +81,9 @@ def main() -> None:
 
     for removed_dir in REMOVED_DIRS:
         shutil.rmtree(removed_dir)
+
+    if USE_CELERY == "none":
+        _prune_celery_skill_metadata()
 
     for markdown_file in MARKDOWN_FILES:
         path = Path(markdown_file)
@@ -126,6 +135,18 @@ def _parse_compose_version(output: str) -> tuple[int, int, int] | None:
         version.append(0)
 
     return tuple(version)
+
+
+def _prune_celery_skill_metadata() -> None:
+    lock_path = Path("skills-lock.json")
+    lock = json.loads(lock_path.read_text())
+    lock["skills"].pop("django-celery-expert", None)
+    lock_path.write_text(json.dumps(lock, indent=2) + "\n")
+
+    readme_path = Path(".agents/README.md")
+    lines = readme_path.read_text().splitlines(keepends=True)
+    kept = [line for line in lines if "`django-celery-expert`:" not in line]
+    readme_path.write_text("".join(kept))
 
 
 def _warn_on_unsupported_compose() -> None:
