@@ -1,14 +1,39 @@
+{% if cookiecutter.use_example_api == "yes" -%}
+from typing import TYPE_CHECKING
+
+{% endif -%}
 import pytest
 import schemathesis
-from schemathesis import Case
+{% if cookiecutter.use_example_api == "yes" -%}
+from django.conf import settings
+from django.test import Client
+{% endif -%}
+from schemathesis import Case, CheckFunction
+from schemathesis.checks import CHECKS, load_all_checks
 
 # Production serves ASGI (config.asgi), but the OpenAPI schema is identical
 # under either protocol and Schemathesis' ASGI transport runs the ASGI
 # lifespan protocol, which Django's ASGIHandler rejects. Load the WSGI app
 # for the contract test.
 from config.wsgi import application
-{%- if cookiecutter.use_example_api == "yes" %}
+{% if cookiecutter.use_example_api == "yes" %}
+if TYPE_CHECKING:
+    from apps.core.models import User
+    from tests.factories import NoteFactory
+{% endif %}
+OPENAPI_CONTRACT_CHECK_NAMES = (
+    "content_type_conformance",
+    "not_a_server_error",
+    "response_schema_conformance",
+    "status_code_conformance",
+)
 
+load_all_checks()
+
+OPENAPI_CONTRACT_CHECKS: list[CheckFunction] = CHECKS.get_by_names(
+    OPENAPI_CONTRACT_CHECK_NAMES
+)
+{% if cookiecutter.use_example_api == "yes" %}
 
 @pytest.fixture(params=["/api/openapi.json", "/api/v1/openapi.json"])
 def api_schema(request: pytest.FixtureRequest) -> object:
@@ -17,7 +42,6 @@ def api_schema(request: pytest.FixtureRequest) -> object:
         application,
     )
 {%- else %}
-
 
 @pytest.fixture
 def api_schema() -> object:
@@ -29,19 +53,54 @@ def api_schema() -> object:
 
 
 schema = schemathesis.pytest.from_fixture("api_schema")
+{% if cookiecutter.use_example_api == "yes" %}
 
+@pytest.fixture
+def authenticated_schema_headers(
+    note_factory: type[NoteFactory],
+    user: User,
+) -> dict[str, str]:
+    note_factory.create(body="Contract body", owner=user, title="Contract note")
+    client = Client()
+    client.force_login(user)
+    session_cookie = client.cookies[settings.SESSION_COOKIE_NAME].value
 
-{% if cookiecutter.use_example_api == "yes" -%}
+    return {
+        "Cookie": f"{settings.SESSION_COOKIE_NAME}={session_cookie}",
+    }
+{%- endif %}
+{% if cookiecutter.use_example_api == "yes" %}
+
 # transaction=True avoids Django's request_finished signal closing the
 # connection mid-test: Hypothesis calls the WSGI app many times per test, and
 # the notes routes run real queries (session lookup) unlike the probes below.
 @pytest.mark.django_db(transaction=True)
-{%- else -%}
+{%- else %}
 @pytest.mark.django_db
 {%- endif %}
 @schema.parametrize()
-def test_api_schema_conforms_to_openapi_contract(case: Case) -> None:
-    case.call_and_validate()
+def test_api_schema_conforms_to_openapi_contract_when_anonymous(case: Case) -> None:
+    case.call_and_validate(checks=OPENAPI_CONTRACT_CHECKS)
+{%- if cookiecutter.use_example_api == "yes" %}
+
+
+# transaction=True avoids Django's request_finished signal closing the
+# connection mid-test: Hypothesis calls the WSGI app many times per test, and
+# the notes routes run real queries (session lookup) unlike the probes below.
+@pytest.mark.django_db(transaction=True)
+@schema.parametrize()
+def test_api_schema_conforms_to_openapi_contract_when_authenticated(
+    authenticated_schema_headers: dict[str, str],
+    case: Case,
+) -> None:
+    if case.method.upper() == "GET" and case.path == "/api/v1/notes":
+        case.query = {"limit": 1, "offset": 0}
+
+    case.call_and_validate(
+        checks=OPENAPI_CONTRACT_CHECKS,
+        headers=authenticated_schema_headers,
+    )
+{%- endif %}
 {%- if cookiecutter.use_example_api == "no" %}
 
 

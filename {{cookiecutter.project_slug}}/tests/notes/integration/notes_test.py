@@ -1,7 +1,10 @@
+from datetime import timedelta
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
+from django.utils import timezone
+from ninja.conf import settings as ninja_settings
 
 from apps.api.pagination import PAGINATION_MAX_LIMIT
 from apps.notes.models import Note
@@ -84,6 +87,22 @@ def test_detail_note_returns_404_when_owned_by_other_user(
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
+def test_list_notes_caps_items_when_limit_below_total(
+    authenticated_v1_api_client: AuthenticatedTestClient,
+    note_factory: type[NoteFactory],
+) -> None:
+    limit = 2
+    total = 3
+    note_factory.create_batch(total, owner=authenticated_v1_api_client.user)
+
+    response = authenticated_v1_api_client.get("/notes", query_params={"limit": limit})
+
+    assert response.status_code == HTTPStatus.OK
+    payload = response.data
+    assert payload["count"] == total
+    assert len(payload["items"]) == limit
+
+
 def test_list_notes_returns_401_when_anonymous(v1_api_client: TestClient) -> None:
     response = v1_api_client.get("/notes")
 
@@ -95,6 +114,17 @@ def test_list_notes_returns_422_when_limit_exceeds_maximum(
 ) -> None:
     response = authenticated_v1_api_client.get(
         "/notes", query_params={"limit": PAGINATION_MAX_LIMIT + 1}
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_list_notes_returns_422_when_offset_exceeds_maximum(
+    authenticated_v1_api_client: AuthenticatedTestClient,
+) -> None:
+    response = authenticated_v1_api_client.get(
+        "/notes",
+        query_params={"offset": ninja_settings.PAGINATION_MAX_OFFSET + 1},
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
@@ -113,6 +143,34 @@ def test_list_notes_returns_only_callers_notes_when_authenticated(
     payload = response.data
     assert payload["count"] == 1
     assert [item["id"] for item in payload["items"]] == [str(own_note.id)]
+
+
+def test_list_notes_returns_second_page_when_offset_given(
+    authenticated_v1_api_client: AuthenticatedTestClient,
+    note_factory: type[NoteFactory],
+) -> None:
+    total_notes = 3
+    oldest_note = note_factory.create(owner=authenticated_v1_api_client.user)
+    second_newest_note = note_factory.create(owner=authenticated_v1_api_client.user)
+    newest_note = note_factory.create(owner=authenticated_v1_api_client.user)
+    base_time = timezone.now()
+    Note.objects.filter(id=oldest_note.id).update(created_at=base_time)
+    Note.objects.filter(id=second_newest_note.id).update(
+        created_at=base_time + timedelta(minutes=1)
+    )
+    Note.objects.filter(id=newest_note.id).update(
+        created_at=base_time + timedelta(minutes=2)
+    )
+
+    response = authenticated_v1_api_client.get(
+        "/notes",
+        query_params={"limit": 1, "offset": 1},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    payload = response.data
+    assert payload["count"] == total_notes
+    assert [item["id"] for item in payload["items"]] == [str(second_newest_note.id)]
 
 
 def test_update_note_returns_200_when_authenticated_owner(

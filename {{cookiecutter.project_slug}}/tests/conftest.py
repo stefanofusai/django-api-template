@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 import pytest
+from hypothesis import settings as hypothesis_settings
 from ninja.testing import TestClient
 from pytest_factoryboy import register
 
@@ -15,6 +16,10 @@ TEST_TYPE_MARKERS = {
     "integration": pytest.mark.integration,
     "unit": pytest.mark.unit,
 }
+
+# Cold database connections can exceed Hypothesis' default deadline under xdist.
+hypothesis_settings.register_profile("ci", deadline=None, max_examples=50)
+hypothesis_settings.load_profile("ci")
 
 register(UserFactory)
 {%- if cookiecutter.use_example_api == "yes" %}

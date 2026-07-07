@@ -17,6 +17,7 @@ class Note(UUIDModel, CreatedAtUpdatedAtModel):
     body = models.TextField(_("body"), blank=True)
 
     class Meta:
+        indexes = (models.Index(fields=["owner", "-created_at"]),)
         ordering = ("-created_at",)
         verbose_name = _("note")
         verbose_name_plural = _("notes")
