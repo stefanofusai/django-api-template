@@ -13,7 +13,7 @@ Compose deployment defaults, and CI gates for the baked project.
   probes
 - 100% pytest coverage gate with factories and Schemathesis property-based
   contract tests
-- actionlint, gitleaks, gitlint, markdownlint, Ruff, Ty, uv-audit, yamlfmt,
+- actionlint, gitleaks, gitlint, markdownlint, Ruff, shellcheck, Ty, uv-audit, yamlfmt,
   yamllint, and other pre-commit checks
 - Custom user model from the initial bake
 - Dependabot for Compose, Docker, GitHub Actions, pre-commit hooks, and uv
