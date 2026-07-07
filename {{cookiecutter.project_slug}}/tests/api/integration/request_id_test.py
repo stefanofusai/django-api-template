@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from faker import Faker
 
 
-def test_failure_response_includes_request_id_from_signal_context(
+def test_failure_response_includes_request_id_when_signal_context_has_request_id(
     faker: Faker,
 ) -> None:
     logger = structlog.get_logger()
@@ -32,13 +32,6 @@ def test_failure_response_includes_request_id_from_signal_context(
 
     finally:
         structlog.contextvars.clear_contextvars()
-
-
-def test_response_includes_generated_request_id(client: Client) -> None:
-    response = client.get("/api/missing")
-
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    UUID(response.headers["X-Request-ID"])
 
 
 def test_request_id_is_regenerated_when_client_sends_malformed_value(
@@ -66,7 +59,18 @@ def test_request_id_response_is_bounded_when_client_sends_overlong_value(
     assert len(response_request_id) <= REQUEST_ID_MAX_LENGTH
 
 
-def test_response_preserves_supplied_request_id(client: Client, faker: Faker) -> None:
+def test_response_includes_generated_request_id_when_client_sends_no_request_id(
+    client: Client,
+) -> None:
+    response = client.get("/api/missing")
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    UUID(response.headers["X-Request-ID"])
+
+
+def test_response_preserves_supplied_request_id_when_client_sends_valid_value(
+    client: Client, faker: Faker
+) -> None:
     request_id = faker.uuid4()
 
     response = client.get("/api/missing", headers={"X-Request-ID": request_id})

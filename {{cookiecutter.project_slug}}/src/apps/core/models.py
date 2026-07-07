@@ -19,15 +19,6 @@ class CreatedAtUpdatedAtModel(CreatedAtModel):
         abstract = True
 
 
-class User(AbstractUser):
-    email = models.EmailField(_("email address"), unique=True)
-
-    class Meta:
-        ordering = ("username",)
-        verbose_name = AbstractUser.Meta.verbose_name
-        verbose_name_plural = AbstractUser.Meta.verbose_name_plural
-
-
 class UUIDModel(models.Model):
     # uuid7 (stdlib since 3.14) over uuid4: time-ordered values keep b-tree
     # primary-key indexes append-mostly instead of randomly fragmented.
@@ -35,3 +26,12 @@ class UUIDModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class User(AbstractUser):
+    email = models.EmailField(_("email address"), unique=True)
+
+    class Meta:
+        ordering = ("username",)
+        verbose_name = AbstractUser.Meta.verbose_name
+        verbose_name_plural = AbstractUser.Meta.verbose_name_plural

@@ -10,7 +10,21 @@ if TYPE_CHECKING:
 {%- endif %}
 
 
-def test_v1_api_exposes_openapi_schema_at_versioned_path(client: Client) -> None:
+{% if cookiecutter.use_example_api == "yes" -%}
+def test_v1_api_exposes_notes_paths_when_example_api_is_enabled(
+    client: Client,
+) -> None:
+    response = client.get(reverse("v1:openapi-json"))
+
+    assert response.status_code == HTTPStatus.OK
+    paths = response.json()["paths"]
+    assert any(path.startswith("/api/v1/notes") for path in paths)
+
+
+{% endif -%}
+def test_v1_api_exposes_openapi_schema_when_versioned_schema_path_is_requested(
+    client: Client,
+) -> None:
     response = client.get(reverse("v1:openapi-json"))
 
     assert response.status_code == HTTPStatus.OK
@@ -32,15 +46,4 @@ def test_v1_api_serves_no_routes_when_template_is_fresh(client: Client) -> None:
     response = client.get("/api/v1/does-not-exist")
 
     assert response.status_code == HTTPStatus.NOT_FOUND
-{%- else %}
-
-
-def test_v1_api_exposes_notes_paths_when_example_api_is_enabled(
-    client: Client,
-) -> None:
-    response = client.get(reverse("v1:openapi-json"))
-
-    assert response.status_code == HTTPStatus.OK
-    paths = response.json()["paths"]
-    assert any(path.startswith("/api/v1/notes") for path in paths)
 {%- endif %}

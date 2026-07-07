@@ -6,7 +6,6 @@ from config.settings import env
 
 CELERY_ACCEPT_CONTENT = ["json"]
 {%- if cookiecutter.use_celery == "worker+beat" %}
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 # DatabaseScheduler copies this dict into its database tables on beat
 # startup; the admin then owns the live schedule (edits there persist,
 # but the entry reappears if deleted while this setting still defines it).
@@ -16,6 +15,7 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.core.tasks.clear_expired_sessions",
     },
 }
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 {%- endif %}
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/1")

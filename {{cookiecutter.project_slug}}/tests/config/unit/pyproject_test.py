@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from faker import Faker
 
 
-def test_pyproject_loads_project_metadata_with_tomllib() -> None:
+def test_pyproject_loads_project_metadata_when_tomllib_is_available() -> None:
     assert isinstance(pyproject, dict)
     assert project_metadata == pyproject["project"]
     assert project_name == project_metadata["name"]

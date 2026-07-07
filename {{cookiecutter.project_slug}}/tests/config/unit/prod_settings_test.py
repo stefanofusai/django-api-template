@@ -7,9 +7,23 @@ if TYPE_CHECKING:
     from faker import Faker
 
 
+def test_prod_settings_reject_example_allowed_host_when_example_domain_is_configured(
+    faker: Faker,
+) -> None:
+    result = _import_prod_settings(
+        faker,
+        {"ALLOWED_HOSTS": "localhost,127.0.0.1,example.com"},
+    )
+
+    assert result.returncode != 0
+    assert "ALLOWED_HOSTS must not contain example.com in production." in result.stderr
+
+
 {% if cookiecutter.redis == "compose" -%}
 {% if cookiecutter.use_celery != "none" -%}
-def test_prod_settings_reject_mismatched_broker_password(faker: Faker) -> None:
+def test_prod_settings_reject_mismatched_broker_password_when_redis_is_compose(
+    faker: Faker,
+) -> None:
     result = _import_prod_settings(
         faker,
         {"CELERY_BROKER_URL": "redis://:wrong@redis:6379/1"},
@@ -20,7 +34,9 @@ def test_prod_settings_reject_mismatched_broker_password(faker: Faker) -> None:
 
 
 {% endif -%}
-def test_prod_settings_reject_mismatched_cache_password(faker: Faker) -> None:
+def test_prod_settings_reject_mismatched_cache_password_when_redis_is_compose(
+    faker: Faker,
+) -> None:
     result = _import_prod_settings(
         faker,
         {"CACHE_URL": "rediscache://:wrong@redis:6379/0"},
@@ -32,7 +48,9 @@ def test_prod_settings_reject_mismatched_cache_password(faker: Faker) -> None:
 
 {% endif -%}
 {% if cookiecutter.postgres == "compose" -%}
-def test_prod_settings_reject_mismatched_database_password(faker: Faker) -> None:
+def test_prod_settings_reject_mismatched_database_password_when_postgres_is_compose(
+    faker: Faker,
+) -> None:
     result = _import_prod_settings(
         faker,
         {"DATABASE_URL": "postgres://my_project:wrong@postgres:5432/my_project"},
@@ -43,16 +61,6 @@ def test_prod_settings_reject_mismatched_database_password(faker: Faker) -> None
 
 
 {% endif -%}
-def test_prod_settings_reject_example_allowed_host(faker: Faker) -> None:
-    result = _import_prod_settings(
-        faker,
-        {"ALLOWED_HOSTS": "localhost,127.0.0.1,example.com"},
-    )
-
-    assert result.returncode != 0
-    assert "ALLOWED_HOSTS must not contain example.com in production." in result.stderr
-
-
 # Utils
 
 

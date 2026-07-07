@@ -9,25 +9,32 @@ COMPOSE_VERSION_WARNING = (
     "WARNING: Docker Compose 5.3.0 or newer is required for the generated "
     "Compose files because they use pre_start lifecycle hooks"
 )
+GIT_INIT_WARNING = (
+    "WARNING: git repository was not initialized; run git init "
+    "--initial-branch=main manually"
+)
+MARKDOWN_FILES = [
+    "AGENTS.md",
+    "README.md",
+]
 POSTGRES = {{ cookiecutter.postgres | tojson }}
 TRAEFIK_TLS = {{ cookiecutter.traefik_tls | tojson }}
 USE_CELERY = {{ cookiecutter.use_celery | tojson }}
 USE_EXAMPLE_API = {{ cookiecutter.use_example_api | tojson }}
 USE_SENTRY = {{ cookiecutter.use_sentry | tojson }}
 USE_TRAEFIK = {{ cookiecutter.use_traefik | tojson }}
-
-GIT_INIT_WARNING = (
-    "WARNING: git repository was not initialized; run git init "
-    "--initial-branch=main manually"
-)
 UV_LOCK_WARNING = (
     "WARNING: uv.lock was not generated; CI, the ty hook, and uv-audit use "
     "--locked and will fail until you run uv lock"
 )
 
-MARKDOWN_FILES = [
-    "AGENTS.md",
-    "README.md",
+REMOVED_DIRS = [
+    *(
+        [".agents/skills/django-celery-expert"]
+        if USE_CELERY == "none"
+        else []
+    ),
+    *(["src/apps/notes", "tests/notes"] if USE_EXAMPLE_API == "no" else []),
 ]
 REMOVED_PATHS = [
     *(
@@ -64,14 +71,6 @@ REMOVED_PATHS = [
         if not (USE_TRAEFIK == "yes" and TRAEFIK_TLS == "external")
         else []
     ),
-]
-REMOVED_DIRS = [
-    *(
-        [".agents/skills/django-celery-expert"]
-        if USE_CELERY == "none"
-        else []
-    ),
-    *(["src/apps/notes", "tests/notes"] if USE_EXAMPLE_API == "no" else []),
 ]
 
 def main() -> None:

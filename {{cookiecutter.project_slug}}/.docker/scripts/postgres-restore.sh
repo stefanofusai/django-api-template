@@ -11,5 +11,5 @@ DUMP_FILE=${1:?usage: postgres-restore.sh <dump-file>}
 [ -f "$DUMP_FILE" ] || { echo "no such dump file: $DUMP_FILE" >&2; exit 2; }
 
 docker compose -f .docker/compose/prod.yaml --env-file=.env exec -T postgres \
-    sh -c 'pg_restore --clean --if-exists --dbname="$POSTGRES_DB" --username="$POSTGRES_USER"' \
+    sh -c 'pg_restore --clean --dbname="$POSTGRES_DB" --if-exists --username="$POSTGRES_USER"' \
     < "$DUMP_FILE"

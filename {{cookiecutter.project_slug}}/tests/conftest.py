@@ -31,6 +31,13 @@ register(NoteFactory)
 
 
 @pytest.fixture
+def authenticated_v1_api_client(
+    v1_api_client: TestClient, user: User
+) -> AuthenticatedTestClient:
+    return AuthenticatedTestClient(v1_api_client, user)
+
+
+@pytest.fixture
 def internal_api_client() -> TestClient:
     return TestClient(internal_api)
 
@@ -38,13 +45,6 @@ def internal_api_client() -> TestClient:
 @pytest.fixture
 def v1_api_client() -> TestClient:
     return TestClient(v1_api)
-
-
-@pytest.fixture
-def authenticated_v1_api_client(
-    v1_api_client: TestClient, user: User
-) -> AuthenticatedTestClient:
-    return AuthenticatedTestClient(v1_api_client, user)
 
 
 # Hooks

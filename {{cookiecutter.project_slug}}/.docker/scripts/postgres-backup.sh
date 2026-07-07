@@ -89,8 +89,10 @@ case $COMMAND in
             < "$DUMP_FILE"
 
         MIGRATIONS=$(docker exec "$CONTAINER" \
-            psql --dbname=postgres --username=postgres -tAc \
-                "SELECT count(*) FROM django_migrations")
+            psql -At \
+                --command="SELECT count(*) FROM django_migrations" \
+                --dbname=postgres \
+                --username=postgres)
         if [ "$MIGRATIONS" -le 0 ]; then
             echo "restore produced no django_migrations rows" >&2
             exit 1
