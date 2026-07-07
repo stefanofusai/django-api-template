@@ -8,10 +8,11 @@
 > maintain the index.
 >
 > **Drift check (run first)**:
-> `git diff --stat d333a73..HEAD -- '{{cookiecutter.project_slug}}/src/apps/core/tasks.py' '{{cookiecutter.project_slug}}/tests/unit/core/tasks_test.py' '{{cookiecutter.project_slug}}/src/config/settings/components/celery.py' hooks/post_gen_project.py .github/workflows/ci.yaml '{{cookiecutter.project_slug}}/README.md'`
-> Plan 003 legitimately edits `tasks_test.py` (sender assertion) —
-> integrate. On other unexplained mismatches with the excerpts below,
-> STOP.
+> `git diff --stat 60b1aab..HEAD -- '{{cookiecutter.project_slug}}/src/apps/core/tasks.py' '{{cookiecutter.project_slug}}/tests/core/unit/tasks_test.py' '{{cookiecutter.project_slug}}/src/config/settings/components/celery.py' hooks/post_gen_project.py .github/workflows/ci.yaml '{{cookiecutter.project_slug}}/README.md'`
+> Plan 003's `from_email`/`DEFAULT_FROM_EMAIL` sender assertion is
+> already merged into this baseline — preserve it when extending
+> `tasks_test.py`. On other unexplained mismatches with the excerpts
+> below, STOP.
 
 ## Status
 
@@ -22,7 +23,10 @@
 - **Depends on**: 003 (hard — same files); 001 (ordering — tests on
   Postgres)
 - **Category**: direction
-- **Planned at**: commit `d333a73`, 2026-07-05
+- **Planned at**: commit `d333a73`, 2026-07-05; reconciled to commit
+  `60b1aab`, 2026-07-07 (test tree moved `tests/unit/core/` →
+  `tests/core/unit/` in commit `9ecd151`; plan 003 sender assertion now
+  in baseline)
 
 ## Why this matters
 
@@ -71,7 +75,7 @@ Cookiecutter template. Generated project under the literal
 
   ```python
   *(
-      ["src/apps/core/tasks.py", "tests/unit/core/tasks_test.py"]
+      ["src/apps/core/tasks.py", "tests/core/unit/tasks_test.py"]
       if USE_CELERY == "none" or EMAIL_PROVIDER == "none"
       else []
   ),
@@ -90,7 +94,7 @@ Cookiecutter template. Generated project under the literal
   `CELERY_TASK_ALWAYS_EAGER = True`, `CELERY_TASK_EAGER_PROPAGATES = True`
   (gated on celery).
 
-- `{{cookiecutter.project_slug}}/tests/unit/core/tasks_test.py` — one
+- `{{cookiecutter.project_slug}}/tests/core/unit/tasks_test.py` — one
   test (`send_email` via `.delay(...)`, asserts `mail.outbox`); plan 003
   adds a `from_email` assertion.
 
@@ -130,7 +134,7 @@ Cookiecutter template. Generated project under the literal
 **In scope**:
 
 - `{{cookiecutter.project_slug}}/src/apps/core/tasks.py`
-- `{{cookiecutter.project_slug}}/tests/unit/core/tasks_test.py`
+- `{{cookiecutter.project_slug}}/tests/core/unit/tasks_test.py`
 - `{{cookiecutter.project_slug}}/src/config/settings/components/celery.py`
 - `hooks/post_gen_project.py` (the one `REMOVED_PATHS` condition)
 - `.github/workflows/ci.yaml` (one new bake matrix case)
@@ -196,7 +200,7 @@ In `hooks/post_gen_project.py`, change:
 
 ```python
 *(
-    ["src/apps/core/tasks.py", "tests/unit/core/tasks_test.py"]
+    ["src/apps/core/tasks.py", "tests/core/unit/tasks_test.py"]
     if USE_CELERY == "none" or EMAIL_PROVIDER == "none"
     else []
 ),
@@ -206,7 +210,7 @@ to:
 
 ```python
 *(
-    ["src/apps/core/tasks.py", "tests/unit/core/tasks_test.py"]
+    ["src/apps/core/tasks.py", "tests/core/unit/tasks_test.py"]
     if USE_CELERY == "none"
     else []
 ),
@@ -251,7 +255,7 @@ order — celery is third-party like django; check Ruff's isort output).
 
 ### Step 4: Test the task
 
-Extend `tests/unit/core/tasks_test.py` (keep functions alphabetized —
+Extend `tests/core/unit/tasks_test.py` (keep functions alphabetized —
 the new test comes first; `pytestmark = pytest.mark.django_db` needed
 now):
 
@@ -287,7 +291,7 @@ The existing `send_email` test gets wrapped in
 imports gated too — `django.core.mail`, faker typing import). Check
 rendered whitespace in both states.
 
-**Verify**: default bake `uv run pytest tests/unit/core -v` → both pass;
+**Verify**: default bake `uv run pytest tests/core/unit -v` → both pass;
 worker-no-email bake → only the sessions test exists and passes; full
 suites pass at 100% coverage in both.
 

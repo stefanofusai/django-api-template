@@ -171,7 +171,11 @@ messages with `django.core.mail.send_mail(...)`.
 Periodic task schedules are managed in Django Admin through
 django-celery-beat's `DatabaseScheduler`. Run exactly one `celery-beat`
 instance for a deployment. The `celery-beat` service has no healthcheck and
-relies on the Compose restart policy.
+relies on the Compose restart policy. The project ships one example:
+`apps.core.tasks.clear_expired_sessions`, scheduled hourly via
+`CELERY_BEAT_SCHEDULE`. `DatabaseScheduler` copies code-defined schedule
+entries into its database tables on beat startup, after which Django Admin
+owns the live schedule.
 {%- endif %}
 
 ## Usage

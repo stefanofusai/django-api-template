@@ -8,7 +8,6 @@ COMPOSE_VERSION_WARNING = (
     "WARNING: Docker Compose 5.3.0 or newer is required for the generated "
     "Compose files because they use pre_start lifecycle hooks"
 )
-EMAIL_PROVIDER = {{ cookiecutter.email_provider | tojson }}
 POSTGRES = {{ cookiecutter.postgres | tojson }}
 TRAEFIK_TLS = {{ cookiecutter.traefik_tls | tojson }}
 USE_CELERY = {{ cookiecutter.use_celery | tojson }}
@@ -39,7 +38,7 @@ REMOVED_PATHS = [
     *([".docker/scripts/celery-beat.sh"] if USE_CELERY == "worker" else []),
     *(
         ["src/apps/core/tasks.py", "tests/core/unit/tasks_test.py"]
-        if USE_CELERY == "none" or EMAIL_PROVIDER == "none"
+        if USE_CELERY == "none"
         else []
     ),
     *(

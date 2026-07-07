@@ -64,6 +64,10 @@ jobs:
             project_name: My_Underscore App
             extra-args: project_name="My_Underscore App"
             slug: my-underscore-app
+          - case: worker-no-email
+            project_name: My Project
+            extra-args: use_celery=worker email_provider=none
+            slug: my-project
           - case: worker-only
             project_name: My Project
             extra-args: use_celery=worker
