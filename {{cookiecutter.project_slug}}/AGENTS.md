@@ -71,6 +71,7 @@
 - Order factory fields to match their model's field order, not alphabetically; order factories and their `register(...)` calls to follow model/dependency order (a factory referenced by another via `SubFactory` comes first).
 - Lead Django admin `list_display` with timestamp fields (`created_at`, `updated_at`), then the remaining columns.
 - Alphabetize parameters in tests, helper functions, and Django Ninja endpoints when framework conventions do not require a leading parameter such as `self`, `request`, `sender`, or Django admin's `request, queryset`.
+- When forwarding keyword arguments to a callee, pass them in the order the callee declares its parameters: declared parameters in signature order first, then arguments captured by `**kwargs`. For example, when wrapping a client whose method is `post(path, data=None, json=None, **request_params)`, pass `json=` (declared) before `user=` (a `**request_params` argument).
 
 ## Django And Configuration
 
