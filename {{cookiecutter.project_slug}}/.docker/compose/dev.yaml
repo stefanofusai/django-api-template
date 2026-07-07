@@ -114,6 +114,10 @@ services:
       - redis-server
       - --appendonly
       - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD}
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
     healthcheck:
       test:
         - CMD

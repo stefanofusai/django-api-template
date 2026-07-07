@@ -148,12 +148,12 @@ git commit -m "feat: initial project scaffold"
 Freshly baked projects are expected to pass:
 
 ```shell
-docker compose -f .docker/compose/dev.yaml up -d --wait postgres
+docker compose -f .docker/compose/dev.yaml --env-file=.env up -d --wait postgres
 uv run pytest
 uv run pre-commit run --all-files
-docker compose -f .docker/compose/dev.yaml up -d --build --wait
+docker compose -f .docker/compose/dev.yaml --env-file=.env up -d --build --wait
 curl -fsS http://localhost:8000/api/ready
-docker compose -f .docker/compose/dev.yaml down -v
+docker compose -f .docker/compose/dev.yaml --env-file=.env down -v
 ```
 
 ## License

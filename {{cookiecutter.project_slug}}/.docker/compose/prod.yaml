@@ -166,6 +166,10 @@ services:
       - "yes"
       - --maxmemory
       - ${REDIS_MAXMEMORY}
+      - --requirepass
+      - ${REDIS_PASSWORD}
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
     healthcheck:
       test:
         - CMD

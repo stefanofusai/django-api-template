@@ -84,7 +84,7 @@ uv run pre-commit install --install-hooks
 Start the local stack:
 
 ```shell
-docker compose -f .docker/compose/dev.yaml up --build
+docker compose -f .docker/compose/dev.yaml --env-file=.env up --build
 ```
 
 The API runs migrations with a Compose `pre_start` step before the service
@@ -103,13 +103,13 @@ starts. When the API is healthy, you can open:
 Create a staff user inside the running API container:
 
 ```shell
-docker compose -f .docker/compose/dev.yaml exec api python manage.py createsuperuser
+docker compose -f .docker/compose/dev.yaml --env-file=.env exec api python manage.py createsuperuser
 ```
 
 Stop the stack with:
 
 ```shell
-docker compose -f .docker/compose/dev.yaml down
+docker compose -f .docker/compose/dev.yaml --env-file=.env down
 ```
 
 ## Local Setup
@@ -328,9 +328,11 @@ uv run python -c "from django.core.management.utils import get_random_secret_key
 
 {% if cookiecutter.postgres == "compose" -%}
 Use the generated value for `SECRET_KEY`, and set a strong
-`POSTGRES_PASSWORD`. The production stack reads the same `.env` file as
-development, and production boot refuses `django-insecure-` keys or the
-shipped slug-default database password.
+`POSTGRES_PASSWORD` and `REDIS_PASSWORD`. Keep `REDIS_PASSWORD` in sync with
+the credentials embedded in `CACHE_URL` and `CELERY_BROKER_URL`. The production
+stack reads the same `.env` file as development, and production boot refuses
+`django-insecure-` keys, the shipped slug-default database password, or the
+shipped slug-default Redis password.
 
 The bundled Postgres has no backup mechanism of its own: it is a single
 named Docker volume, and losing the host or the volume loses the data.
@@ -366,6 +368,11 @@ upgrades.
 Use the generated value for `SECRET_KEY`. The production stack reads the same
 `.env` file as development, and production boot refuses `django-insecure-`
 keys.
+{%- if cookiecutter.redis == "compose" %}
+Set a strong `REDIS_PASSWORD` too. Keep it in sync with the credentials
+embedded in `CACHE_URL` and `CELERY_BROKER_URL`; production boot refuses the
+shipped slug-default Redis password.
+{%- endif %}
 
 Set `DATABASE_URL` to the external PostgreSQL-compatible endpoint and append
 `?sslmode=require`, unless your provider requires stricter settings such as
@@ -525,7 +532,7 @@ the proxy with an IP allowlist or route only `/api/` publicly.
 Run the test suite:
 
 ```shell
-docker compose -f .docker/compose/dev.yaml up -d --wait postgres
+docker compose -f .docker/compose/dev.yaml --env-file=.env up -d --wait postgres
 uv run pytest
 ```
 
@@ -562,12 +569,12 @@ readiness through GitHub Actions.
 Freshly generated projects are expected to pass:
 
 ```shell
-docker compose -f .docker/compose/dev.yaml up -d --wait postgres
+docker compose -f .docker/compose/dev.yaml --env-file=.env up -d --wait postgres
 uv run pytest
 uv run pre-commit run --all-files
-docker compose -f .docker/compose/dev.yaml up -d --build --wait
+docker compose -f .docker/compose/dev.yaml --env-file=.env up -d --build --wait
 curl -fsS http://localhost:8000/api/ready
-docker compose -f .docker/compose/dev.yaml down -v
+docker compose -f .docker/compose/dev.yaml --env-file=.env down -v
 ```
 
 ## License

@@ -9,6 +9,12 @@ if SECRET_KEY.startswith("django-insecure-"):  # noqa: F821  # ty: ignore[unreso
 if DATABASES["default"].get("PASSWORD") == "{{ cookiecutter.project_slug.replace('-', '_') }}":
     msg = "The default database password must be replaced with a securely generated value in production."
     raise ImproperlyConfigured(msg)
+{%- if cookiecutter.redis == "compose" %}
+
+if env("REDIS_PASSWORD") == "{{ cookiecutter.project_slug.replace('-', '_') }}":
+    msg = "The default Redis password must be replaced with a securely generated value in production."
+    raise ImproperlyConfigured(msg)
+{%- endif %}
 
 {%- if cookiecutter.email_provider == "resend" %}
 ANYMAIL = {"RESEND_API_KEY": env("RESEND_API_KEY")}
