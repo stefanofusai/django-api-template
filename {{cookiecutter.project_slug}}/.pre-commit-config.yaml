@@ -6,6 +6,10 @@ default_language_version:
 exclude: ^\.agents/
 repos:
   # Git
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
   - repo: https://github.com/jorisroovers/gitlint
     rev: v0.19.1
     hooks:
