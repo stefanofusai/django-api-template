@@ -54,7 +54,7 @@ lands) — shell scripts are linted directly via
 | 005 | Test-suite hygiene (dead test, vacuous assert, dangling ref, brittle metadata) | P2 | S | — | DONE |
 | 006 | Add shellcheck to baked + root pre-commit stacks | P2 | S | — | DONE |
 | 007 | Gate HTTPS-trust settings **and `FORWARDED_ALLOW_IPS`** on a `behind_proxy` knob | P2 | M | — | DONE |
-| 008 | Reject the default (slug) DB password in production | P2 | S | — | TODO |
+| 008 | Reject the default (slug) DB password in production | P2 | S | — | DONE |
 | 009 | Require a password on the bundled Redis | P2 | S–M | — | TODO |
 | 010 | CI robustness: example-API-under-stripped-stack bake + Postgres image drift guard | P2 | S | — | TODO |
 | 011 | Notes-slice hardening: pagination e2e, composite index, auth'd contract pass, Hypothesis profile | P2 | M | — | TODO |

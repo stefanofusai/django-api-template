@@ -5,8 +5,12 @@ from config.settings import env
 if SECRET_KEY.startswith("django-insecure-"):  # noqa: F821  # ty: ignore[unresolved-reference]
     msg = "SECRET_KEY must be replaced with a securely generated value in production."
     raise ImproperlyConfigured(msg)
-{%- if cookiecutter.email_provider == "resend" %}
 
+if DATABASES["default"].get("PASSWORD") == "{{ cookiecutter.project_slug.replace('-', '_') }}":
+    msg = "The default database password must be replaced with a securely generated value in production."
+    raise ImproperlyConfigured(msg)
+
+{%- if cookiecutter.email_provider == "resend" %}
 ANYMAIL = {"RESEND_API_KEY": env("RESEND_API_KEY")}
 {%- endif %}
 API_DOCS_DECORATOR = "django.contrib.admin.views.decorators.staff_member_required"

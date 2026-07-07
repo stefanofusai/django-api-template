@@ -286,7 +286,8 @@ uv run python -c "from django.core.management.utils import get_random_secret_key
 {% if cookiecutter.postgres == "compose" -%}
 Use the generated value for `SECRET_KEY`, and set a strong
 `POSTGRES_PASSWORD`. The production stack reads the same `.env` file as
-development, and production boot refuses `django-insecure-` keys.
+development, and production boot refuses `django-insecure-` keys or the
+shipped slug-default database password.
 
 The bundled Postgres has no backup mechanism of its own: it is a single
 named Docker volume, and losing the host or the volume loses the data.
