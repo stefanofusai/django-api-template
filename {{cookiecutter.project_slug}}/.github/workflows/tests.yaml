@@ -14,7 +14,8 @@ jobs:
     services:
       postgres:
         # Keep this image in sync with .docker/compose/{dev,prod}.yaml;
-        # Dependabot does not track images inside workflow service blocks.
+        # Dependabot does not track images inside workflow service blocks;
+        # scripts/check_postgres_image.py enforces agreement.
         image: postgres:18.4
         env:
           POSTGRES_DB: postgres

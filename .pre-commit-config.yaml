@@ -80,3 +80,12 @@ repos:
     rev: v1.7.12
     hooks:
       - id: actionlint
+  # Repo invariants
+  - repo: local
+    hooks:
+      - id: postgres-image-pin
+        name: postgres image pins agree across compose and workflows
+        entry: python scripts/check_postgres_image.py
+        language: system
+        pass_filenames: false
+        always_run: true
