@@ -1,4 +1,7 @@
 #!/bin/sh
+# Env lives in this rendered script, not inline in the calling workflow, because
+# .github/workflows/* ship without Jinja rendering (cookiecutter
+# _copy_without_render), so knob-conditional env vars can only be branched here.
 set -eu
 
 ALLOWED_HOSTS=localhost \
