@@ -98,7 +98,7 @@ include_apps = ["core"{% if cookiecutter.use_example_api == "yes" %}, "notes"{% 
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
-addopts = "--cov=src --cov-fail-under=100 --cov-report=term-missing:skip-covered --numprocesses=auto"
+addopts = "--cov=src --cov-fail-under=100 --cov-report=term-missing:skip-covered --numprocesses=auto --strict-config --strict-markers"
 env = [
     "ALLOWED_HOSTS=localhost,testserver",
     "CACHE_URL=locmemcache://",
@@ -111,6 +111,9 @@ env = [
 {%- endif %}
     "DJANGO_ENV=ci",
     "SECRET_KEY=ci-secret-for-tests-0123456789-abcdefghijklmnopqrstuvwxyz",
+]
+filterwarnings = [
+    "error",
 ]
 markers = [
     "integration: tests that exercise integrated framework behavior",
