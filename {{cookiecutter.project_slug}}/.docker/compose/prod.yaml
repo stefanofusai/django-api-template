@@ -138,6 +138,12 @@ services:
       - media_data:/app/media
 {%- endif %}
     restart: unless-stopped
+    # Must exceed CELERY_TASK_TIME_LIMIT (330s, settings/components/celery.py)
+    # so a warm shutdown can finish the in-flight task instead of Docker
+    # SIGKILLing it mid-run; acks_late would then redeliver and re-run it.
+    # Warm shutdown exits as soon as running tasks finish, so this is a
+    # worst-case cap, not a fixed wait.
+    stop_grace_period: 335s
 {%- endif %}
 {%- if cookiecutter.postgres == "compose" %}
   postgres:
