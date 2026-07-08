@@ -21,17 +21,17 @@ def ready(
 ) -> Status[ReadyOkSchema] | Status[ReadyErrorSchema]:
     errors: list[ReadyError] = []
 
+    {% if cookiecutter.use_celery != "none" -%}
+    if not _broker_ready():
+        errors.append("broker")
+
+    {% endif -%}
     if not _cache_ready():
         errors.append("cache")
 
     if not _database_ready():
         errors.append("database")
 
-    {% if cookiecutter.use_celery != "none" -%}
-    if not _broker_ready():
-        errors.append("broker")
-
-    {% endif -%}
     if errors:
         return Status(503, ReadyErrorSchema(status="error", errors=errors))
 
