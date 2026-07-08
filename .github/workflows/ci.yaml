@@ -35,6 +35,10 @@ jobs:
             project_name: My Project
             extra-args: use_cors=yes
             slug: my-project
+          - case: cors-csp
+            project_name: My Project
+            extra-args: use_cors=yes use_csp=yes
+            slug: my-project
           - case: csp
             project_name: My Project
             extra-args: use_csp=yes
@@ -86,6 +90,10 @@ jobs:
           - case: smtp
             project_name: My Project
             extra-args: email_provider=smtp
+            slug: my-project
+          - case: throttling-no-example
+            project_name: My Project
+            extra-args: api_throttling=basic
             slug: my-project
           - case: underscored
             project_name: My_Underscore App
