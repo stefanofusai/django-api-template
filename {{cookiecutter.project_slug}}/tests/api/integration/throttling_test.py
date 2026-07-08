@@ -30,10 +30,7 @@ def test_authenticated_users_get_separate_counters(
         client.get("/api/v1/notes", headers=headers).status_code
         == HTTPStatus.TOO_MANY_REQUESTS
     )
-    assert (
-        client_1.get("/api/v1/notes", headers=headers_1).status_code
-        == HTTPStatus.OK
-    )
+    assert client_1.get("/api/v1/notes", headers=headers_1).status_code == HTTPStatus.OK
 
 
 @override_settings(API_THROTTLE_ANON_RATE="2/min")
