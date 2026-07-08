@@ -8,6 +8,9 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+{%- if cookiecutter.api_throttling == "basic" %}
+    "apps.api.throttling.PublicAPIThrottleMiddleware",
+{%- endif %}
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

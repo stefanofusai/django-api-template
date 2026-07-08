@@ -7,6 +7,7 @@
     "github_username": "johndoe",
     "domain_name": "example.com",
     "api_auth": ["session", "token"],
+    "api_throttling": ["none", "basic"],
     "behind_proxy": ["yes", "no"],
     "email_provider": ["resend", "smtp", "none"],
     "postgres": ["compose", "external"],
@@ -30,6 +31,11 @@
             "__prompt__": "Authentication used by the example notes API",
             "session": "Django session auth with CSRF",
             "token": "Opaque bearer tokens for non-browser clients"
+        },
+        "api_throttling": {
+            "__prompt__": "Public API throttling",
+            "none": "Disable public API throttling",
+            "basic": "Enable cache-backed public API throttling"
         },
         "behind_proxy": {
             "__prompt__": "Production trusts an upstream proxy's X-Forwarded-Proto header",

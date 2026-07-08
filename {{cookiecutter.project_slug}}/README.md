@@ -149,6 +149,10 @@ target local PostgreSQL and Redis containers:
 
 {% endif %}
 - `CACHE_URL` uses Redis database 0.
+{%- if cookiecutter.api_throttling == "basic" %}
+- `API_THROTTLE_ANON_RATE` and `API_THROTTLE_USER_RATE` optionally tune
+  cache-backed public API throttling.
+{%- endif %}
 {%- if cookiecutter.use_cors == "yes" %}
 - `CORS_ALLOWED_ORIGINS` lists browser origins allowed to call the API
   cross-origin.

@@ -11,6 +11,7 @@ Compose deployment defaults, and CI gates for the baked project.
 
 - `/api/v1/` business API versioning plus unversioned health and readiness
   probes
+- Optional cache-backed throttling for public API routes
 - 100% pytest coverage gate with factories and Schemathesis property-based
   contract tests
 - actionlint, gitleaks, gitlint, markdownlint, Ruff, shellcheck, Ty, uv-audit, yamlfmt,
@@ -88,6 +89,7 @@ uvx cookiecutter gh:stefanofusai/django-api-template
 | `github_username` | `johndoe` | Badge and Dependabot assignee username. |
 | `domain_name` | `example.com` | Deployment domain pre-filled into `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, and `TRAEFIK_DOMAIN`. |
 | `api_auth` | `session` | Authentication used by the example notes API: `session` (Django session auth with CSRF) or `token` (opaque bearer tokens); only takes effect when `use_example_api=yes`. |
+| `api_throttling` | `none` | Public API throttling: `none` disables throttling, `basic` enables cache-backed fixed-window throttling. |
 | `behind_proxy` | `yes` | Trust an upstream TLS-terminating proxy's `X-Forwarded-Proto`; use `no` only for plain-HTTP private-network production. |
 | `email_provider` | `resend` | Production email provider: `resend`, `smtp`, or `none`. |
 | `postgres` | `compose` | Run production Postgres as a bundled Compose service, or point `DATABASE_URL` at an external/managed Postgres-compatible database. |

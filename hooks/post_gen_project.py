@@ -5,6 +5,7 @@ import shutil
 import subprocess
 
 API_AUTH = {{ cookiecutter.api_auth | tojson }}
+API_THROTTLING = {{ cookiecutter.api_throttling | tojson }}
 COMPOSE_MIN_VERSION = (5, 3, 0)
 COMPOSE_VERSION_WARNING = (
     "WARNING: Docker Compose 5.3.0 or newer is required for the generated "
@@ -39,6 +40,20 @@ REMOVED_DIRS = [
     *(["src/apps/notes", "tests/notes"] if USE_EXAMPLE_API == "no" else []),
 ]
 REMOVED_PATHS = [
+    *(
+        [
+            "src/apps/api/throttling.py",
+            "tests/api/integration/throttling_test.py",
+            "tests/api/unit/throttling_test.py",
+        ]
+        if API_THROTTLING == "none"
+        else []
+    ),
+    *(
+        ["tests/api/integration/throttling_test.py"]
+        if API_THROTTLING == "basic" and USE_EXAMPLE_API == "no"
+        else []
+    ),
     *(
         [
             ".docker/scripts/postgres-backup.sh",

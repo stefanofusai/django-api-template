@@ -49,6 +49,10 @@ jobs:
             project_name: My Project
             extra-args: use_example_api=yes api_auth=token
             slug: my-project
+          - case: example-token-auth-throttling
+            project_name: My Project
+            extra-args: use_example_api=yes api_auth=token api_throttling=basic
+            slug: my-project
           - case: external-backing
             project_name: My Project
             extra-args: postgres=external redis=external use_traefik=no

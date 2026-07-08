@@ -5,6 +5,9 @@ from ninja import NinjaAPI
 {% if cookiecutter.use_example_api == "yes" -%}
 from apps.notes.routes import router as notes_router
 {% endif -%}
+{% if cookiecutter.api_throttling == "basic" -%}
+from apps.api.throttling import get_public_api_throttles
+{% endif -%}
 from config.pyproject import project_name
 
 from .routes import health_router, ready_router
@@ -26,5 +29,11 @@ v1_api = NinjaAPI(
     urls_namespace="v1",
 )
 {%- if cookiecutter.use_example_api == "yes" %}
-v1_api.add_router("/notes", notes_router)
+v1_api.add_router(
+    "/notes",
+    notes_router,
+{%- if cookiecutter.api_throttling == "basic" %}
+    throttle=get_public_api_throttles(),
+{%- endif %}
+)
 {%- endif %}
