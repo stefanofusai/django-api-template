@@ -9,10 +9,11 @@ from config.settings import env
 
 SENTRY_DSN = env("SENTRY_DSN")
 SENTRY_ENABLE_LOGS = env.bool("SENTRY_ENABLE_LOGS", default=False)
+# 10% keeps tracing/profiling affordable at production volume; raise via env for low-traffic services.
 SENTRY_PROFILE_SESSION_SAMPLE_RATE = env.float(
-    "SENTRY_PROFILE_SESSION_SAMPLE_RATE", default=1.0
+    "SENTRY_PROFILE_SESSION_SAMPLE_RATE", default=0.1
 )
-SENTRY_TRACES_SAMPLE_RATE = env.float("SENTRY_TRACES_SAMPLE_RATE", default=1.0)
+SENTRY_TRACES_SAMPLE_RATE = env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.1)
 
 if not SENTRY_DSN:
     msg = "SENTRY_DSN must be set in production."
