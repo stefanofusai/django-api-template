@@ -69,6 +69,8 @@ RUN if [ "$UV_DEPENDENCY_GROUP" = "prod" ]; then \
 
 FROM base AS runtime
 
+# Apt package versions follow the pinned Debian base image and remain patchable.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install --no-install-recommends --yes \
         curl \
