@@ -1,11 +1,13 @@
-{%- if cookiecutter.use_example_api == "yes" or cookiecutter.use_celery != "none" -%}
+from collections.abc import Iterator
+{%- if cookiecutter.use_example_api == "yes" or cookiecutter.use_celery != "none" %}
 from typing import TYPE_CHECKING
+{%- endif %}
 
-{% endif -%}
 import pytest
 from hypothesis import settings as hypothesis_settings
 from ninja.testing import TestClient
 from pytest_factoryboy import register
+from zeal import zeal_context
 
 from apps.api.api import internal_api, v1_api
 from tests.factories import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}NoteFactory, TokenFactory, UserFactory{% elif cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
@@ -47,6 +49,21 @@ register(TokenFactory)
 
 
 # Fixtures
+
+
+@pytest.fixture(autouse=True)
+def _zeal(request: pytest.FixtureRequest) -> Iterator[None]:
+    # Schemathesis re-invokes the request-handling code path many times per
+    # Hypothesis example within a single test function; the fixture's
+    # per-test-function detection window then aggregates those unrelated,
+    # per-request queries into one false N+1 site. Skip detection for the
+    # contract test — determinism beats coverage here.
+    if request.node.path.name == "schema_test.py":
+        yield
+        return
+
+    with zeal_context():
+        yield
 
 
 {% if cookiecutter.use_celery != "none" -%}

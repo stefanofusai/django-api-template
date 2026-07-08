@@ -614,6 +614,13 @@ The suite uses CI settings, real PostgreSQL, in-memory storage, and enforces
 100% coverage through `pytest-cov`.
 {%- endif %}
 
+[django-zeal](https://pypi.org/project/django-zeal/) runs in dev requests and
+in every test via an autouse fixture, raising `NPlusOneError` the moment code
+fetches a related object or field without `select_related`/`prefetch_related`.
+Fix a failure by adding the missing `select_related`/`prefetch_related`, or,
+for a deliberately singular access pattern, add a commented entry to
+`ZEAL_ALLOWLIST` in the matching settings overlay.
+
 Run repository checks:
 
 ```shell
