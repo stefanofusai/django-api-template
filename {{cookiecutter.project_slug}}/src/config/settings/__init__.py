@@ -19,6 +19,7 @@ settings_files = [
 {%- if cookiecutter.use_csp == "yes" %}
     "components/csp.py",
 {%- endif %}
+    "components/permissions_policy.py",
 {%- if cookiecutter.api_throttling == "basic" %}
     "components/throttling.py",
 {%- endif %}

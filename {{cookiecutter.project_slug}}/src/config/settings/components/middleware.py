@@ -6,6 +6,7 @@ MIDDLEWARE = [
 {%- if cookiecutter.use_csp == "yes" %}
     "django.middleware.csp.ContentSecurityPolicyMiddleware",
 {%- endif %}
+    "django_permissions_policy.PermissionsPolicyMiddleware",
     "django_structlog.middlewares.RequestMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
