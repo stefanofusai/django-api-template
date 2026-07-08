@@ -281,7 +281,11 @@ For release-based deploys, bump `[project] version` in `pyproject.toml`,
 commit, tag `v<version>`, and push the tag. Only strict `vX.Y.Z` tags trigger
 the release workflow. It runs the full test suite before publishing
 `ghcr.io/<owner>/<repo>:v<version>` and refuses tags that do not match the
-project version, keeping image tags aligned with Sentry release names.
+project version, keeping image tags aligned with Sentry release names. The
+GitHub repository must be named `{{ cookiecutter.project_slug }}`: the release
+workflow publishes to `ghcr.io/<owner>/<repo-name>` while the Compose stack
+below pulls `ghcr.io/<owner>/{{ cookiecutter.project_slug }}`, and the two only
+agree when the repository name equals the project slug.
 
 Deploy or roll back with one command from the project root:
 
@@ -305,11 +309,10 @@ so keep migrations backward-compatible at least one release back. CI enforces
 this contract with `lintmigrations` for project apps. If a deliberately
 backward-incompatible migration has an approved deploy plan, add
 `django_migration_linter.IgnoreMigration()` to that migration's `operations`
-list to mark the exception explicitly. If the GitHub repository name differs
-from `{{ cookiecutter.project_slug }}`, update the
-`image:` lines in `.docker/compose/prod.yaml` to match
-`ghcr.io/<owner>/<repo>`. Private GHCR packages require `docker login ghcr.io`
-on the host with a token that can read packages.
+list to mark the exception explicitly. If the repository can't be named to
+match, update the `image:` lines in `.docker/compose/prod.yaml` to
+`ghcr.io/<owner>/<repo>` instead. Private GHCR packages require
+`docker login ghcr.io` on the host with a token that can read packages.
 
 Run management commands against the running production stack through the
 wrapper script. The template deliberately ships no registration endpoints, so
