@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING
 
-from ninja.errors import HttpError
 from ninja.security import HttpBearer
 
+from apps.api.exceptions import InvalidTokenError
 from apps.core.models import Token, User
 
 if TYPE_CHECKING:
@@ -14,7 +14,7 @@ class BearerTokenAuth(HttpBearer):
         prefix = Token.prefix_from(token)
 
         if prefix is None:
-            raise HttpError(401, "Invalid token")
+            raise InvalidTokenError
 
         stored_token = (
             Token.objects.select_related("user")
@@ -23,7 +23,7 @@ class BearerTokenAuth(HttpBearer):
         )
 
         if stored_token is None or stored_token.is_expired():
-            raise HttpError(401, "Invalid token")
+            raise InvalidTokenError
 
         stored_token.mark_used()
         request.user = stored_token.user

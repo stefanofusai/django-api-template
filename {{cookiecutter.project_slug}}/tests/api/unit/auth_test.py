@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 from django.utils import timezone
-from ninja.errors import HttpError
 
 from apps.api.auth import BearerTokenAuth
+from apps.api.exceptions import InvalidTokenError
 from apps.core.models import Token
 
 if TYPE_CHECKING:
@@ -20,7 +20,7 @@ pytestmark = pytest.mark.django_db
 def test_authenticate_raises_401_when_token_is_unknown(mocker: MockerFixture) -> None:
     auth = BearerTokenAuth()
 
-    with pytest.raises(HttpError) as exc_info:
+    with pytest.raises(InvalidTokenError) as exc_info:
         auth.authenticate(mocker.Mock(), "unknown-token")
 
     assert exc_info.value.status_code == HTTPStatus.UNAUTHORIZED
@@ -37,7 +37,7 @@ def test_authenticate_raises_401_when_token_is_expired(
     )
     auth = BearerTokenAuth()
 
-    with pytest.raises(HttpError) as exc_info:
+    with pytest.raises(InvalidTokenError) as exc_info:
         auth.authenticate(mocker.Mock(), raw_token)
 
     assert exc_info.value.status_code == HTTPStatus.UNAUTHORIZED

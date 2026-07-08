@@ -96,6 +96,7 @@ REMOVED_PATHS = [
     *(
         [
             "src/apps/api/auth.py",
+            "src/apps/api/exceptions.py",
             "src/apps/core/migrations/0002_token.py",
             "tests/api/unit/auth_test.py",
         ]

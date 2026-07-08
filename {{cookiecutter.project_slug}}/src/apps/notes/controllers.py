@@ -4,6 +4,9 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from ninja import Status
+{%- if cookiecutter.api_auth == "session" %}
+from ninja.security import django_auth
+{%- endif %}
 from ninja_extra import (
     ControllerBase,
     api_controller,
@@ -14,9 +17,6 @@ from ninja_extra import (
 )
 from ninja_extra.pagination import paginate
 from ninja_extra.schemas import NinjaPaginationResponseSchema
-{%- if cookiecutter.api_auth == "session" %}
-from ninja.security import django_auth
-{%- endif %}
 
 {% if cookiecutter.api_auth == "token" -%}
 from apps.api.auth import bearer_token_auth

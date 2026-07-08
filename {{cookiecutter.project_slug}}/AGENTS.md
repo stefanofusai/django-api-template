@@ -133,6 +133,11 @@
 - The example notes resource uses `apps.notes.controllers.NotesController`, a
   django-ninja-extra class-based controller; `/api/health` and `/api/ready`
   remain plain function-based routers on `internal_api`.
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+- Domain error raise sites use `ninja_extra.exceptions.APIException`
+  subclasses, such as `apps.api.exceptions.InvalidTokenError`, rather than
+  `ninja.errors.HttpError`.
+{%- endif %}
 - Mount business routers on `v1_api` (under `/api/v1/`); `internal_api` is reserved for internal probes and must stay unversioned.
 
 ## Testing
