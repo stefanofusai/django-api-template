@@ -16,6 +16,7 @@ class BearerTokenAuth(HttpBearer):
             .filter(digest=Token.hash(token))
             .first()
         )
+
         if stored_token is None:
             raise HttpError(401, "Invalid token")
 

@@ -27,7 +27,7 @@
         "domain_name": "Bare deployment hostname used in generated environment defaults",
         "api_auth": {
             "__prompt__": "Authentication used by the example notes API",
-            "session": "Django session auth with CSRF, matching today's behavior",
+            "session": "Django session auth with CSRF",
             "token": "Opaque bearer tokens for non-browser clients"
         },
         "behind_proxy": {
