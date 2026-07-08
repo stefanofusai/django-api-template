@@ -11,6 +11,9 @@ INSTALLED_APPS.append("django_migration_linter")  # noqa: F821  # ty: ignore[unr
 # (tests/conftest.py) relies on; the fixture alone only toggles detection on
 # and off around each test.
 INSTALLED_APPS.append("zeal")  # noqa: F821  # ty: ignore[unresolved-reference]
+STORAGES["default"] = {  # noqa: F821  # ty: ignore[unresolved-reference]
+    "BACKEND": "django.core.files.storage.InMemoryStorage",
+}
 # The autouse zeal fixture treats one test function as a single N+1-detection
 # window. Tests that issue several independent client requests in one
 # function (e.g. django-axes lockout tests posting to /admin/login/
@@ -24,6 +27,3 @@ ZEAL_ALLOWLIST = [
     {"model": "core.User", "field": "get()"},
     {"model": "sessions.Session", "field": "get()"},
 ]
-STORAGES["default"] = {  # noqa: F821  # ty: ignore[unresolved-reference]
-    "BACKEND": "django.core.files.storage.InMemoryStorage",
-}
