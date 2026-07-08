@@ -10,7 +10,6 @@ from apps.core.models import Token
 {% endif %}
 if TYPE_CHECKING:
     from apps.core.models import User
-    from tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -24,10 +23,10 @@ def clear_cache() -> None:
 def test_authenticated_users_get_separate_counters(
     client: Client,
     user: User,
-    user_factory: type[UserFactory],
+    user_1: User,
 ) -> None:
     first_headers = _auth_headers(client, user)
-    second_headers = _auth_headers(client, user_factory.create())
+    second_headers = _auth_headers(client, user_1)
 
     assert (
         client.get("/api/v1/notes", headers=first_headers).status_code == HTTPStatus.OK

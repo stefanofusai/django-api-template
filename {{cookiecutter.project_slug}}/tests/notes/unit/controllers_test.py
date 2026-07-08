@@ -9,8 +9,7 @@ if TYPE_CHECKING:
     from faker import Faker
     from ninja_extra.testing import TestClient
 
-    from apps.core.models import User
-    from tests.factories import NoteFactory
+    from apps.notes.models import Note
 
 pytestmark = pytest.mark.django_db
 
@@ -26,18 +25,16 @@ def test_get_note_returns_401_when_anonymous(
 
 def test_get_note_returns_note_when_authenticated_owner(
     notes_controller_client: TestClient,
-    note_factory: type[NoteFactory],
-    user: User,
+    note: Note,
 ) -> None:
-    note = note_factory.create(owner=user)
 {% if cookiecutter.api_auth == "token" %}
-    raw_token, _ = Token.issue(name="test token", user=user)
+    raw_token, _ = Token.issue(name="test token", user=note.owner)
     response = notes_controller_client.get(
         f"/{note.id}",
         headers={"Authorization": f"Bearer {raw_token}"},
     )
 {% else %}
-    response = notes_controller_client.get(f"/{note.id}", user=user)
+    response = notes_controller_client.get(f"/{note.id}", user=note.owner)
 {% endif %}
     assert response.status_code == HTTPStatus.OK
     assert response.data["id"] == str(note.id)

@@ -21,7 +21,7 @@ from config.wsgi import application
 {% if cookiecutter.use_example_api == "yes" %}
 if TYPE_CHECKING:
     from apps.core.models import User
-    from tests.factories import NoteFactory
+    from apps.notes.models import Note
 {% endif %}
 OPENAPI_CONTRACT_CHECK_NAMES = (
     "content_type_conformance",
@@ -59,10 +59,10 @@ schema = schemathesis.pytest.from_fixture("api_schema")
 
 @pytest.fixture
 def authenticated_schema_headers(
-    note_factory: type[NoteFactory],
+    note: Note,
     user: User,
 ) -> dict[str, str]:
-    note_factory.create(body="Contract body", owner=user, title="Contract note")
+    _ = note
     {%- if cookiecutter.api_auth == "token" %}
     raw_token, _ = Token.issue(name="contract test token", user=user)
 

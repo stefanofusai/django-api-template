@@ -154,6 +154,10 @@
   (see `UserFactory`).
 - Use pytest-factoryboy model fixtures directly and prefer attribute
   parametrization for factory-backed model setup.
+- When a test needs multiple model instances, register named model fixtures
+  with sequence suffixes such as `note_1` and `note_2`; use `LazyFixture(...)`
+  only when a fixture attribute must point at another fixture, such as a note
+  owned by `user_1`.
 - Use Django's `@override_settings(...)` or `@modify_settings(...)` for tests
   that change Django settings; do not mock or patch `django.conf.settings` or
   derived settings objects directly.

@@ -22,11 +22,11 @@ hypothesis_settings.register_profile("ci", deadline=None, max_examples=50)
 hypothesis_settings.load_profile("ci")
 
 register(UserFactory)
-{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
-register(TokenFactory)
-{%- endif %}
 {%- if cookiecutter.use_example_api == "yes" %}
 register(NoteFactory)
+{%- endif %}
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+register(TokenFactory)
 {%- endif %}
 
 

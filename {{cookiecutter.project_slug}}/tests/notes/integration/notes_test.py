@@ -12,7 +12,6 @@ from apps.notes.models import Note
 if TYPE_CHECKING:
     from ninja.testing import TestClient
 
-    from tests.factories import NoteFactory
     from tests.utils import AuthenticatedTestClient
 
 pytestmark = pytest.mark.django_db
@@ -42,10 +41,8 @@ def test_create_note_returns_401_when_anonymous(v1_api_client: TestClient) -> No
 
 def test_delete_note_returns_204_when_authenticated_owner(
     authenticated_v1_api_client: AuthenticatedTestClient,
-    note_factory: type[NoteFactory],
+    note: Note,
 ) -> None:
-    note = note_factory.create(owner=authenticated_v1_api_client.user)
-
     response = authenticated_v1_api_client.delete(f"/notes/{note.id}")
 
     assert response.status_code == HTTPStatus.NO_CONTENT
@@ -54,22 +51,18 @@ def test_delete_note_returns_204_when_authenticated_owner(
 
 def test_delete_note_returns_404_when_owned_by_other_user(
     authenticated_v1_api_client: AuthenticatedTestClient,
-    note_factory: type[NoteFactory],
+    note_owner_user_1: Note,
 ) -> None:
-    other_note = note_factory.create()
-
-    response = authenticated_v1_api_client.delete(f"/notes/{other_note.id}")
+    response = authenticated_v1_api_client.delete(f"/notes/{note_owner_user_1.id}")
 
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert Note.objects.filter(id=other_note.id).exists()
+    assert Note.objects.filter(id=note_owner_user_1.id).exists()
 
 
 def test_detail_note_returns_200_when_authenticated_owner(
     authenticated_v1_api_client: AuthenticatedTestClient,
-    note_factory: type[NoteFactory],
+    note: Note,
 ) -> None:
-    note = note_factory.create(owner=authenticated_v1_api_client.user)
-
     response = authenticated_v1_api_client.get(f"/notes/{note.id}")
 
     assert response.status_code == HTTPStatus.OK
@@ -78,28 +71,27 @@ def test_detail_note_returns_200_when_authenticated_owner(
 
 def test_detail_note_returns_404_when_owned_by_other_user(
     authenticated_v1_api_client: AuthenticatedTestClient,
-    note_factory: type[NoteFactory],
+    note_owner_user_1: Note,
 ) -> None:
-    other_note = note_factory.create()
-
-    response = authenticated_v1_api_client.get(f"/notes/{other_note.id}")
+    response = authenticated_v1_api_client.get(f"/notes/{note_owner_user_1.id}")
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 def test_list_notes_caps_items_when_limit_below_total(
     authenticated_v1_api_client: AuthenticatedTestClient,
-    note_factory: type[NoteFactory],
+    note: Note,
+    note_1: Note,
+    note_2: Note,
 ) -> None:
     limit = 2
-    total = 3
-    note_factory.create_batch(total, owner=authenticated_v1_api_client.user)
+    notes = [note, note_1, note_2]
 
     response = authenticated_v1_api_client.get("/notes", query_params={"limit": limit})
 
     assert response.status_code == HTTPStatus.OK
     payload = response.data
-    assert payload["count"] == total
+    assert payload["count"] == len(notes)
     assert len(payload["items"]) == limit
 
 
@@ -132,33 +124,72 @@ def test_list_notes_returns_422_when_offset_exceeds_maximum(
 
 def test_list_notes_returns_only_callers_notes_when_authenticated(
     authenticated_v1_api_client: AuthenticatedTestClient,
-    note_factory: type[NoteFactory],
+    note: Note,
+    note_owner_user_1: Note,
 ) -> None:
-    own_note = note_factory.create(owner=authenticated_v1_api_client.user)
-    note_factory.create()
-
     response = authenticated_v1_api_client.get("/notes")
 
     assert response.status_code == HTTPStatus.OK
     payload = response.data
+    item_ids = [item["id"] for item in payload["items"]]
     assert payload["count"] == 1
-    assert [item["id"] for item in payload["items"]] == [str(own_note.id)]
+    assert item_ids == [str(note.id)]
+    assert str(note_owner_user_1.id) not in item_ids
+
+
+@pytest.mark.parametrize("note__title", ["Quarterly planning"])
+@pytest.mark.parametrize("note_1__title", ["Daily checklist"])
+def test_list_notes_filters_by_title_when_authenticated(
+    authenticated_v1_api_client: AuthenticatedTestClient,
+    note: Note,
+    note_1: Note,
+) -> None:
+    response = authenticated_v1_api_client.get(
+        "/notes", query_params={"title": "planning"}
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    payload = response.data
+    item_ids = [item["id"] for item in payload["items"]]
+    assert payload["count"] == 1
+    assert item_ids == [str(note.id)]
+    assert str(note_1.id) not in item_ids
+
+
+@pytest.mark.parametrize("note__title", ["Alpha"])
+@pytest.mark.parametrize("note_1__title", ["Beta"])
+def test_list_notes_orders_by_requested_field_when_authenticated(
+    authenticated_v1_api_client: AuthenticatedTestClient,
+    note: Note,
+    note_1: Note,
+) -> None:
+    response = authenticated_v1_api_client.get(
+        "/notes", query_params={"ordering": "title"}
+    )
+
+    expected_notes = [note, note_1]
+
+    assert response.status_code == HTTPStatus.OK
+    payload = response.data
+    assert payload["count"] == len(expected_notes)
+    assert [item["id"] for item in payload["items"]] == [
+        str(expected_note.id) for expected_note in expected_notes
+    ]
 
 
 def test_list_notes_returns_second_page_when_offset_given(
     authenticated_v1_api_client: AuthenticatedTestClient,
-    note_factory: type[NoteFactory],
+    note: Note,
+    note_1: Note,
+    note_2: Note,
 ) -> None:
-    total_notes = 3
-    oldest_note = note_factory.create(owner=authenticated_v1_api_client.user)
-    second_newest_note = note_factory.create(owner=authenticated_v1_api_client.user)
-    newest_note = note_factory.create(owner=authenticated_v1_api_client.user)
+    notes = [note, note_1, note_2]
     base_time = timezone.now()
-    Note.objects.filter(id=oldest_note.id).update(created_at=base_time)
-    Note.objects.filter(id=second_newest_note.id).update(
+    Note.objects.filter(id=note.id).update(created_at=base_time)
+    Note.objects.filter(id=note_1.id).update(
         created_at=base_time + timedelta(minutes=1)
     )
-    Note.objects.filter(id=newest_note.id).update(
+    Note.objects.filter(id=note_2.id).update(
         created_at=base_time + timedelta(minutes=2)
     )
 
@@ -169,15 +200,42 @@ def test_list_notes_returns_second_page_when_offset_given(
 
     assert response.status_code == HTTPStatus.OK
     payload = response.data
-    assert payload["count"] == total_notes
-    assert [item["id"] for item in payload["items"]] == [str(second_newest_note.id)]
+    assert payload["count"] == len(notes)
+    assert [item["id"] for item in payload["items"]] == [str(note_1.id)]
+
+
+@pytest.mark.parametrize("note__body", ["Remember the apricot launch detail"])
+@pytest.mark.parametrize("note__title", ["Release notes"])
+@pytest.mark.parametrize("note_1__body", ["Unrelated body"])
+@pytest.mark.parametrize("note_1__title", ["Apricot checklist"])
+@pytest.mark.parametrize("note_2__body", ["No matching term"])
+@pytest.mark.parametrize("note_2__title", ["Daily checklist"])
+def test_list_notes_searches_title_and_body_when_authenticated(
+    authenticated_v1_api_client: AuthenticatedTestClient,
+    note: Note,
+    note_1: Note,
+    note_2: Note,
+) -> None:
+    response = authenticated_v1_api_client.get(
+        "/notes", query_params={"ordering": "title", "search": "apricot"}
+    )
+
+    expected_notes = [note_1, note]
+
+    assert response.status_code == HTTPStatus.OK
+    payload = response.data
+    item_ids = [item["id"] for item in payload["items"]]
+    assert payload["count"] == len(expected_notes)
+    assert item_ids == [str(expected_note.id) for expected_note in expected_notes]
+    assert str(note_2.id) not in item_ids
 
 
 def test_update_note_returns_200_when_authenticated_owner(
     authenticated_v1_api_client: AuthenticatedTestClient,
-    note_factory: type[NoteFactory],
+    note: Note,
 ) -> None:
-    note = note_factory.create(owner=authenticated_v1_api_client.user, title="Original")
+    note.title = "Original"
+    note.save()
 
     response = authenticated_v1_api_client.put(
         f"/notes/{note.id}",
@@ -194,15 +252,15 @@ def test_update_note_returns_200_when_authenticated_owner(
 
 def test_update_note_returns_404_when_owned_by_other_user(
     authenticated_v1_api_client: AuthenticatedTestClient,
-    note_factory: type[NoteFactory],
+    note_owner_user_1: Note,
 ) -> None:
-    other_note = note_factory.create(title="Original")
+    original_title = note_owner_user_1.title
 
     response = authenticated_v1_api_client.put(
-        f"/notes/{other_note.id}",
+        f"/notes/{note_owner_user_1.id}",
         json={"body": "Updated body", "title": "Updated title"},
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
-    other_note.refresh_from_db()
-    assert other_note.title == "Original"
+    note_owner_user_1.refresh_from_db()
+    assert note_owner_user_1.title == original_title

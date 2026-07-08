@@ -236,6 +236,9 @@ open http://localhost:8000/api/v1/docs
 
 Try the example `notes` resource ({% if cookiecutter.api_auth == "token" %}bearer-token-authenticated{% else %}session-authenticated{% endif %} class-based controller CRUD)
 documented at `/api/v1/docs`.
+The list endpoint demonstrates filtering, ordering, pagination, and searching
+with query parameters such as `?title=planning`, `?ordering=title`, and
+`?search=apricot`.
 {%- endif %}
 
 API docs and the OpenAPI schema are public in development and staff-only in

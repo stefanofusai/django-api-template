@@ -3,7 +3,7 @@ import uuid
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
-from ninja import Status
+from ninja import Query, Status
 {%- if cookiecutter.api_auth == "session" %}
 from ninja.security import django_auth
 {%- endif %}
@@ -15,8 +15,10 @@ from ninja_extra import (
     http_post,
     http_put,
 )
+from ninja_extra.ordering import Ordering, ordering
 from ninja_extra.pagination import paginate
 from ninja_extra.schemas import NinjaPaginationResponseSchema
+from ninja_extra.searching import Searching, searching
 
 {% if cookiecutter.api_auth == "token" -%}
 from apps.api.auth import bearer_token_auth
@@ -27,7 +29,7 @@ from apps.api.schemas import ErrorSchema, ValidationErrorSchema
 from apps.api.throttling import get_public_api_throttles
 {% endif %}
 from .models import Note
-from .schemas import NoteInSchema, NoteOutSchema
+from .schemas import NoteFilterSchema, NoteInSchema, NoteOutSchema
 
 
 @api_controller(
@@ -91,8 +93,12 @@ class NotesController(ControllerBase):
         },
     )
     @paginate(BoundedLimitOffsetPagination)
-    def list_notes(self, request: HttpRequest) -> QuerySet[Note]:
-        return Note.objects.filter(owner=request.user)
+    @ordering(Ordering, ordering_fields=["created_at", "title"])
+    @searching(Searching, search_fields=["body", "title"])
+    def list_notes(
+        self, request: HttpRequest, filters: Query[NoteFilterSchema]
+    ) -> QuerySet[Note]:
+        return filters.filter(Note.objects.filter(owner=request.user))
 
     @http_put(
         "/{note_id}",
