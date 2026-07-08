@@ -10,8 +10,9 @@ if TYPE_CHECKING:
     from apps.core.models import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}Token, User{% else %}User{% endif %}
 
 pytestmark = pytest.mark.django_db
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
 
-{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+
 @pytest.mark.parametrize("user__is_staff", [True])
 @pytest.mark.parametrize("user__is_superuser", [True])
 def test_token_changelist_returns_200_when_staff(
@@ -25,7 +26,8 @@ def test_token_changelist_returns_200_when_staff(
     response = client.get(reverse("admin:core_token_changelist"))
 
     assert response.status_code == HTTPStatus.OK
-{% endif %}
+{%- endif %}
+
 
 @pytest.mark.parametrize("user__is_staff", [True])
 @pytest.mark.parametrize("user__is_superuser", [True])

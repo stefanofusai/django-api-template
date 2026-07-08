@@ -43,6 +43,9 @@ dependencies = [
     "django-structlog==10.1.0",
 {%- endif %}
     "django-unfold==0.96.0",
+{%- if cookiecutter.use_celery != "none" %}
+    "kombu==5.6.2",
+{%- endif %}
     "psycopg[binary]==3.3.4",
 {%- if cookiecutter.use_sentry == "yes" %}
     "sentry-sdk==2.64.0",
@@ -70,6 +73,9 @@ ci = [
 ]
 dev = [
     { include-group = "ci" },
+    # deptry's upstream pre-commit hook uses language: system, so uv must
+    # provide the executable when running generated-project hooks.
+    "deptry==0.25.1",
     "django-extensions==4.1",
     "pre-commit==4.6.0",
     "werkzeug==3.1.8",
@@ -96,11 +102,13 @@ omit = [
     "src/config/settings/environments/prod.py",
 ]
 
-[tool.django_migration_linter]
-include_apps = ["core"{% if cookiecutter.use_example_api == "yes" %}, "notes"{% endif %}]
+[tool.deptry]
+known_first_party = ["apps", "config"]
 
 [tool.deptry.per_rule_ignores]
 DEP002 = [
+    # Loaded via INSTALLED_APPS in settings/components/apps.py.
+    "django-axes",
 {%- if cookiecutter.email_provider == "resend" %}
     # Loaded via EMAIL_BACKEND dotted path in settings/environments/prod.py.
     "django-anymail",
@@ -119,6 +127,8 @@ DEP002 = [
 {%- endif %}
     # Loaded via INSTALLED_APPS in settings/components/apps.py.
     "django-extra-checks",
+    # Loaded via MIDDLEWARE in settings/components/middleware.py.
+    "django-permissions-policy",
     # Used by Django's PostgreSQL backend configured from DATABASE_URL.
     "psycopg",
 ]
@@ -126,6 +136,9 @@ DEP003 = [
     # Imported for RedisError in apps/api/routes/ready.py; provided by django-redis.
     "redis",
 ]
+
+[tool.django_migration_linter]
+include_apps = ["core"{% if cookiecutter.use_example_api == "yes" %}, "notes"{% endif %}]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"

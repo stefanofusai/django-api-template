@@ -118,9 +118,14 @@ def _base_prod_env(faker: Faker) -> dict[str, str]:
         ),
         "DEFAULT_FROM_EMAIL": "noreply@example.test",
         "DJANGO_ENV": "prod",
+{%- if cookiecutter.email_provider == "smtp" %}
+        "EMAIL_HOST": "smtp.example.test",
+{%- endif %}
         "POSTGRES_PASSWORD": postgres_password,
         "REDIS_PASSWORD": redis_password,
+{%- if cookiecutter.email_provider == "resend" %}
         "RESEND_API_KEY": f"re_{faker.pystr(min_chars=24, max_chars=24)}",
+{%- endif %}
         "SECRET_KEY": faker.bothify(text="mock-secret-key-????????-########-????????"),
         "SENTRY_DSN": f"https://{sentry_key}@sentry.example.com/1",
     }

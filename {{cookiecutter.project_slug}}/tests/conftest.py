@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     {%- endif %}
 {%- endif %}
 
-
 TEST_TYPE_MARKERS = {
     "integration": pytest.mark.integration,
     "unit": pytest.mark.unit,

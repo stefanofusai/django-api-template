@@ -7,7 +7,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 permissions:
   contents: read
-  packages: write
 jobs:
   tests:
     name: Tests
@@ -15,6 +14,9 @@ jobs:
   publish-release-image:
     name: Publish release image
     needs: tests
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
