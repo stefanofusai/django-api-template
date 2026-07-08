@@ -33,6 +33,10 @@ jobs:
             project_name: My Project
             extra-args: use_cors=yes
             slug: my-project
+          - case: csp
+            project_name: My Project
+            extra-args: use_csp=yes
+            slug: my-project
           - case: default
             project_name: My Project
             extra-args: ""

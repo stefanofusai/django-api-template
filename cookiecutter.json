@@ -15,6 +15,7 @@
     "traefik_tls": ["letsencrypt", "external"],
     "use_celery": ["worker+beat", "worker", "none"],
     "use_cors": ["no", "yes"],
+    "use_csp": ["no", "yes"],
     "use_example_api": ["no", "yes"],
     "use_s3_media": ["yes", "no"],
     "use_sentry": ["yes", "no"],
@@ -73,6 +74,11 @@
             "__prompt__": "Browser CORS policy",
             "no": "Do not install or configure CORS support",
             "yes": "Enable explicit browser origins through CORS_ALLOWED_ORIGINS"
+        },
+        "use_csp": {
+            "__prompt__": "Django native Content Security Policy",
+            "no": "Do not emit Content-Security-Policy headers",
+            "yes": "Enable a Swagger-compatible starter CSP for browser-rendered surfaces"
         },
         "use_example_api": {
             "__prompt__": "Example notes API resource",

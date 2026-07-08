@@ -243,6 +243,12 @@ production (`API_DOCS_DECORATOR`). The API itself ships unauthenticated: when
 you add the first endpoint that needs protection, set a global auth class
 (`NinjaAPI(auth=...)`) or per-router auth; see
 <https://django-ninja.dev/guides/authentication/>.
+{%- if cookiecutter.use_csp == "yes" %}
+
+Content Security Policy headers are enabled through Django's native CSP
+middleware. The starter policy is compatible with Swagger UI and intentionally
+allows inline scripts and styles.
+{%- endif %}
 
 Export OpenAPI schema files for client generation:
 

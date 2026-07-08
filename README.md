@@ -24,6 +24,7 @@ Compose deployment defaults, and CI gates for the baked project.
   generation
 - Optional Celery worker and beat services, chosen at bake time
 - Optional CORS support for explicit browser origins
+- Optional Django native Content Security Policy for browser-rendered surfaces
 - Optional email stack: Resend API, SMTP, or no production email provider
 - Optional example `notes` resource demonstrating the model-to-tests vertical
   slice
@@ -97,6 +98,7 @@ uvx cookiecutter gh:stefanofusai/django-api-template
 | `traefik_tls` | `letsencrypt` | Use `external` to serve an operator-provided PEM pair instead of running ACME; ignored when `use_traefik=no`. |
 | `use_celery` | `worker+beat` | Celery services to include: `worker+beat`, `worker`, or `none`. |
 | `use_cors` | `no` | Enable explicit browser origins with `django-cors-headers` and `CORS_ALLOWED_ORIGINS`. |
+| `use_csp` | `no` | Enable Django native CSP headers with a Swagger-compatible starter policy that allows inline scripts and styles. |
 | `use_example_api` | `no` | Include the example `notes` model, router, and tests demonstrating the full API pattern. |
 | `use_s3_media` | `yes` | Store production media on S3-compatible object storage. |
 | `use_sentry` | `yes` | Include the production Sentry integration. |

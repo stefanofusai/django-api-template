@@ -23,6 +23,7 @@ POSTGRES = {{ cookiecutter.postgres | tojson }}
 TRAEFIK_TLS = {{ cookiecutter.traefik_tls | tojson }}
 USE_CELERY = {{ cookiecutter.use_celery | tojson }}
 USE_CORS = {{ cookiecutter.use_cors | tojson }}
+USE_CSP = {{ cookiecutter.use_csp | tojson }}
 USE_EXAMPLE_API = {{ cookiecutter.use_example_api | tojson }}
 USE_SENTRY = {{ cookiecutter.use_sentry | tojson }}
 USE_TRAEFIK = {{ cookiecutter.use_traefik | tojson }}
@@ -83,6 +84,13 @@ REMOVED_PATHS = [
             "tests/api/integration/cors_test.py",
         ]
         if USE_CORS == "no"
+        else []
+    ),
+    *(
+        [
+            "tests/api/integration/csp_test.py",
+        ]
+        if USE_CSP == "no"
         else []
     ),
     *(

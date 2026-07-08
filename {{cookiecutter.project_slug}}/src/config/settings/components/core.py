@@ -1,3 +1,7 @@
+{%- if cookiecutter.use_csp == "yes" %}
+from django.utils.csp import CSP
+
+{% endif -%}
 from config.settings import env
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
@@ -23,4 +27,12 @@ if API_THROTTLE_USER_RATE is not None:
 {% endif %}
 ROOT_URLCONF = "config.urls"
 SECRET_KEY = env("SECRET_KEY")
+{%- if cookiecutter.use_csp == "yes" %}
+SECURE_CSP = {
+    "default-src": [CSP.SELF],
+    "img-src": [CSP.SELF, "data:"],
+    "script-src": [CSP.SELF, CSP.UNSAFE_INLINE],
+    "style-src": [CSP.SELF, CSP.UNSAFE_INLINE],
+}
+{%- endif %}
 TIME_ZONE = "UTC"
