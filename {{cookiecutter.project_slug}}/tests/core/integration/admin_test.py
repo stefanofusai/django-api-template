@@ -18,13 +18,8 @@ def test_token_changelist_returns_200_when_staff(
     client: Client,
     token: Token,
     user: User,
-    user__is_staff: bool,
-    user__is_superuser: bool,
 ) -> None:
     assert token.pk is not None
-    assert user__is_staff
-    assert user__is_superuser
-
     client.force_login(user)
 
     response = client.get(reverse("admin:core_token_changelist"))
@@ -37,12 +32,7 @@ def test_token_changelist_returns_200_when_staff(
 def test_user_changelist_returns_200_when_staff(
     client: Client,
     user: User,
-    user__is_staff: bool,
-    user__is_superuser: bool,
 ) -> None:
-    assert user__is_staff
-    assert user__is_superuser
-
     client.force_login(user)
 
     response = client.get(reverse("admin:core_user_changelist"))

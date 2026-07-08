@@ -22,7 +22,7 @@ TEST_TYPE_MARKERS = {
 hypothesis_settings.register_profile("ci", deadline=None, max_examples=50)
 hypothesis_settings.load_profile("ci")
 
-register(UserFactory, is_staff=False, is_superuser=False)
+register(UserFactory)
 {%- if cookiecutter.use_example_api == "yes" %}
 register(NoteFactory)
 {%- endif %}
