@@ -148,6 +148,8 @@ target local PostgreSQL and Redis containers:
 {%- else %}
 
 {% endif %}
+- `AXES_COOLOFF_MINUTES` and `AXES_FAILURE_LIMIT` optionally tune the
+  cache-backed failed-login lockout.
 - `CACHE_URL` uses Redis database 0.
 {%- if cookiecutter.api_throttling == "basic" %}
 - `API_THROTTLE_ANON_RATE` and `API_THROTTLE_USER_RATE` optionally tune
@@ -314,6 +316,12 @@ mint the first credential with:
 ```shell
 ./.docker/scripts/manage.sh createsuperuser
 ```
+
+Password-based logins are protected by cache-backed django-axes lockout.
+Tune `AXES_COOLOFF_MINUTES` and `AXES_FAILURE_LIMIT` in `.env` when the
+defaults do not fit the deployment. To clear active lockouts manually, run
+`uv run manage.py axes_reset` or the same command through the production
+management wrapper.
 
 Production serves Django through ASGI (`config.asgi`) using Gunicorn with
 Uvicorn workers. Sync and async Django Ninja operations can coexist; use async
