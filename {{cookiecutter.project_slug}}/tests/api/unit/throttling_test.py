@@ -6,7 +6,6 @@ from http import HTTPStatus
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
-from django.core.cache import cache
 from django.http import HttpResponse
 from django.test import RequestFactory, override_settings
 from ninja_extra.throttling import AnonRateThrottle, BaseThrottle, UserRateThrottle
@@ -48,7 +47,6 @@ def test_public_api_throttle_allows_requests_when_rates_are_unset() -> None:
 def test_dynamic_public_api_throttle_allow_request_delegates_when_throttle_is_configured() -> (
     None
 ):
-    cache.clear()
     request = RequestFactory().get("/api/v1/notes")
     request.user = AnonymousUser()
 
@@ -107,7 +105,6 @@ def test_ninja_extra_throttle_rates_are_populated_when_env_is_set() -> None:
 
 @override_settings(API_THROTTLE_ANON_RATE="1/min", API_THROTTLE_USER_RATE=None)
 def test_public_api_middleware_counts_unauthorized_authorization_requests() -> None:
-    cache.clear()
     request = RequestFactory().get(
         "/api/v1/notes",
         HTTP_AUTHORIZATION="Bearer garbage",
@@ -123,7 +120,6 @@ def test_public_api_middleware_counts_unauthorized_authorization_requests() -> N
 
 @override_settings(API_THROTTLE_ANON_RATE="1/min", API_THROTTLE_USER_RATE=None)
 def test_public_api_middleware_does_not_count_non_401_authorization_requests() -> None:
-    cache.clear()
     request = RequestFactory().get(
         "/api/v1/notes",
         HTTP_AUTHORIZATION="Bearer valid",
@@ -141,7 +137,6 @@ def test_public_api_middleware_does_not_count_non_401_authorization_requests() -
 def test_public_api_middleware_allows_header_less_request_when_throttle_permits() -> (
     None
 ):
-    cache.clear()
     request = RequestFactory().get("/api/v1/notes")
     request.user = AnonymousUser()
     middleware = PublicAPIThrottleMiddleware(
@@ -155,7 +150,6 @@ def test_public_api_middleware_allows_header_less_request_when_throttle_permits(
 def test_public_api_middleware_throttles_header_less_request_when_budget_exhausted() -> (
     None
 ):
-    cache.clear()
     request = RequestFactory().get("/api/v1/notes")
     request.user = AnonymousUser()
     middleware = PublicAPIThrottleMiddleware(
