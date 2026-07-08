@@ -9,11 +9,13 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.core.cache import cache
 from django.http import HttpResponse
 from django.test import RequestFactory, override_settings
-from ninja_extra.throttling import AnonRateThrottle, BaseThrottle
+from ninja_extra.throttling import AnonRateThrottle, BaseThrottle, UserRateThrottle
 
 from apps.api.throttling import (
+    DynamicPublicAPIThrottle,
     PublicAPIThrottleMiddleware,
     _anon_budget_exhausted,
+    _get_request_throttle,
     get_public_api_throttles,
 )
 
@@ -40,6 +42,41 @@ def test_public_api_throttle_allows_requests_when_rates_are_unset() -> None:
     request.user = AnonymousUser()
 
     assert get_public_api_throttles()[0].allow_request(request)
+
+
+@override_settings(API_THROTTLE_ANON_RATE="2/min", API_THROTTLE_USER_RATE=None)
+def test_dynamic_public_api_throttle_allow_request_delegates_when_throttle_is_configured() -> (
+    None
+):
+    cache.clear()
+    request = RequestFactory().get("/api/v1/notes")
+    request.user = AnonymousUser()
+
+    assert DynamicPublicAPIThrottle().allow_request(request)
+
+
+def test_dynamic_public_api_throttle_wait_returns_none() -> None:
+    assert DynamicPublicAPIThrottle().wait() is None
+
+
+@override_settings(API_THROTTLE_ANON_RATE=None, API_THROTTLE_USER_RATE=None)
+def test_get_request_throttle_returns_none_when_authenticated_user_rate_is_unset() -> (
+    None
+):
+    request = RequestFactory().get("/api/v1/notes")
+    request.user = User(username="test-user")
+
+    assert _get_request_throttle(request) is None
+
+
+@override_settings(API_THROTTLE_ANON_RATE=None, API_THROTTLE_USER_RATE="3/min")
+def test_get_request_throttle_returns_user_throttle_when_authenticated_user_rate_is_set() -> (
+    None
+):
+    request = RequestFactory().get("/api/v1/notes")
+    request.user = User(username="test-user")
+
+    assert isinstance(_get_request_throttle(request), UserRateThrottle)
 
 
 def test_ninja_extra_throttle_rates_default_to_empty_when_env_is_unset() -> None:
@@ -98,6 +135,35 @@ def test_public_api_middleware_does_not_count_non_401_authorization_requests() -
 
     assert middleware(request).status_code == HTTPStatus.OK
     assert middleware(request).status_code == HTTPStatus.OK
+
+
+@override_settings(API_THROTTLE_ANON_RATE="1/min", API_THROTTLE_USER_RATE=None)
+def test_public_api_middleware_allows_header_less_request_when_throttle_permits() -> (
+    None
+):
+    cache.clear()
+    request = RequestFactory().get("/api/v1/notes")
+    request.user = AnonymousUser()
+    middleware = PublicAPIThrottleMiddleware(
+        lambda _request: HttpResponse(status=HTTPStatus.OK),
+    )
+
+    assert middleware(request).status_code == HTTPStatus.OK
+
+
+@override_settings(API_THROTTLE_ANON_RATE="1/min", API_THROTTLE_USER_RATE=None)
+def test_public_api_middleware_throttles_header_less_request_when_budget_exhausted() -> (
+    None
+):
+    cache.clear()
+    request = RequestFactory().get("/api/v1/notes")
+    request.user = AnonymousUser()
+    middleware = PublicAPIThrottleMiddleware(
+        lambda _request: HttpResponse(status=HTTPStatus.OK),
+    )
+
+    assert middleware(request).status_code == HTTPStatus.OK
+    assert middleware(request).status_code == HTTPStatus.TOO_MANY_REQUESTS
 
 
 @override_settings(API_THROTTLE_ANON_RATE=None, API_THROTTLE_USER_RATE="3/min")
