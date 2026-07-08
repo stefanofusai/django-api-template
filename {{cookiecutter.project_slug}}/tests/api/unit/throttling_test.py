@@ -1,9 +1,25 @@
-from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
-from django.test import RequestFactory, override_settings
-from ninja_extra.throttling import BaseThrottle
+from http import HTTPStatus
 
-from apps.api.throttling import get_public_api_throttles
+from django.conf import settings
+from django.contrib.auth.models import AnonymousUser, User
+from django.core.cache import cache
+from django.http import HttpResponse
+from django.test import RequestFactory, override_settings
+from ninja_extra.throttling import AnonRateThrottle, BaseThrottle
+
+from apps.api.throttling import (
+    PublicAPIThrottleMiddleware,
+    _anon_budget_exhausted,
+    get_public_api_throttles,
+)
+
+
+@override_settings(API_THROTTLE_ANON_RATE="2/min", API_THROTTLE_USER_RATE=None)
+def test_anon_budget_exhausted_returns_false_when_request_has_no_cache_key() -> None:
+    request = RequestFactory().get("/api/v1/notes")
+    request.user = User(username="test-user")
+
+    assert not _anon_budget_exhausted(AnonRateThrottle(rate="2/min"), request)
 
 
 @override_settings(API_THROTTLE_ANON_RATE="2/min", API_THROTTLE_USER_RATE=None)
@@ -24,6 +40,38 @@ def test_public_api_throttle_allows_requests_when_rates_are_unset() -> None:
 
 def test_ninja_extra_throttle_rates_are_env_driven() -> None:
     assert settings.NINJA_EXTRA["THROTTLE_RATES"] == {}
+
+
+@override_settings(API_THROTTLE_ANON_RATE="1/min", API_THROTTLE_USER_RATE=None)
+def test_public_api_middleware_counts_unauthorized_authorization_requests() -> None:
+    cache.clear()
+    request = RequestFactory().get(
+        "/api/v1/notes",
+        HTTP_AUTHORIZATION="Bearer garbage",
+    )
+    request.user = AnonymousUser()
+    middleware = PublicAPIThrottleMiddleware(
+        lambda _request: HttpResponse(status=HTTPStatus.UNAUTHORIZED),
+    )
+
+    assert middleware(request).status_code == HTTPStatus.UNAUTHORIZED
+    assert middleware(request).status_code == HTTPStatus.TOO_MANY_REQUESTS
+
+
+@override_settings(API_THROTTLE_ANON_RATE="1/min", API_THROTTLE_USER_RATE=None)
+def test_public_api_middleware_does_not_count_non_401_authorization_requests() -> None:
+    cache.clear()
+    request = RequestFactory().get(
+        "/api/v1/notes",
+        HTTP_AUTHORIZATION="Bearer valid",
+    )
+    request.user = AnonymousUser()
+    middleware = PublicAPIThrottleMiddleware(
+        lambda _request: HttpResponse(status=HTTPStatus.OK),
+    )
+
+    assert middleware(request).status_code == HTTPStatus.OK
+    assert middleware(request).status_code == HTTPStatus.OK
 
 
 @override_settings(API_THROTTLE_ANON_RATE=None, API_THROTTLE_USER_RATE="3/min")
