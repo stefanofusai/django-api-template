@@ -26,10 +26,25 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "digest",
-                    models.CharField(max_length=64, unique=True, verbose_name="digest"),
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True),
                 ),
-                ("name", models.CharField(max_length=100, verbose_name="name")),
+                (
+                    "expires_at",
+                    models.DateTimeField(
+                        blank=True,
+                        null=True,
+                        verbose_name="expires at",
+                    ),
+                ),
+                (
+                    "last_used_at",
+                    models.DateTimeField(
+                        blank=True,
+                        null=True,
+                        verbose_name="last used at",
+                    ),
+                ),
                 (
                     "user",
                     models.ForeignKey(
@@ -37,6 +52,19 @@ class Migration(migrations.Migration):
                         related_name="tokens",
                         to=settings.AUTH_USER_MODEL,
                         verbose_name="user",
+                    ),
+                ),
+                (
+                    "digest",
+                    models.CharField(max_length=64, unique=True, verbose_name="digest"),
+                ),
+                ("name", models.CharField(max_length=100, verbose_name="name")),
+                (
+                    "prefix",
+                    models.CharField(
+                        db_index=True,
+                        max_length=12,
+                        verbose_name="prefix",
                     ),
                 ),
             ],

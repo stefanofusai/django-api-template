@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from apps.core.models import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}Token, User{% else %}User{% endif %}
 
@@ -11,12 +14,37 @@ def test_get_user_model_returns_custom_user_when_project_is_configured() -> None
 {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
 
 
-def test_token_issue_returns_raw_token_and_stores_only_digest(user: User) -> None:
+def test_token_issue_returns_pat_token_and_stores_prefix_and_digest(
+    user: User,
+) -> None:
     raw_token, token = Token.issue(name="test token", user=user)
 
-    assert raw_token
+    token.refresh_from_db()
+    assert raw_token.startswith(f"pat_{token.prefix}_")
     assert token.digest == Token.hash(raw_token)
     assert token.digest != raw_token
+    assert token.created_at is not None
+    assert token.expires_at is None
+    assert token.last_used_at is None
+    assert token.prefix
+
+
+def test_token_issue_stores_optional_expiration(user: User) -> None:
+    expires_at = timezone.now() + timedelta(days=7)
+
+    _, token = Token.issue(expires_at=expires_at, name="test token", user=user)
+
+    assert token.expires_at == expires_at
+
+
+def test_token_prefix_from_returns_none_when_token_shape_is_invalid() -> None:
+    assert Token.prefix_from("jwt_deadbeefcafe_test-secret") is None
+    assert Token.prefix_from("pat__test-secret") is None
+    assert Token.prefix_from("pat_deadbeefcafe_") is None
+
+
+def test_token_prefix_from_returns_prefix_when_token_shape_is_valid() -> None:
+    assert Token.prefix_from("pat_deadbeefcafe_test-secret") == "deadbeefcafe"
 
 
 def test_token_str_returns_token_name(user: User) -> None:

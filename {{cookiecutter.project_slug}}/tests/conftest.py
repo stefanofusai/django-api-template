@@ -6,7 +6,7 @@ from ninja.testing import TestClient
 from pytest_factoryboy import register
 
 from apps.api.api import internal_api, v1_api
-from tests.factories import {% if cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
+from tests.factories import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}NoteFactory, TokenFactory, UserFactory{% elif cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
 from tests.utils import AuthenticatedTestClient
 
 if TYPE_CHECKING:
@@ -22,6 +22,9 @@ hypothesis_settings.register_profile("ci", deadline=None, max_examples=50)
 hypothesis_settings.load_profile("ci")
 
 register(UserFactory)
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+register(TokenFactory)
+{%- endif %}
 {%- if cookiecutter.use_example_api == "yes" %}
 register(NoteFactory)
 {%- endif %}

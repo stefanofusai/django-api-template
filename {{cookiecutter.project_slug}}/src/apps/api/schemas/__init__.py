@@ -1,4 +1,4 @@
-from .error import ErrorSchema
+from .error import ErrorSchema, ValidationErrorItem, ValidationErrorSchema
 from .health import HealthOkSchema
 from .ready import ReadyError, ReadyErrorSchema, ReadyOkSchema
 
@@ -8,4 +8,6 @@ __all__ = [
     "ReadyError",
     "ReadyErrorSchema",
     "ReadyOkSchema",
+    "ValidationErrorItem",
+    "ValidationErrorSchema",
 ]

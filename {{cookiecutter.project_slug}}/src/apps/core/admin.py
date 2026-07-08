@@ -16,5 +16,12 @@ class UserAdmin(DjangoUserAdmin, ModelAdmin):
 
 @admin.register(Token)
 class TokenAdmin(ModelAdmin):
-    list_display = ("name", "user")
+    list_display = (
+        "created_at",
+        "expires_at",
+        "last_used_at",
+        "name",
+        "prefix",
+        "user",
+    )
 {%- endif %}

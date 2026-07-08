@@ -13,7 +13,7 @@ from ninja.security import django_auth
 from apps.api.auth import bearer_token_auth
 {% endif -%}
 from apps.api.pagination import BoundedLimitOffsetPagination
-from apps.api.schemas import ErrorSchema
+from apps.api.schemas import ErrorSchema, ValidationErrorSchema
 
 from .models import Note
 from .schemas import NoteInSchema, NoteOutSchema
@@ -24,7 +24,16 @@ router = Router(auth=bearer_token_auth, tags=["notes"])
 router = Router(auth=django_auth, tags=["notes"])
 {% endif %}
 
-@router.post("", response={201: NoteOutSchema, 401: ErrorSchema, 403: ErrorSchema})
+@router.post(
+    "",
+    response={
+        201: NoteOutSchema,
+        400: ErrorSchema,
+        401: ErrorSchema,
+        403: ErrorSchema,
+        422: ValidationErrorSchema,
+    },
+)
 def create_note(request: HttpRequest, payload: NoteInSchema) -> Status[Note]:
     note = Note.objects.create(owner=request.user, **payload.dict())
     return Status(201, note)
@@ -32,7 +41,14 @@ def create_note(request: HttpRequest, payload: NoteInSchema) -> Status[Note]:
 
 @router.delete(
     "/{note_id}",
-    response={204: None, 401: ErrorSchema, 403: ErrorSchema, 404: ErrorSchema},
+    response={
+        204: None,
+        400: ErrorSchema,
+        401: ErrorSchema,
+        403: ErrorSchema,
+        404: ErrorSchema,
+        422: ValidationErrorSchema,
+    },
 )
 def delete_note(request: HttpRequest, note_id: uuid.UUID) -> Status[None]:
     note = get_object_or_404(Note, id=note_id, owner=request.user)
@@ -41,13 +57,23 @@ def delete_note(request: HttpRequest, note_id: uuid.UUID) -> Status[None]:
 
 
 @router.get(
-    "/{note_id}", response={200: NoteOutSchema, 401: ErrorSchema, 404: ErrorSchema}
+    "/{note_id}",
+    response={
+        200: NoteOutSchema,
+        400: ErrorSchema,
+        401: ErrorSchema,
+        404: ErrorSchema,
+        422: ValidationErrorSchema,
+    },
 )
 def get_note(request: HttpRequest, note_id: uuid.UUID) -> Note:
     return get_object_or_404(Note, id=note_id, owner=request.user)
 
 
-@router.get("", response={200: list[NoteOutSchema], 401: ErrorSchema})
+@router.get(
+    "",
+    response={200: list[NoteOutSchema], 401: ErrorSchema, 422: ValidationErrorSchema},
+)
 @paginate(BoundedLimitOffsetPagination)
 def list_notes(request: HttpRequest) -> QuerySet[Note]:
     return Note.objects.filter(owner=request.user)
@@ -57,9 +83,11 @@ def list_notes(request: HttpRequest) -> QuerySet[Note]:
     "/{note_id}",
     response={
         200: NoteOutSchema,
+        400: ErrorSchema,
         401: ErrorSchema,
         403: ErrorSchema,
         404: ErrorSchema,
+        422: ValidationErrorSchema,
     },
 )
 def update_note(

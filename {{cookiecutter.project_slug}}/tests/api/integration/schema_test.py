@@ -4,13 +4,15 @@ from typing import TYPE_CHECKING
 {% endif -%}
 import pytest
 import schemathesis
-{% if cookiecutter.use_example_api == "yes" -%}
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "session" -%}
 from django.conf import settings
 from django.test import Client
 {% endif -%}
 from schemathesis import Case, CheckFunction
 from schemathesis.checks import CHECKS, load_all_checks
-
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+from apps.core.models import Token
+{% endif %}
 # Production serves ASGI (config.asgi), but the OpenAPI schema is identical
 # under either protocol and Schemathesis' ASGI transport runs the ASGI
 # lifespan protocol, which Django's ASGIHandler rejects. Load the WSGI app
@@ -61,6 +63,13 @@ def authenticated_schema_headers(
     user: User,
 ) -> dict[str, str]:
     note_factory.create(body="Contract body", owner=user, title="Contract note")
+    {%- if cookiecutter.api_auth == "token" %}
+    raw_token, _ = Token.issue(name="contract test token", user=user)
+
+    return {
+        "Authorization": f"Bearer {raw_token}",
+    }
+    {%- else %}
     client = Client()
     client.force_login(user)
     session_cookie = client.cookies[settings.SESSION_COOKIE_NAME].value
@@ -68,6 +77,7 @@ def authenticated_schema_headers(
     return {
         "Cookie": f"{settings.SESSION_COOKIE_NAME}={session_cookie}",
     }
+    {%- endif %}
 {%- endif %}
 {% if cookiecutter.use_example_api == "yes" %}
 

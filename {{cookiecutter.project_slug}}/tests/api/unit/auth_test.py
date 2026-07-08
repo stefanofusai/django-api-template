@@ -1,7 +1,9 @@
+from datetime import timedelta
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
+from django.utils import timezone
 from ninja.errors import HttpError
 
 from apps.api.auth import BearerTokenAuth
@@ -24,6 +26,23 @@ def test_authenticate_raises_401_when_token_is_unknown(mocker: MockerFixture) ->
     assert exc_info.value.status_code == HTTPStatus.UNAUTHORIZED
 
 
+def test_authenticate_raises_401_when_token_is_expired(
+    mocker: MockerFixture,
+    user: User,
+) -> None:
+    raw_token, _ = Token.issue(
+        expires_at=timezone.now() - timedelta(seconds=1),
+        name="test token",
+        user=user,
+    )
+    auth = BearerTokenAuth()
+
+    with pytest.raises(HttpError) as exc_info:
+        auth.authenticate(mocker.Mock(), raw_token)
+
+    assert exc_info.value.status_code == HTTPStatus.UNAUTHORIZED
+
+
 def test_authenticate_returns_user_and_sets_request_user_when_token_is_valid(
     mocker: MockerFixture,
     user: User,
@@ -36,3 +55,16 @@ def test_authenticate_returns_user_and_sets_request_user_when_token_is_valid(
 
     assert result == user
     assert request.user == user
+
+
+def test_authenticate_updates_last_used_at_when_token_is_valid(
+    mocker: MockerFixture,
+    user: User,
+) -> None:
+    raw_token, token = Token.issue(name="test token", user=user)
+    auth = BearerTokenAuth()
+
+    auth.authenticate(mocker.Mock(), raw_token)
+
+    token.refresh_from_db()
+    assert token.last_used_at is not None
