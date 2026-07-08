@@ -2,15 +2,19 @@ name: Release
 on:
   push:
     tags:
-      - v*
+      - v[0-9]+.[0-9]+.[0-9]+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 permissions:
   contents: read
   packages: write
 jobs:
+  tests:
+    name: Tests
+    uses: ./.github/workflows/tests.yaml
   publish-release-image:
     name: Publish release image
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -44,4 +48,3 @@ jobs:
           cache-from: type=gha,scope=prod
           tags: |
             ${{ steps.image.outputs.name }}:${{ github.ref_name }}
-            ${{ steps.image.outputs.name }}:latest

@@ -274,7 +274,8 @@ docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --wait
 ```
 
 For release-based deploys, bump `[project] version` in `pyproject.toml`,
-commit, tag `v<version>`, and push the tag. The release workflow publishes
+commit, tag `v<version>`, and push the tag. Only strict `vX.Y.Z` tags trigger
+the release workflow. It runs the full test suite before publishing
 `ghcr.io/<owner>/<repo>:v<version>` and refuses tags that do not match the
 project version, keeping image tags aligned with Sentry release names.
 
@@ -285,10 +286,13 @@ Deploy or roll back with one command from the project root:
 ```
 
 The script updates `APP_VERSION` in `.env`, pulls the matching image, and
-replaces the containers. Rollback is the same command with the previous tag,
-for example `./.docker/scripts/deploy.sh v<previous>`. Usually the previous
-image is still cached on the host, so the pull is a no-op. Find earlier tags
-with `git tag --sort=-v:refname | head` or on the GHCR package page.
+replaces the containers. There is no published `:latest` tag: release deploys
+always set an explicit `APP_VERSION`, while an unset `APP_VERSION` means a
+locally built unreleased image tagged `unreleased`, never a registry pull.
+Rollback is the same command with the previous tag, for example
+`./.docker/scripts/deploy.sh v<previous>`. Usually the previous image is still
+cached on the host, so the pull is a no-op. Find earlier tags with
+`git tag --sort=-v:refname | head` or on the GHCR package page.
 
 Do not deploy releases with `up -d --build`; that builds source on the host
 instead of running the published artifact. Rolling back an image does not roll

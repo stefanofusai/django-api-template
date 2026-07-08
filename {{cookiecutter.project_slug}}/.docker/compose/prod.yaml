@@ -43,7 +43,7 @@ services:
       retries: 3
       start_period: 30s
       start_interval: 2s
-    image: ghcr.io/{{ cookiecutter.github_username }}/{{ cookiecutter.project_slug }}:${APP_VERSION:-latest}
+    image: ghcr.io/{{ cookiecutter.github_username }}/{{ cookiecutter.project_slug }}:${APP_VERSION:-unreleased}
 {%- if cookiecutter.use_traefik == "yes" %}
     labels:
       - docker-rollout.pre-stop-hook=sleep 3
@@ -101,7 +101,7 @@ services:
       - ../../.env
     environment:
       DJANGO_ENV: prod
-    image: ghcr.io/{{ cookiecutter.github_username }}/{{ cookiecutter.project_slug }}:${APP_VERSION:-latest}
+    image: ghcr.io/{{ cookiecutter.github_username }}/{{ cookiecutter.project_slug }}:${APP_VERSION:-unreleased}
     logging: *default-logging
     restart: unless-stopped
 {%- endif %}
@@ -131,7 +131,7 @@ services:
       retries: 3
       start_period: 30s
       start_interval: 5s
-    image: ghcr.io/{{ cookiecutter.github_username }}/{{ cookiecutter.project_slug }}:${APP_VERSION:-latest}
+    image: ghcr.io/{{ cookiecutter.github_username }}/{{ cookiecutter.project_slug }}:${APP_VERSION:-unreleased}
     logging: *default-logging
 {%- if cookiecutter.use_s3_media == "no" %}
     volumes:
