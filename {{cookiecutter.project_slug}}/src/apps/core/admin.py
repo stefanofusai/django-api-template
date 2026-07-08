@@ -24,4 +24,5 @@ class TokenAdmin(ModelAdmin):
         "prefix",
         "user",
     )
+    list_select_related = ("user",)
 {%- endif %}

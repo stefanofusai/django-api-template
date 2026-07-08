@@ -17,11 +17,12 @@ TEST_TYPE_MARKERS = {
     "unit": pytest.mark.unit,
 }
 
+
 # Cold database connections can exceed Hypothesis' default deadline under xdist.
 hypothesis_settings.register_profile("ci", deadline=None, max_examples=50)
 hypothesis_settings.load_profile("ci")
 
-register(UserFactory)
+register(UserFactory, is_staff=False, is_superuser=False)
 {%- if cookiecutter.use_example_api == "yes" %}
 register(NoteFactory)
 {%- endif %}
