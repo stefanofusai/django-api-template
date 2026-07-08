@@ -275,6 +275,8 @@ Start the production stack:
 docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --wait
 ```
 
+### Deploying releases (recommended)
+
 For release-based deploys, bump `[project] version` in `pyproject.toml`,
 commit, tag `v<version>`, and push the tag. Only strict `vX.Y.Z` tags trigger
 the release workflow. It runs the full test suite before publishing
@@ -464,7 +466,13 @@ externally managed certificate works the same way. Restart the `traefik`
 service after replacing files; renewal is the operator's or issuing service's
 responsibility.
 {%- endif %}
-{%- if cookiecutter.use_traefik == "yes" %}
+
+### Building on the host
+
+Use this flow before the first published release, when GHCR is unreachable, or
+when the project deliberately does not publish images.
+
+{% if cookiecutter.use_traefik == "yes" %}
 
 Install docker-rollout once on each host:
 
@@ -485,7 +493,7 @@ docker compose -f .docker/compose/prod.yaml --env-file=.env run --no-deps --rm a
 docker rollout -f .docker/compose/prod.yaml --env-file=.env api
 docker compose -f .docker/compose/prod.yaml --env-file=.env up -d
 ```
-{%- else %}
+{% else %}
 Deploy from the project root:
 
 ```shell
@@ -498,6 +506,8 @@ docker compose -f .docker/compose/prod.yaml --env-file=.env up -d
 Container replacement has brief downtime. Overlap deployment requires the
 bundled proxy path.
 {%- endif %}
+
+For either deploy flow, keep database changes compatible across the handoff.
 
 {% if cookiecutter.use_traefik == "yes" -%}
 Migrations must stay N-1 compatible because old code keeps serving while the
