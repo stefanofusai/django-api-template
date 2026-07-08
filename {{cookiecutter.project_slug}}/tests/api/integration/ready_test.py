@@ -73,6 +73,79 @@ def test_ready_endpoint_returns_database_error_when_connection_raises(
     ensure_connection.assert_called_once_with()
 
 
+{% if cookiecutter.use_celery != "none" -%}
+def test_ready_endpoint_returns_error_when_dependencies_are_unavailable(
+    internal_api_client: TestClient, mocker: MockerFixture
+) -> None:
+    cache_ready = mocker.patch.object(ready_route, "_cache_ready", return_value=False)
+    database_ready = mocker.patch.object(
+        ready_route, "_database_ready", return_value=False
+    )
+    broker_ready = mocker.patch.object(ready_route, "_broker_ready", return_value=False)
+
+    response = internal_api_client.get("/ready")
+
+    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.data == {
+        "status": "error",
+        "errors": ["cache", "database", "broker"],
+    }
+    cache_ready.assert_called_once_with()
+    database_ready.assert_called_once_with()
+    broker_ready.assert_called_once_with()
+
+
+@pytest.mark.django_db
+def test_ready_endpoint_returns_ok_when_dependencies_are_available(
+    internal_api_client: TestClient,
+) -> None:
+    response = internal_api_client.get("/ready")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.data == {"status": "ok"}
+
+
+def test_broker_ready_returns_true_when_broker_accepts_connection(
+    mocker: MockerFixture,
+) -> None:
+    # The autouse `_broker_ready_default` fixture (conftest.py) replaces this
+    # module's `_broker_ready` wholesale so unrelated tests default to a
+    # healthy broker; undo it here to exercise the real implementation.
+    mocker.stopall()
+    connection = mocker.MagicMock()
+    connection_context = mocker.MagicMock()
+    connection_context.__enter__.return_value = connection
+    connection_for_read = mocker.patch.object(
+        ready_route.app, "connection_for_read", return_value=connection_context
+    )
+
+    assert ready_route._broker_ready() is True  # noqa: SLF001
+    connection_for_read.assert_called_once_with()
+    connection.ensure_connection.assert_called_once_with(max_retries=0, timeout=1)
+
+
+def test_ready_endpoint_returns_broker_error_when_broker_is_unreachable(
+    internal_api_client: TestClient,
+    mocker: MockerFixture,
+) -> None:
+    # See the comment in test_broker_ready_returns_true_when_broker_accepts_
+    # connection: undo the autouse default so the endpoint runs the real
+    # _broker_ready() and surfaces the patched connection failure below.
+    mocker.stopall()
+    mocker.patch.object(ready_route, "_cache_ready", return_value=True)
+    mocker.patch.object(ready_route, "_database_ready", return_value=True)
+    connection_for_read = mocker.patch.object(
+        ready_route.app,
+        "connection_for_read",
+        side_effect=ready_route.OperationalError("broker unreachable"),
+    )
+
+    response = internal_api_client.get("/ready")
+
+    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.data == {"status": "error", "errors": ["broker"]}
+    connection_for_read.assert_called_once_with()
+{% else -%}
 def test_ready_endpoint_returns_error_when_dependencies_are_unavailable(
     internal_api_client: TestClient, mocker: MockerFixture
 ) -> None:
@@ -97,3 +170,4 @@ def test_ready_endpoint_returns_ok_when_dependencies_are_available(
 
     assert response.status_code == HTTPStatus.OK
     assert response.data == {"status": "ok"}
+{% endif -%}

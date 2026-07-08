@@ -1,4 +1,4 @@
-{%- if cookiecutter.use_example_api == "yes" -%}
+{%- if cookiecutter.use_example_api == "yes" or cookiecutter.use_celery != "none" -%}
 from typing import TYPE_CHECKING
 
 {% endif -%}
@@ -11,10 +11,21 @@ from apps.api.api import internal_api, v1_api
 from tests.factories import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}NoteFactory, TokenFactory, UserFactory{% elif cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
 {%- if cookiecutter.use_example_api == "yes" %}
 from tests.utils import AuthenticatedTestClient
+{%- endif %}
+{%- if cookiecutter.use_example_api == "yes" or cookiecutter.use_celery != "none" %}
 
 if TYPE_CHECKING:
+    {%- if cookiecutter.use_celery != "none" and cookiecutter.use_example_api == "yes" %}
+    from pytest_mock import MockerFixture
+
     from apps.core.models import User
+    {%- elif cookiecutter.use_celery != "none" %}
+    from pytest_mock import MockerFixture
+    {%- elif cookiecutter.use_example_api == "yes" %}
+    from apps.core.models import User
+    {%- endif %}
 {%- endif %}
+
 
 TEST_TYPE_MARKERS = {
     "integration": pytest.mark.integration,
@@ -38,6 +49,16 @@ register(TokenFactory)
 # Fixtures
 
 
+{% if cookiecutter.use_celery != "none" -%}
+@pytest.fixture(autouse=True)
+def _broker_ready_default(mocker: MockerFixture) -> None:
+    # The broker is unreachable in the test environment (no CELERY_BROKER_URL
+    # is configured), so default every test to a healthy broker; tests that
+    # care about broker state override this patch in their own body.
+    mocker.patch("apps.api.routes.ready._broker_ready", return_value=True)
+
+
+{% endif -%}
 {% if cookiecutter.use_example_api == "yes" -%}
 @pytest.fixture
 def authenticated_v1_api_client(
