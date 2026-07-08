@@ -19,6 +19,20 @@ def test_prod_settings_reject_example_allowed_host_when_example_domain_is_config
     assert "ALLOWED_HOSTS must not contain example.com in production." in result.stderr
 
 
+{% if cookiecutter.use_cors == "yes" -%}
+def test_prod_settings_reject_missing_cors_allowed_origins_when_cors_is_enabled(
+    faker: Faker,
+) -> None:
+    result = _import_prod_settings(
+        faker,
+        {"CORS_ALLOWED_ORIGINS": ""},
+    )
+
+    assert result.returncode != 0
+    assert "CORS_ALLOWED_ORIGINS must not be empty in production." in result.stderr
+
+
+{% endif -%}
 {% if cookiecutter.redis == "compose" -%}
 {% if cookiecutter.use_celery != "none" -%}
 def test_prod_settings_reject_mismatched_broker_password_when_redis_is_compose(
@@ -74,6 +88,7 @@ def _base_prod_env(faker: Faker) -> dict[str, str]:
         "AWS_STORAGE_BUCKET_NAME": faker.slug(),
         "CACHE_URL": f"rediscache://:{redis_password}@redis:6379/0",
         "CELERY_BROKER_URL": f"redis://:{redis_password}@redis:6379/1",
+        "CORS_ALLOWED_ORIGINS": "https://app.example.test",
         "CSRF_TRUSTED_ORIGINS": "https://api.example.test",
         "DATABASE_URL": (
             f"postgres://my_project:{postgres_password}@postgres:5432/my_project"

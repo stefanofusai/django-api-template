@@ -25,6 +25,9 @@ dependencies = [
 {%- if cookiecutter.use_celery != "none" %}
     "django-celery-results==2.6.0",
 {%- endif %}
+{%- if cookiecutter.use_cors == "yes" %}
+    "django-cors-headers==4.9.0",
+{%- endif %}
     "django-environ==0.13.0",
     "django-extra-checks==0.17.0",
     "django-ninja==1.6.2",

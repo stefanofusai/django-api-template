@@ -13,6 +13,12 @@ if "example.com" in ALLOWED_HOSTS:  # noqa: F821  # ty: ignore[unresolved-refere
 if SECRET_KEY.startswith("django-insecure-"):  # noqa: F821  # ty: ignore[unresolved-reference]
     msg = "SECRET_KEY must be replaced with a securely generated value in production."
     raise ImproperlyConfigured(msg)
+{%- if cookiecutter.use_cors == "yes" %}
+
+if not CORS_ALLOWED_ORIGINS:  # noqa: F821  # ty: ignore[unresolved-reference]
+    msg = "CORS_ALLOWED_ORIGINS must not be empty in production."
+    raise ImproperlyConfigured(msg)
+{%- endif %}
 
 if DATABASES["default"].get("PASSWORD") == "{{ cookiecutter.project_slug.replace('-', '_') }}":  # noqa: F821  # ty: ignore[unresolved-reference]
     msg = "The default database password must be replaced with a securely generated value in production."

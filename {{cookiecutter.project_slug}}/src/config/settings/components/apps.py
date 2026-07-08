@@ -15,6 +15,9 @@ INSTALLED_APPS = [
 {%- if cookiecutter.use_celery != "none" %}
     "django_celery_results",
 {%- endif %}
+{%- if cookiecutter.use_cors == "yes" %}
+    "corsheaders",
+{%- endif %}
     "django_structlog",
     "extra_checks",
     # Project

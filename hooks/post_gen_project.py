@@ -21,6 +21,7 @@ MARKDOWN_FILES = [
 POSTGRES = {{ cookiecutter.postgres | tojson }}
 TRAEFIK_TLS = {{ cookiecutter.traefik_tls | tojson }}
 USE_CELERY = {{ cookiecutter.use_celery | tojson }}
+USE_CORS = {{ cookiecutter.use_cors | tojson }}
 USE_EXAMPLE_API = {{ cookiecutter.use_example_api | tojson }}
 USE_SENTRY = {{ cookiecutter.use_sentry | tojson }}
 USE_TRAEFIK = {{ cookiecutter.use_traefik | tojson }}
@@ -60,6 +61,13 @@ REMOVED_PATHS = [
     *(
         ["src/apps/core/tasks.py", "tests/core/unit/tasks_test.py"]
         if USE_CELERY == "none"
+        else []
+    ),
+    *(
+        [
+            "tests/api/integration/cors_test.py",
+        ]
+        if USE_CORS == "no"
         else []
     ),
     *(

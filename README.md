@@ -22,6 +22,7 @@ Compose deployment defaults, and CI gates for the baked project.
 - OpenAPI schema export command and schema artifact workflow for client
   generation
 - Optional Celery worker and beat services, chosen at bake time
+- Optional CORS support for explicit browser origins
 - Optional email stack: Resend API, SMTP, or no production email provider
 - Optional example `notes` resource demonstrating the model-to-tests vertical
   slice
@@ -56,8 +57,8 @@ Compose deployment defaults, and CI gates for the baked project.
   against a real Postgres so migrations and engine semantics are exercised.
 - Production Sentry is boot-required when enabled, so broken observability
   fails before traffic reaches the app.
-- The template deliberately ships no CORS or throttling defaults; add them
-  when a real consumer and policy exist.
+- CORS is opt-in and requires explicit allowed browser origins; throttling is
+  deliberately not enabled by default.
 - The `src/` layout keeps import paths honest and avoids accidentally
   importing from the repository root.
 - uv exact pins and generated lockfiles make fresh bakes reproducible.
@@ -93,6 +94,7 @@ uvx cookiecutter gh:stefanofusai/django-api-template
 | `redis` | `compose` | Run production Redis as a bundled Compose service, or point `CACHE_URL` and `CELERY_BROKER_URL` at external Redis-protocol providers. |
 | `traefik_tls` | `letsencrypt` | Use `external` to serve an operator-provided PEM pair instead of running ACME; ignored when `use_traefik=no`. |
 | `use_celery` | `worker+beat` | Celery services to include: `worker+beat`, `worker`, or `none`. |
+| `use_cors` | `no` | Enable explicit browser origins with `django-cors-headers` and `CORS_ALLOWED_ORIGINS`. |
 | `use_example_api` | `no` | Include the example `notes` model, router, and tests demonstrating the full API pattern. |
 | `use_s3_media` | `yes` | Store production media on S3-compatible object storage. |
 | `use_sentry` | `yes` | Include the production Sentry integration. |
@@ -114,6 +116,7 @@ cp .env.example .env
 Before production deploy:
 
 - Replace `SECRET_KEY` with a securely generated value.
+- Set `CORS_ALLOWED_ORIGINS` when `use_cors=yes`.
 - Set `AWS_STORAGE_BUCKET_NAME` when `use_s3_media=yes`.
 - Set `RESEND_API_KEY` when `email_provider=resend`, or `EMAIL_HOST` when
   `email_provider=smtp`.

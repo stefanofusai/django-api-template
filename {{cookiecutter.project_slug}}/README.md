@@ -5,13 +5,29 @@
 
 {{ cookiecutter.description }}
 
-{% if cookiecutter.use_celery == "worker+beat" and cookiecutter.use_s3_media == "yes" -%}
+{% if cookiecutter.use_celery == "worker+beat" and cookiecutter.use_cors == "yes" and cookiecutter.use_s3_media == "yes" -%}
+The project is built on Django, Django Ninja, PostgreSQL, Redis, Celery,
+django-celery-beat, django-celery-results, django-cors-headers,
+django-structlog, django-storages, Docker Compose, pytest, Ruff, Ty, and uv.
+{%- elif cookiecutter.use_celery == "worker" and cookiecutter.use_cors == "yes" and cookiecutter.use_s3_media == "yes" %}
+The project is built on Django, Django Ninja, PostgreSQL, Redis, Celery,
+django-celery-results, django-cors-headers, django-structlog, django-storages,
+Docker Compose, pytest, Ruff, Ty, and uv.
+{%- elif cookiecutter.use_celery == "worker+beat" and cookiecutter.use_s3_media == "yes" %}
 The project is built on Django, Django Ninja, PostgreSQL, Redis, Celery,
 django-celery-beat, django-celery-results, django-structlog,
 django-storages, Docker Compose, pytest, Ruff, Ty, and uv.
 {%- elif cookiecutter.use_celery == "worker" and cookiecutter.use_s3_media == "yes" %}
 The project is built on Django, Django Ninja, PostgreSQL, Redis, Celery,
 django-celery-results, django-structlog, django-storages, Docker Compose,
+pytest, Ruff, Ty, and uv.
+{%- elif cookiecutter.use_celery == "worker+beat" and cookiecutter.use_cors == "yes" %}
+The project is built on Django, Django Ninja, PostgreSQL, Redis, Celery,
+django-celery-beat, django-celery-results, django-cors-headers,
+django-structlog, Docker Compose, pytest, Ruff, Ty, and uv.
+{%- elif cookiecutter.use_celery == "worker" and cookiecutter.use_cors == "yes" %}
+The project is built on Django, Django Ninja, PostgreSQL, Redis, Celery,
+django-celery-results, django-cors-headers, django-structlog, Docker Compose,
 pytest, Ruff, Ty, and uv.
 {%- elif cookiecutter.use_celery == "worker+beat" %}
 The project is built on Django, Django Ninja, PostgreSQL, Redis, Celery,
@@ -21,9 +37,17 @@ pytest, Ruff, Ty, and uv.
 The project is built on Django, Django Ninja, PostgreSQL, Redis, Celery,
 django-celery-results, django-structlog, Docker Compose, pytest, Ruff, Ty,
 and uv.
+{%- elif cookiecutter.use_cors == "yes" and cookiecutter.use_s3_media == "yes" %}
+The project is built on Django, Django Ninja, PostgreSQL, Redis,
+django-cors-headers, django-structlog, django-storages, Docker Compose,
+pytest, Ruff, Ty, and uv.
 {%- elif cookiecutter.use_s3_media == "yes" %}
 The project is built on Django, Django Ninja, PostgreSQL, Redis,
 django-structlog, django-storages, Docker Compose, pytest, Ruff, Ty, and uv.
+{%- elif cookiecutter.use_cors == "yes" %}
+The project is built on Django, Django Ninja, PostgreSQL, Redis,
+django-cors-headers, django-structlog, Docker Compose, pytest, Ruff, Ty, and
+uv.
 {%- else %}
 The project is built on Django, Django Ninja, PostgreSQL, Redis,
 django-structlog, Docker Compose, pytest, Ruff, Ty, and uv.
@@ -125,6 +149,10 @@ target local PostgreSQL and Redis containers:
 
 {% endif %}
 - `CACHE_URL` uses Redis database 0.
+{%- if cookiecutter.use_cors == "yes" %}
+- `CORS_ALLOWED_ORIGINS` lists browser origins allowed to call the API
+  cross-origin.
+{%- endif %}
 {%- if cookiecutter.use_celery != "none" %}
 - `CELERY_BROKER_URL` uses Redis database 1.
 - `CELERY_WORKER_CONCURRENCY` and `CELERY_WORKER_MAX_TASKS_PER_CHILD` size the
