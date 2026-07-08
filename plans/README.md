@@ -9,10 +9,11 @@ status row when finished.
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| [001](001-api-auth-token.md) | Add `api_auth=token` for the example API | P1 | L | none | TODO |
+| [001](001-api-auth-token.md) | Add `api_auth=token` for the example API | P1 | L | none | DONE |
 | [002](002-use-cors.md) | Add project-level `use_cors` | P1 | M | none | TODO |
 | [003](003-api-throttling.md) | Add `api_throttling=basic` for public API routes | P2 | L | 001 | TODO |
 | [004](004-use-csp.md) | Add project-level `use_csp` with Django native CSP | P3 | M | none | TODO |
+| [005](005-notes-ninja-extra-controllers.md) | Migrate the example notes API to django-ninja-extra class-based controllers | P2 | L | none | TODO |
 
 ## Dependency Notes
 
@@ -23,6 +24,10 @@ status row when finished.
   on the example API.
 - Keep all defaults conservative: `api_auth=session`, `use_cors=no`,
   `api_throttling=none`, and `use_csp=no`.
+- Plan 005 depends on nothing directly, but touches the same
+  `apps/notes/routes.py` file plan 003 will eventually touch for throttling.
+  If plan 005 executes before plan 003, plan 003 must be refreshed to target
+  `apps/notes/controllers.py` instead.
 
 ## Scope Decisions
 
