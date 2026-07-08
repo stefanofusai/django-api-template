@@ -1,10 +1,13 @@
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
 from datetime import timedelta
 
+{% endif -%}
 import pytest
 from django.contrib.auth import get_user_model
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
 from django.utils import timezone
-
-from apps.core.models import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}Token, User{% else %}User{% endif %}
+{% endif %}
+from apps.core.models import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}Token, {% endif %}User
 
 pytestmark = pytest.mark.django_db
 

@@ -12,15 +12,12 @@ from django.db import models
 from django.utils import timezone
 {% endif -%}
 from django.utils.translation import gettext_lazy as _
-
-{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
 TOKEN_PART_COUNT = 3
 TOKEN_PREFIX = "pat"  # noqa: S105
 TOKEN_PREFIX_BYTES = 6
 TOKEN_SECRET_BYTES = 32
-
-
-{% endif -%}
+{% endif %}
 
 class CreatedAtModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
