@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 {%- endif %}
 
 import pytest
+from django.core.cache import cache
 from hypothesis import settings as hypothesis_settings
 from ninja.testing import TestClient
 from pytest_factoryboy import register
@@ -49,6 +50,13 @@ register(TokenFactory)
 
 
 # Fixtures
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache() -> None:
+    # Throttle counters, axes lockouts, and readiness keys share the
+    # Django cache; clear it so no test sees a neighbor's state.
+    cache.clear()
 
 
 @pytest.fixture(autouse=True)

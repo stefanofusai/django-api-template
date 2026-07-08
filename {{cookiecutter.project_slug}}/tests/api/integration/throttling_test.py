@@ -2,7 +2,6 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
-from django.core.cache import cache
 from django.test import Client, override_settings
 
 {% if cookiecutter.api_auth == "token" -%}
@@ -13,11 +12,6 @@ if TYPE_CHECKING:
     from apps.core.models import User
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture(autouse=True)
-def clear_cache() -> None:
-    cache.clear()
 
 
 @override_settings(API_THROTTLE_USER_RATE="2/min")

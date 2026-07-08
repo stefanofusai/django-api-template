@@ -2,7 +2,6 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
-from django.core.cache import cache
 from django.test import override_settings
 
 from tests.factories import UserFactory
@@ -14,11 +13,6 @@ if TYPE_CHECKING:
     from apps.core.models import User
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture(autouse=True)
-def clear_cache() -> None:
-    cache.clear()
 
 
 @override_settings(AXES_FAILURE_LIMIT=3)

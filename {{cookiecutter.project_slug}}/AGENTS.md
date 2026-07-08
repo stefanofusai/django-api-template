@@ -150,6 +150,10 @@
 ## Testing
 
 - Organize tests by app, then by type: `tests/<app>/{integration,unit}/` (for example `tests/api/integration/`, `tests/core/unit/`, `tests/notes/integration/`). `tests/conftest.py` applies the `integration`/`unit` marker from the `integration`/`unit` path segment, so a new app's tests just need those subdirectories. Shared helpers stay at the `tests/` root (`conftest.py`, `factories.py`, `utils.py`).
+- Prefix autouse fixtures with `_` (they are ambient infrastructure, never
+  requested by name — see `_clear_cache`, `_zeal`, and `_broker_ready_default`
+  in `tests/conftest.py`). Autouse fixtures the whole suite needs belong in
+  `tests/conftest.py`, not duplicated per module.
 - The full suite enforces 100% coverage. Focused test commands are useful, but final verification should include `uv run pytest`.
 - Run relevant checks before completion:
   - `uv run pre-commit run ruff-check --all-files`
