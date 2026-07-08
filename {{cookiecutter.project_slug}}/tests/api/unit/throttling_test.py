@@ -1,3 +1,7 @@
+import json
+import os
+import subprocess
+import sys
 from http import HTTPStatus
 
 from django.conf import settings
@@ -38,8 +42,30 @@ def test_public_api_throttle_allows_requests_when_rates_are_unset() -> None:
     assert get_public_api_throttles()[0].allow_request(request)
 
 
-def test_ninja_extra_throttle_rates_are_env_driven() -> None:
+def test_ninja_extra_throttle_rates_default_to_empty_when_env_is_unset() -> None:
     assert settings.NINJA_EXTRA["THROTTLE_RATES"] == {}
+
+
+def test_ninja_extra_throttle_rates_are_populated_when_env_is_set() -> None:
+    env = os.environ | {
+        "API_THROTTLE_ANON_RATE": "60/minute",
+        "API_THROTTLE_USER_RATE": "600/minute",
+        "PYTHONPATH": "src",
+    }
+    script = (
+        "import json; import config.settings as s; "
+        "print(json.dumps(s.NINJA_EXTRA['THROTTLE_RATES']))"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        check=False,
+        env=env,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {"anon": "60/minute", "user": "600/minute"}
 
 
 @override_settings(API_THROTTLE_ANON_RATE="1/min", API_THROTTLE_USER_RATE=None)

@@ -42,6 +42,21 @@ def test_ready_endpoint_returns_cache_error_when_cache_set_fails(
     cache_get.assert_not_called()
 
 
+def test_ready_endpoint_returns_cache_error_when_cache_readback_mismatches(
+    internal_api_client: TestClient,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch.object(ready_route, "_database_ready", return_value=True)
+    mocker.patch.object(ready_route.cache, "set", return_value=None)
+    cache_get = mocker.patch.object(ready_route.cache, "get", return_value="stale")
+
+    response = internal_api_client.get("/ready")
+
+    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.data == {"status": "error", "errors": ["cache"]}
+    cache_get.assert_called_once_with("ready-check")
+
+
 def test_ready_endpoint_returns_database_error_when_connection_raises(
     internal_api_client: TestClient,
     mocker: MockerFixture,
