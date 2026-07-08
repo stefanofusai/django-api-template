@@ -6,6 +6,9 @@ set -eu
 
 ALLOWED_HOSTS=localhost \
 CACHE_URL=locmemcache:// \
+{%- if cookiecutter.use_cors == "yes" %}
+CORS_ALLOWED_ORIGINS=https://app.example.com \
+{%- endif %}
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres \
 {%- if cookiecutter.email_provider != "none" %}
 DEFAULT_FROM_EMAIL=noreply@example.com \
