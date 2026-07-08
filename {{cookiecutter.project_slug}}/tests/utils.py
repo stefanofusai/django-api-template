@@ -36,13 +36,6 @@ class AuthenticatedTestClient:
         return self._client.get(path, query_params=query_params, user=self.user)
         {%- endif %}
 
-    def patch(self, path: str, json: dict[str, object] | None = None) -> NinjaResponse:
-        {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
-        return self._client.patch(path, headers=self._headers, json=json)
-        {%- else %}
-        return self._client.patch(path, json=json, user=self.user)
-        {%- endif %}
-
     def post(self, path: str, json: dict[str, object] | None = None) -> NinjaResponse:
         {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
         return self._client.post(path, headers=self._headers, json=json)

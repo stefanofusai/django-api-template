@@ -63,6 +63,7 @@ ci = [
     "pytest-mock==3.15.1",
     "pytest-randomly==4.1.0",
     "pytest-sugar==1.1.1",
+    "pytest-timeout==2.4.0",
     "pytest-xdist==3.8.0",
     "schemathesis==4.21.10",
 ]
@@ -127,7 +128,7 @@ DEP003 = [
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
-addopts = "--cov=src --cov-fail-under=100 --cov-report=term-missing:skip-covered --numprocesses=auto --strict-config --strict-markers"
+addopts = "--cov=src --cov=tests --cov-fail-under=100 --cov-report=term-missing:skip-covered --numprocesses=auto --strict-config --strict-markers"
 env = [
     "ALLOWED_HOSTS=localhost,testserver",
     "CACHE_URL=locmemcache://",
@@ -151,6 +152,9 @@ markers = [
 python_files = ["*_test.py"]
 pythonpath = ["src"]
 testpaths = ["tests"]
+timeout = 60
+timeout_method = "thread"
+xfail_strict = true
 
 [tool.ruff.lint]
 select = ["ALL"]

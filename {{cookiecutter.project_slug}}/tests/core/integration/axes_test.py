@@ -28,10 +28,9 @@ def test_admin_login_locks_out_after_configured_failures(
     username = faker.user_name()
     password = faker.password(length=16)
     remote_addr = faker.ipv4()
-    wrong_password = faker.password(length=16)
-
-    while wrong_password == password:
-        wrong_password = faker.password(length=16)
+    # Deterministically distinct from `password` rather than drawn from the
+    # same random distribution, so this never needs a collision retry.
+    wrong_password = f"wrong-{password}"
 
     user = UserFactory.create(is_staff=True, username=username)
     _set_password(user, password)
@@ -63,10 +62,9 @@ def test_login_succeeds_before_lockout_threshold(client: Client, faker: Faker) -
     username = faker.user_name()
     password = faker.password(length=16)
     remote_addr = faker.ipv4()
-    wrong_password = faker.password(length=16)
-
-    while wrong_password == password:
-        wrong_password = faker.password(length=16)
+    # Deterministically distinct from `password` rather than drawn from the
+    # same random distribution, so this never needs a collision retry.
+    wrong_password = f"wrong-{password}"
 
     user = UserFactory.create(is_staff=True, username=username)
     _set_password(user, password)

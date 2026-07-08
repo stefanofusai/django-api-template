@@ -1,5 +1,7 @@
+{%- if cookiecutter.use_example_api == "yes" -%}
 from typing import TYPE_CHECKING
 
+{% endif -%}
 import pytest
 from hypothesis import settings as hypothesis_settings
 from ninja.testing import TestClient
@@ -7,10 +9,12 @@ from pytest_factoryboy import register
 
 from apps.api.api import internal_api, v1_api
 from tests.factories import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}NoteFactory, TokenFactory, UserFactory{% elif cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
+{%- if cookiecutter.use_example_api == "yes" %}
 from tests.utils import AuthenticatedTestClient
 
 if TYPE_CHECKING:
     from apps.core.models import User
+{%- endif %}
 
 TEST_TYPE_MARKERS = {
     "integration": pytest.mark.integration,
@@ -34,6 +38,7 @@ register(TokenFactory)
 # Fixtures
 
 
+{% if cookiecutter.use_example_api == "yes" -%}
 @pytest.fixture
 def authenticated_v1_api_client(
     v1_api_client: TestClient, user: User
@@ -41,6 +46,7 @@ def authenticated_v1_api_client(
     return AuthenticatedTestClient(v1_api_client, user)
 
 
+{% endif -%}
 @pytest.fixture
 def internal_api_client() -> TestClient:
     return TestClient(internal_api)
