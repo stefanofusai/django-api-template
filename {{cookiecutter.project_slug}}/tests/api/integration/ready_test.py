@@ -26,6 +26,21 @@ def test_ready_endpoint_returns_cache_error_when_cache_raises(
     cache_set.assert_called_once_with("ready-check", "ok", timeout=1)
 
 
+def test_ready_endpoint_returns_cache_error_when_cache_readback_mismatches(
+    internal_api_client: TestClient,
+    mocker: MockerFixture,
+) -> None:
+    mocker.patch.object(ready_route, "_database_ready", return_value=True)
+    mocker.patch.object(ready_route.cache, "set", return_value=None)
+    cache_get = mocker.patch.object(ready_route.cache, "get", return_value="stale")
+
+    response = internal_api_client.get("/ready")
+
+    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.data == {"status": "error", "errors": ["cache"]}
+    cache_get.assert_called_once_with("ready-check")
+
+
 def test_ready_endpoint_returns_cache_error_when_cache_set_fails(
     internal_api_client: TestClient,
     mocker: MockerFixture,
@@ -40,21 +55,6 @@ def test_ready_endpoint_returns_cache_error_when_cache_set_fails(
     assert response.data == {"status": "error", "errors": ["cache"]}
     cache_set.assert_called_once_with("ready-check", "ok", timeout=1)
     cache_get.assert_not_called()
-
-
-def test_ready_endpoint_returns_cache_error_when_cache_readback_mismatches(
-    internal_api_client: TestClient,
-    mocker: MockerFixture,
-) -> None:
-    mocker.patch.object(ready_route, "_database_ready", return_value=True)
-    mocker.patch.object(ready_route.cache, "set", return_value=None)
-    cache_get = mocker.patch.object(ready_route.cache, "get", return_value="stale")
-
-    response = internal_api_client.get("/ready")
-
-    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
-    assert response.data == {"status": "error", "errors": ["cache"]}
-    cache_get.assert_called_once_with("ready-check")
 
 
 def test_ready_endpoint_returns_database_error_when_connection_raises(
@@ -74,37 +74,6 @@ def test_ready_endpoint_returns_database_error_when_connection_raises(
 
 
 {% if cookiecutter.use_celery != "none" -%}
-def test_ready_endpoint_returns_error_when_dependencies_are_unavailable(
-    internal_api_client: TestClient, mocker: MockerFixture
-) -> None:
-    cache_ready = mocker.patch.object(ready_route, "_cache_ready", return_value=False)
-    database_ready = mocker.patch.object(
-        ready_route, "_database_ready", return_value=False
-    )
-    broker_ready = mocker.patch.object(ready_route, "_broker_ready", return_value=False)
-
-    response = internal_api_client.get("/ready")
-
-    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
-    assert response.data == {
-        "status": "error",
-        "errors": ["cache", "database", "broker"],
-    }
-    cache_ready.assert_called_once_with()
-    database_ready.assert_called_once_with()
-    broker_ready.assert_called_once_with()
-
-
-@pytest.mark.django_db
-def test_ready_endpoint_returns_ok_when_dependencies_are_available(
-    internal_api_client: TestClient,
-) -> None:
-    response = internal_api_client.get("/ready")
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.data == {"status": "ok"}
-
-
 def test_broker_ready_returns_true_when_broker_accepts_connection(
     mocker: MockerFixture,
 ) -> None:
@@ -145,6 +114,37 @@ def test_ready_endpoint_returns_broker_error_when_broker_is_unreachable(
     assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
     assert response.data == {"status": "error", "errors": ["broker"]}
     connection_for_read.assert_called_once_with()
+
+
+def test_ready_endpoint_returns_error_when_dependencies_are_unavailable(
+    internal_api_client: TestClient, mocker: MockerFixture
+) -> None:
+    cache_ready = mocker.patch.object(ready_route, "_cache_ready", return_value=False)
+    database_ready = mocker.patch.object(
+        ready_route, "_database_ready", return_value=False
+    )
+    broker_ready = mocker.patch.object(ready_route, "_broker_ready", return_value=False)
+
+    response = internal_api_client.get("/ready")
+
+    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.data == {
+        "status": "error",
+        "errors": ["broker", "cache", "database"],
+    }
+    cache_ready.assert_called_once_with()
+    database_ready.assert_called_once_with()
+    broker_ready.assert_called_once_with()
+
+
+@pytest.mark.django_db
+def test_ready_endpoint_returns_ok_when_dependencies_are_available(
+    internal_api_client: TestClient,
+) -> None:
+    response = internal_api_client.get("/ready")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.data == {"status": "ok"}
 {% else -%}
 def test_ready_endpoint_returns_error_when_dependencies_are_unavailable(
     internal_api_client: TestClient, mocker: MockerFixture
