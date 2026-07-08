@@ -54,18 +54,18 @@ jobs:
           cp .env.example .env
           ./.github/scripts/docker-smoke.sh
       - name: Boot production stack
-        run: docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --build --wait --wait-timeout=300
+        run: docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env up -d --build --wait --wait-timeout=300
       - name: Probe API container health
         run: |
-          docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/health
-          docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/ready
+          docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/health
+          docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/ready
       - name: Check service states
         run: |
-          docker compose -f .docker/compose/prod.yaml --env-file=.env ps
-          test -z "$(docker compose -f .docker/compose/prod.yaml --env-file=.env ps -q --status=exited)"
+          docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env ps
+          test -z "$(docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env ps -q --status=exited)"
       - name: Dump Docker logs on failure
         if: failure()
-        run: docker compose -f .docker/compose/prod.yaml --env-file=.env logs
+        run: docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env logs
       - name: Tear down Docker Compose
         if: always()
-        run: docker compose -f .docker/compose/prod.yaml --env-file=.env down -v
+        run: docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env down -v

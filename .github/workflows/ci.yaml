@@ -209,6 +209,8 @@ jobs:
         include:
           - variant: default
             extra-args: ""
+          - variant: external-backing
+            extra-args: postgres=external redis=external use_traefik=no
           - variant: minimal
             extra-args: use_celery=none email_provider=none use_sentry=no use_s3_media=no use_traefik=no
     steps:
@@ -250,6 +252,25 @@ jobs:
           sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=$(uuidgen)|" .env
           sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(uuidgen)$(uuidgen)|" .env
           sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1|" .env
+      - name: Prepare external-backing production env file
+        if: matrix.variant == 'external-backing'
+        working-directory: /tmp/smoke/my-project
+        run: |
+          cp .env.example .env
+          postgres_password="$(uuidgen)"
+          redis_password="$(uuidgen)"
+          sed -i "s|^ALLOWED_HOSTS=.*|ALLOWED_HOSTS=localhost,127.0.0.1,api.example.test|" .env
+          sed -i "s|^AWS_STORAGE_BUCKET_NAME=.*|AWS_STORAGE_BUCKET_NAME=$(uuidgen)|" .env
+          sed -i "s|^CACHE_URL=.*|CACHE_URL=rediscache://:$redis_password@redis:6379/0|" .env
+          sed -i "s|^CELERY_BROKER_URL=.*|CELERY_BROKER_URL=redis://:$redis_password@redis:6379/1|" .env
+          sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgres://ci:$postgres_password@postgres:5432/ci|" .env
+          sed -i "s|^POSTGRES_DB=.*|POSTGRES_DB=ci|" .env
+          sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$postgres_password|" .env
+          sed -i "s|^POSTGRES_USER=.*|POSTGRES_USER=ci|" .env
+          sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=$(uuidgen)|" .env
+          sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(uuidgen)$(uuidgen)|" .env
+          sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1|" .env
+          printf '%s\n' "REDIS_PASSWORD=$redis_password" >> .env
       - name: Prepare minimal production env file
         if: matrix.variant == 'minimal'
         working-directory: /tmp/smoke/my-project
@@ -265,12 +286,12 @@ jobs:
           sed -i "s|^SECRET_KEY=.*|SECRET_KEY=$(uuidgen)$(uuidgen)|" .env
       - name: Boot production stack
         working-directory: /tmp/smoke/my-project
-        run: docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --build --wait --wait-timeout=300
+        run: docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env up -d --build --wait --wait-timeout=300
       - name: Probe API container health
         working-directory: /tmp/smoke/my-project
         run: |
-          docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/health
-          docker compose -f .docker/compose/prod.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/ready
+          docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/health
+          docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/ready
       - name: Probe through Traefik
         if: matrix.variant == 'default'
         working-directory: /tmp/smoke/my-project
@@ -278,7 +299,7 @@ jobs:
           curl -fsS http://localhost/api/health
           curl -fsS http://localhost/api/ready
       - name: Probe host port
-        if: matrix.variant == 'minimal'
+        if: contains(fromJSON('["external-backing", "minimal"]'), matrix.variant)
         working-directory: /tmp/smoke/my-project
         run: |
           curl -fsS http://127.0.0.1:8000/api/health
@@ -287,23 +308,23 @@ jobs:
         if: matrix.variant == 'default'
         working-directory: /tmp/smoke/my-project
         run: |
-          docker compose -f .docker/compose/prod.yaml --env-file=.env ps
-          docker compose -f .docker/compose/prod.yaml --env-file=.env ps --format='{{.State}}' celery-beat | grep -x running
-          test -z "$(docker compose -f .docker/compose/prod.yaml --env-file=.env ps -q --status=exited)"
-      - name: Check minimal service states
-        if: matrix.variant == 'minimal'
+          docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env ps
+          docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env ps --format='{{.State}}' celery-beat | grep -x running
+          test -z "$(docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env ps -q --status=exited)"
+      - name: Check host-port service states
+        if: contains(fromJSON('["external-backing", "minimal"]'), matrix.variant)
         working-directory: /tmp/smoke/my-project
         run: |
-          docker compose -f .docker/compose/prod.yaml --env-file=.env ps
-          test -z "$(docker compose -f .docker/compose/prod.yaml --env-file=.env ps -q --status=exited)"
+          docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env ps
+          test -z "$(docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env ps -q --status=exited)"
       - name: Dump Docker logs on failure
         if: failure()
         working-directory: /tmp/smoke/my-project
-        run: docker compose -f .docker/compose/prod.yaml --env-file=.env logs
+        run: docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env logs
       - name: Tear down Docker Compose
         if: always()
         working-directory: /tmp/smoke/my-project
-        run: docker compose -f .docker/compose/prod.yaml --env-file=.env down -v
+        run: docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env down -v
   pre-commit:
     name: Pre-commit
     runs-on: ubuntu-latest

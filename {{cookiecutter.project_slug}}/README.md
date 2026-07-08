@@ -629,7 +629,10 @@ uv run pre-commit run ty --all-files
 
 CI runs tests, deploy checks, pre-commit, dependency audit, prod and dev Docker
 image builds, and a production-stack boot smoke that probes liveness and
-readiness through GitHub Actions.
+readiness through GitHub Actions. The smoke job always merges
+`.docker/compose/ci-services.yaml` over `prod.yaml`; that overlay supplies
+CI-only Postgres and Redis stand-ins for external-backend bakes and is never
+part of production deploys.
 
 ## Verification
 
