@@ -114,6 +114,10 @@ repos:
           - --locked
           - --preview-features=audit-command
       - id: uv-lock
+  - repo: https://github.com/osprey-oss/deptry
+    rev: 0.25.1
+    hooks:
+      - id: deptry
   - repo: https://github.com/tsvikas/sync-with-uv
     rev: v0.5.0
     hooks:

@@ -96,6 +96,34 @@ omit = [
 [tool.django_migration_linter]
 include_apps = ["core"{% if cookiecutter.use_example_api == "yes" %}, "notes"{% endif %}]
 
+[tool.deptry.per_rule_ignores]
+DEP002 = [
+{%- if cookiecutter.email_provider == "resend" %}
+    # Loaded via EMAIL_BACKEND dotted path in settings/environments/prod.py.
+    "django-anymail",
+{%- endif %}
+{%- if cookiecutter.use_celery == "worker+beat" %}
+    # Loaded via INSTALLED_APPS in settings/components/apps.py.
+    "django-celery-beat",
+{%- endif %}
+{%- if cookiecutter.use_celery != "none" %}
+    # Loaded via INSTALLED_APPS in settings/components/apps.py.
+    "django-celery-results",
+{%- endif %}
+{%- if cookiecutter.use_cors == "yes" %}
+    # Loaded via INSTALLED_APPS and MIDDLEWARE in settings/components.
+    "django-cors-headers",
+{%- endif %}
+    # Loaded via INSTALLED_APPS in settings/components/apps.py.
+    "django-extra-checks",
+    # Used by Django's PostgreSQL backend configured from DATABASE_URL.
+    "psycopg",
+]
+DEP003 = [
+    # Imported for RedisError in apps/api/routes/ready.py; provided by django-redis.
+    "redis",
+]
+
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 addopts = "--cov=src --cov-fail-under=100 --cov-report=term-missing:skip-covered --numprocesses=auto --strict-config --strict-markers"
