@@ -10,10 +10,10 @@ status row when finished.
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | [001](001-api-auth-token.md) | Add `api_auth=token` for the example API | P1 | L | none | DONE |
-| [002](002-use-cors.md) | Add project-level `use_cors` | P1 | M | none | TODO |
-| [003](003-api-throttling.md) | Add `api_throttling=basic` for public API routes | P2 | L | 001 | TODO |
-| [004](004-use-csp.md) | Add project-level `use_csp` with Django native CSP | P3 | M | none | TODO |
-| [005](005-notes-ninja-extra-controllers.md) | Migrate the example notes API to django-ninja-extra class-based controllers | P2 | L | none | TODO |
+| [002](002-use-cors.md) | Add project-level `use_cors` | P1 | M | none | DONE |
+| [003](003-api-throttling.md) | Add `api_throttling=basic` for public API routes | P2 | L | 001 | DONE |
+| [004](004-use-csp.md) | Add project-level `use_csp` with Django native CSP | P3 | M | none | DONE |
+| [005](005-notes-ninja-extra-controllers.md) | Migrate the example notes API to django-ninja-extra class-based controllers | P2 | L | none | DONE |
 
 ## Dependency Notes
 

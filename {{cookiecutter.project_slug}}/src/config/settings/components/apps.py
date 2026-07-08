@@ -20,7 +20,7 @@ INSTALLED_APPS = [
 {%- endif %}
     "django_structlog",
     "extra_checks",
-{%- if cookiecutter.api_throttling == "basic" %}
+{%- if cookiecutter.api_throttling == "basic" or cookiecutter.use_example_api == "yes" %}
     "ninja_extra",
 {%- endif %}
     # Project

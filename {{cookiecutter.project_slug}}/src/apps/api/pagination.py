@@ -2,7 +2,7 @@ import math
 
 from ninja import Field
 from ninja.conf import settings
-from ninja.pagination import LimitOffsetPagination
+from ninja_extra.pagination import LimitOffsetPagination
 
 # Ninja defaults PAGINATION_MAX_LIMIT to inf; fall back to the page size so the
 # default stays bounded, while an explicit finite setting can raise the cap.

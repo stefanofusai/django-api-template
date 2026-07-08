@@ -130,6 +130,9 @@
 - Do not add empty optional values to `.env.example`; document optional AWS variables as commented examples.
 - Keep operational constants fixed in code unless there is a real deployment need to configure them.
 - Keep Django Ninja routers resource-oriented. Mount resource routers at their resource prefix and keep route-local paths relative.
+- The example notes resource uses `apps.notes.controllers.NotesController`, a
+  django-ninja-extra class-based controller; `/api/health` and `/api/ready`
+  remain plain function-based routers on `internal_api`.
 - Mount business routers on `v1_api` (under `/api/v1/`); `internal_api` is reserved for internal probes and must stay unversioned.
 
 ## Testing

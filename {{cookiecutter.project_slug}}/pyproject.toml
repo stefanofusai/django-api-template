@@ -31,7 +31,7 @@ dependencies = [
     "django-environ==0.13.0",
     "django-extra-checks==0.17.0",
     "django-ninja==1.6.2",
-{%- if cookiecutter.api_throttling == "basic" %}
+{%- if cookiecutter.api_throttling == "basic" or cookiecutter.use_example_api == "yes" %}
     "django-ninja-extra==0.31.5",
 {%- endif %}
     "django-redis==7.0.0",
@@ -143,6 +143,10 @@ runtime-evaluated-decorators = [
     "ninja.Router.patch",
     "ninja.Router.post",
     "ninja.Router.put",
+    "ninja_extra.http_delete",
+    "ninja_extra.http_get",
+    "ninja_extra.http_post",
+    "ninja_extra.http_put",
 ]
 
 [tool.ruff.lint.per-file-ignores]

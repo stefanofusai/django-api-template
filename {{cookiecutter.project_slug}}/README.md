@@ -64,7 +64,7 @@ src/config/          Django settings, URLs, ASGI entrypoint
 src/apps/core/       shared abstract model bases
 src/apps/api/        Django Ninja API, schemas, pagination, request metadata
 {%- if cookiecutter.use_example_api == "yes" %}
-src/apps/notes/      example notes resource (model, router, schemas, tests)
+src/apps/notes/      example notes resource (model, controller, schemas, tests)
 {%- endif %}
 tests/               unit and integration tests
 .docker/             Dockerfile, Compose files, entrypoint scripts
@@ -234,7 +234,7 @@ open http://localhost:8000/api/v1/docs
 ```
 {%- if cookiecutter.use_example_api == "yes" %}
 
-Try the example `notes` resource ({% if cookiecutter.api_auth == "token" %}bearer-token-authenticated{% else %}session-authenticated{% endif %} CRUD)
+Try the example `notes` resource ({% if cookiecutter.api_auth == "token" %}bearer-token-authenticated{% else %}session-authenticated{% endif %} class-based controller CRUD)
 documented at `/api/v1/docs`.
 {%- endif %}
 
