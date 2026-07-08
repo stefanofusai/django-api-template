@@ -4,7 +4,7 @@ import secrets
 {% endif -%}
 import uuid
 {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
-from datetime import datetime
+from datetime import datetime, timedelta
 {% endif %}
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -13,6 +13,7 @@ from django.utils import timezone
 {% endif -%}
 from django.utils.translation import gettext_lazy as _
 {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+TOKEN_LAST_USED_GRANULARITY = timedelta(minutes=1)
 TOKEN_PART_COUNT = 3
 TOKEN_PREFIX = "pat"  # noqa: S105
 TOKEN_PREFIX_BYTES = 6
@@ -99,7 +100,16 @@ class Token(CreatedAtModel):
         return self.expires_at is not None and self.expires_at <= timezone.now()
 
     def mark_used(self) -> None:
-        self.last_used_at = timezone.now()
+        now = timezone.now()
+
+        # Keep last_used_at minute-granular so reads do not write every request.
+        if (
+            self.last_used_at is not None
+            and now - self.last_used_at < TOKEN_LAST_USED_GRANULARITY
+        ):
+            return
+
+        self.last_used_at = now
         self.save(update_fields=("last_used_at",))
 
     @staticmethod

@@ -1,4 +1,6 @@
 {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
+from collections.abc import Callable
+from contextlib import AbstractContextManager
 from datetime import timedelta
 
 {% endif -%}
@@ -15,6 +17,34 @@ pytestmark = pytest.mark.django_db
 def test_get_user_model_returns_custom_user_when_project_is_configured() -> None:
     assert get_user_model() is User
 {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+
+
+def test_mark_used_skips_write_when_last_used_at_is_fresh(
+    django_assert_num_queries: Callable[[int], AbstractContextManager[None]],
+    user: User,
+) -> None:
+    _, token = Token.issue(name="test token", user=user)
+    last_used_at = timezone.now()
+    token.last_used_at = last_used_at
+    token.save(update_fields=("last_used_at",))
+
+    with django_assert_num_queries(0):
+        token.mark_used()
+
+    assert token.last_used_at == last_used_at
+
+
+def test_mark_used_writes_when_last_used_at_is_stale(user: User) -> None:
+    _, token = Token.issue(name="test token", user=user)
+    last_used_at = timezone.now() - timedelta(minutes=2)
+    token.last_used_at = last_used_at
+    token.save(update_fields=("last_used_at",))
+
+    token.mark_used()
+
+    token.refresh_from_db()
+    assert token.last_used_at is not None
+    assert token.last_used_at > last_used_at
 
 
 def test_token_issue_returns_pat_token_and_stores_prefix_and_digest(
