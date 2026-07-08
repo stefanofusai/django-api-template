@@ -12,7 +12,7 @@ class NoteFilterSchema(FilterSchema):
 
 
 class NoteInSchema(Schema):
-    title: str = Field(pattern=NO_NUL_PATTERN)
+    title: str = Field(max_length=255, min_length=1, pattern=NO_NUL_PATTERN)
     body: str = Field("", pattern=NO_NUL_PATTERN)
 
 

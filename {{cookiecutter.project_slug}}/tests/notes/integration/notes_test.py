@@ -39,6 +39,23 @@ def test_create_note_returns_401_when_anonymous(v1_api_client: TestClient) -> No
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
+def test_create_note_returns_422_when_title_exceeds_column_length(
+    authenticated_v1_api_client: AuthenticatedTestClient,
+) -> None:
+    response = authenticated_v1_api_client.post("/notes", json={"title": "x" * 256})
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert not Note.objects.exists()
+
+
+def test_create_note_returns_422_when_title_is_empty(
+    authenticated_v1_api_client: AuthenticatedTestClient,
+) -> None:
+    response = authenticated_v1_api_client.post("/notes", json={"title": ""})
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
 def test_delete_note_returns_204_when_authenticated_owner(
     authenticated_v1_api_client: AuthenticatedTestClient,
     note: Note,
@@ -120,6 +137,17 @@ def test_list_notes_returns_422_when_offset_exceeds_maximum(
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_list_notes_returns_422_when_ordering_field_is_unknown(
+    authenticated_v1_api_client: AuthenticatedTestClient,
+) -> None:
+    response = authenticated_v1_api_client.get(
+        "/notes", query_params={"ordering": "owner__password"}
+    )
+
+    # ninja-extra silently ignores unknown ordering fields.
+    assert response.status_code == HTTPStatus.OK
 
 
 def test_list_notes_returns_only_callers_notes_when_authenticated(
@@ -248,6 +276,22 @@ def test_update_note_returns_200_when_authenticated_owner(
     assert payload["title"] == "Updated title"
     note.refresh_from_db()
     assert note.title == "Updated title"
+
+
+def test_update_note_returns_422_when_title_exceeds_column_length(
+    authenticated_v1_api_client: AuthenticatedTestClient,
+    note: Note,
+) -> None:
+    original_title = note.title
+
+    response = authenticated_v1_api_client.put(
+        f"/notes/{note.id}",
+        json={"body": "Updated body", "title": "x" * 256},
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    note.refresh_from_db()
+    assert note.title == original_title
 
 
 def test_update_note_returns_404_when_owned_by_other_user(
