@@ -1,0 +1,6 @@
+# Keep version-tagged action refs so Dependabot can update them.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "*": ref-pin

@@ -1,0 +1,3 @@
+# Apt package versions follow the pinned Debian base image and remain patchable.
+ignored:
+  - DL3008

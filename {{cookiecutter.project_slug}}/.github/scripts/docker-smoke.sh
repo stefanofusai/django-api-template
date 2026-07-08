@@ -68,5 +68,5 @@ replace_env RESEND_API_KEY "$(uuidgen)"
 {%- endif %}
 replace_env SECRET_KEY "$(uuidgen)$(uuidgen)"
 {%- if cookiecutter.use_sentry == "yes" %}
-replace_env SENTRY_DSN "https://$(uuidgen | tr -d -)@sentry.example.com/1"
+replace_env SENTRY_DSN "https://$(uuidgen)@sentry.example.com/1"
 {%- endif %}

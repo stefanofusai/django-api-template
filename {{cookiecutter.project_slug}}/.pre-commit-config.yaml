@@ -105,6 +105,17 @@ repos:
     rev: v1.7.12
     hooks:
       - id: actionlint
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.26.1
+    hooks:
+      - id: zizmor
+        files: ^\.github/workflows/
+  # Docker
+  - repo: https://github.com/AleksaC/hadolint-py
+    rev: v2.14.0
+    hooks:
+      - id: hadolint
+        files: ^\.docker/Dockerfile$
   # Dependency management
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.11.19

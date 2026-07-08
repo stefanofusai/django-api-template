@@ -7,6 +7,8 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+permissions:
+  contents: read
 jobs:
   audit-dependencies:
     name: Audit dependencies
@@ -14,6 +16,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6.0.3
+        with:
+          persist-credentials: false
       - name: Set up Python
         uses: actions/setup-python@v6.2.0
         with:

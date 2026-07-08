@@ -67,7 +67,7 @@ RUN if [ "$UV_DEPENDENCY_GROUP" = "prod" ]; then \
 {%- endif %}
         SECRET_KEY=$(uuidgen)$(uuidgen) \
 {%- if cookiecutter.use_sentry == "yes" %}
-        SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1 \
+        SENTRY_DSN=https://$(uuidgen)@sentry.example.com/1 \
 {%- endif %}
         .venv/bin/python manage.py collectstatic --no-input; \
     fi

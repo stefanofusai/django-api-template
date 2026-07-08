@@ -23,7 +23,7 @@ RESEND_API_KEY=$(uuidgen) \
 {%- endif %}
 SECRET_KEY=$(uuidgen)$(uuidgen) \
 {%- if cookiecutter.use_sentry == "yes" %}
-SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1 \
+SENTRY_DSN=https://$(uuidgen)@sentry.example.com/1 \
 {%- endif %}
 uv run --group=ci --locked --no-default-groups \
     manage.py check --deploy --fail-level=WARNING --tag=security
