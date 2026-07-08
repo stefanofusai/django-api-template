@@ -14,18 +14,20 @@ def main() -> int:
     required_env = []
 
     if 'env("POSTGRES_PASSWORD")' in prod_settings:
-        required_env.append("POSTGRES_PASSWORD=postgres")
+        required_env.append("POSTGRES_PASSWORD=mock-postgres-password")
 
     if 'env("REDIS_PASSWORD")' in prod_settings:
         required_env.extend(
             [
-                "CACHE_URL=rediscache://:redis@localhost:6379/0",
-                "REDIS_PASSWORD=redis",
+                "CACHE_URL=rediscache://:mock-redis-password@localhost:6379/0",
+                "REDIS_PASSWORD=mock-redis-password",
             ],
         )
 
     if 'env("CELERY_BROKER_URL")' in prod_settings:
-        required_env.append("CELERY_BROKER_URL=redis://:redis@localhost:6379/1")
+        required_env.append(
+            "CELERY_BROKER_URL=redis://:mock-redis-password@localhost:6379/1"
+        )
 
     missing_env = [env for env in required_env if env not in dockerfile]
 

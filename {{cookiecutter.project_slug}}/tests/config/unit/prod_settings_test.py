@@ -102,8 +102,8 @@ def test_prod_settings_reject_mismatched_database_password_when_postgres_is_comp
 
 
 def _base_prod_env(faker: Faker) -> dict[str, str]:
-    postgres_password = faker.bothify(text="postgres-password-????????-########")
-    redis_password = faker.bothify(text="redis-password-????????-########")
+    postgres_password = faker.bothify(text="mock-postgres-password-????????-########")
+    redis_password = faker.bothify(text="mock-redis-password-????????-########")
     sentry_key = faker.hexify(text="^" * 32)
 
     return {
@@ -121,7 +121,7 @@ def _base_prod_env(faker: Faker) -> dict[str, str]:
         "POSTGRES_PASSWORD": postgres_password,
         "REDIS_PASSWORD": redis_password,
         "RESEND_API_KEY": f"re_{faker.pystr(min_chars=24, max_chars=24)}",
-        "SECRET_KEY": faker.bothify(text="ci-secret-????????-########-????????"),
+        "SECRET_KEY": faker.bothify(text="mock-secret-key-????????-########-????????"),
         "SENTRY_DSN": f"https://{sentry_key}@sentry.example.com/1",
     }
 

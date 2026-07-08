@@ -30,10 +30,10 @@ jobs:
         env:
           ALLOWED_HOSTS: localhost
           CACHE_URL: locmemcache://
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+          DATABASE_URL: postgres://postgres:mock-postgres-password@localhost:5432/postgres
           DEFAULT_FROM_EMAIL: noreply@example.com
           DJANGO_ENV: ci
-          SECRET_KEY: ci-secret-for-openapi-0123456789-abcdefghijklmnopqrstuvwxyz
+          SECRET_KEY: mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz
         run: |
           uv run --group=ci --locked --no-default-groups manage.py export_openapi_schema --api=internal --output=openapi-internal.json
           uv run --group=ci --locked --no-default-groups manage.py export_openapi_schema --api=v1 --output=openapi-v1.json

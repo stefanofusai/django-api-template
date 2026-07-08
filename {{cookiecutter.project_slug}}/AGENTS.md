@@ -110,6 +110,13 @@
   <https://docs.sentry.io/platforms/python/configuration/options/#available-options>.
 {%- endif %}
 - Add environment variables only for secrets, deployment topology, or resource sizing.
+- Mock env values (CI workflows, CI scripts, the Dockerfile's build-time
+  collectstatic env, pytest env) use fixed `mock-<variable-name>` literals,
+  e.g. `mock-postgres-password`; the mock
+  `SECRET_KEY=mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz` must stay
+  ≥50 chars with ≥5 unique chars so `manage.py check --deploy` passes. Never
+  generate mock values at runtime (`uuidgen`, `$RANDOM`), and never promote a
+  mock value to a real credential.
 - Keep `.env.example` grouped by concern, not globally byte-sorted. Alphabetize keys only within each block.
 - In `.env.example`, comments must be own-line only; never put inline comments after a value.
 - In `.env.example`, empty uncommented values mean required in production and must have a boot guard or prod-only consumer that fails loudly.

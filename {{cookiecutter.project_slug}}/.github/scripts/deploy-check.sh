@@ -6,14 +6,14 @@ set -eu
 
 ALLOWED_HOSTS=localhost \
 {%- if cookiecutter.use_s3_media == "yes" %}
-AWS_STORAGE_BUCKET_NAME=$(uuidgen) \
+AWS_STORAGE_BUCKET_NAME=mock-storage-bucket \
 {%- endif %}
-CACHE_URL=redis://:redis-ci-password@localhost:6379/0 \
+CACHE_URL=redis://:mock-redis-password@localhost:6379/0 \
 {%- if cookiecutter.use_celery != "none" %}
-CELERY_BROKER_URL=redis://:redis-ci-password@localhost:6379/1 \
+CELERY_BROKER_URL=redis://:mock-redis-password@localhost:6379/1 \
 {%- endif %}
 CSRF_TRUSTED_ORIGINS=https://localhost \
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres \
+DATABASE_URL=postgres://postgres:mock-postgres-password@localhost:5432/postgres \
 {%- if cookiecutter.email_provider != "none" %}
 DEFAULT_FROM_EMAIL=noreply@example.com \
 {%- endif %}
@@ -22,27 +22,27 @@ DJANGO_ENV=prod \
 EMAIL_HOST=smtp.example.com \
 {%- endif %}
 {%- if cookiecutter.email_provider == "resend" %}
-RESEND_API_KEY=$(uuidgen) \
+RESEND_API_KEY=mock-resend-api-key \
 {%- endif %}
-POSTGRES_PASSWORD=postgres \
-REDIS_PASSWORD=redis-ci-password \
-SECRET_KEY=$(uuidgen)$(uuidgen) \
+POSTGRES_PASSWORD=mock-postgres-password \
+REDIS_PASSWORD=mock-redis-password \
+SECRET_KEY=mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz \
 {%- if cookiecutter.use_sentry == "yes" %}
-SENTRY_DSN=https://$(uuidgen)@sentry.example.com/1 \
+SENTRY_DSN=https://mock-sentry-key@sentry.example.com/1 \
 {%- endif %}
 uv run --group=ci --locked --no-default-groups \
     manage.py check --fail-level=WARNING
 
 ALLOWED_HOSTS=localhost \
 {%- if cookiecutter.use_s3_media == "yes" %}
-AWS_STORAGE_BUCKET_NAME=$(uuidgen) \
+AWS_STORAGE_BUCKET_NAME=mock-storage-bucket \
 {%- endif %}
-CACHE_URL=redis://:redis-ci-password@localhost:6379/0 \
+CACHE_URL=redis://:mock-redis-password@localhost:6379/0 \
 {%- if cookiecutter.use_celery != "none" %}
-CELERY_BROKER_URL=redis://:redis-ci-password@localhost:6379/1 \
+CELERY_BROKER_URL=redis://:mock-redis-password@localhost:6379/1 \
 {%- endif %}
 CSRF_TRUSTED_ORIGINS=https://localhost \
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres \
+DATABASE_URL=postgres://postgres:mock-postgres-password@localhost:5432/postgres \
 {%- if cookiecutter.email_provider != "none" %}
 DEFAULT_FROM_EMAIL=noreply@example.com \
 {%- endif %}
@@ -51,13 +51,13 @@ DJANGO_ENV=prod \
 EMAIL_HOST=smtp.example.com \
 {%- endif %}
 {%- if cookiecutter.email_provider == "resend" %}
-RESEND_API_KEY=$(uuidgen) \
+RESEND_API_KEY=mock-resend-api-key \
 {%- endif %}
-POSTGRES_PASSWORD=postgres \
-REDIS_PASSWORD=redis-ci-password \
-SECRET_KEY=$(uuidgen)$(uuidgen) \
+POSTGRES_PASSWORD=mock-postgres-password \
+REDIS_PASSWORD=mock-redis-password \
+SECRET_KEY=mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz \
 {%- if cookiecutter.use_sentry == "yes" %}
-SENTRY_DSN=https://$(uuidgen | tr -d -)@sentry.example.com/1 \
+SENTRY_DSN=https://mock-sentry-key@sentry.example.com/1 \
 {%- endif %}
 uv run --group=ci --locked --no-default-groups \
     manage.py check --deploy --fail-level=WARNING

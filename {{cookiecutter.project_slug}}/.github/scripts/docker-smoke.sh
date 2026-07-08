@@ -27,15 +27,15 @@ set_env() {
 }
 
 {%- if cookiecutter.postgres == "compose" or cookiecutter.postgres == "external" %}
-postgres_password=$(uuidgen)
+postgres_password=mock-postgres-password
 {%- endif %}
 {%- if cookiecutter.redis == "compose" or cookiecutter.redis == "external" %}
-redis_password=$(uuidgen)
+redis_password=mock-redis-password
 {%- endif %}
 
 replace_env ALLOWED_HOSTS "localhost,127.0.0.1,api.example.test"
 {%- if cookiecutter.use_s3_media == "yes" %}
-replace_env AWS_STORAGE_BUCKET_NAME "$(uuidgen)"
+replace_env AWS_STORAGE_BUCKET_NAME "mock-storage-bucket"
 {%- endif %}
 {%- if cookiecutter.redis == "compose" or cookiecutter.redis == "external" %}
 replace_env CACHE_URL "rediscache://:${redis_password}@redis:6379/0"
@@ -49,7 +49,7 @@ replace_env DATABASE_URL "postgres://{{ cookiecutter.project_slug.replace('-', '
 replace_env DATABASE_URL "postgres://ci:${postgres_password}@postgres:5432/ci"
 {%- endif %}
 {%- if cookiecutter.email_provider == "smtp" %}
-replace_env EMAIL_HOST "$(uuidgen).smtp.example.com"
+replace_env EMAIL_HOST "smtp.example.com"
 {%- endif %}
 {%- if cookiecutter.postgres == "compose" %}
 replace_env POSTGRES_PASSWORD "$postgres_password"
@@ -64,9 +64,9 @@ replace_env REDIS_PASSWORD "$redis_password"
 set_env REDIS_PASSWORD "$redis_password"
 {%- endif %}
 {%- if cookiecutter.email_provider == "resend" %}
-replace_env RESEND_API_KEY "$(uuidgen)"
+replace_env RESEND_API_KEY "mock-resend-api-key"
 {%- endif %}
-replace_env SECRET_KEY "$(uuidgen)$(uuidgen)"
+replace_env SECRET_KEY "mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz"
 {%- if cookiecutter.use_sentry == "yes" %}
-replace_env SENTRY_DSN "https://$(uuidgen)@sentry.example.com/1"
+replace_env SENTRY_DSN "https://mock-sentry-key@sentry.example.com/1"
 {%- endif %}

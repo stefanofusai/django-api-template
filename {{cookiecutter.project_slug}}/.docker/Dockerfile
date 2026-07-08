@@ -2,11 +2,6 @@ FROM python:3.14.5-slim AS base
 
 FROM base AS builder
 
-RUN apt-get update \
-    && apt-get install --no-install-recommends --yes \
-        uuid-runtime \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY --from=ghcr.io/astral-sh/uv:0.11.19 /uv /uvx /bin/
 
 WORKDIR /app
@@ -37,18 +32,18 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 RUN if [ "$UV_DEPENDENCY_GROUP" = "prod" ]; then \
         ALLOWED_HOSTS=localhost \
 {%- if cookiecutter.use_s3_media == "yes" %}
-        AWS_STORAGE_BUCKET_NAME=$(uuidgen) \
+        AWS_STORAGE_BUCKET_NAME=mock-storage-bucket \
 {%- endif %}
 {%- if cookiecutter.redis == "compose" %}
-        CACHE_URL=rediscache://:redis@localhost:6379/0 \
+        CACHE_URL=rediscache://:mock-redis-password@localhost:6379/0 \
 {%- else %}
         CACHE_URL=locmemcache:// \
 {%- endif %}
 {%- if cookiecutter.use_celery != "none" and cookiecutter.redis == "compose" %}
-        CELERY_BROKER_URL=redis://:redis@localhost:6379/1 \
+        CELERY_BROKER_URL=redis://:mock-redis-password@localhost:6379/1 \
 {%- endif %}
         CSRF_TRUSTED_ORIGINS=https://localhost \
-        DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres \
+        DATABASE_URL=postgres://postgres:mock-postgres-password@localhost:5432/postgres \
 {%- if cookiecutter.email_provider != "none" %}
         DEFAULT_FROM_EMAIL=noreply@example.com \
 {%- endif %}
@@ -57,17 +52,17 @@ RUN if [ "$UV_DEPENDENCY_GROUP" = "prod" ]; then \
         EMAIL_HOST=smtp.example.com \
 {%- endif %}
 {%- if cookiecutter.postgres == "compose" %}
-        POSTGRES_PASSWORD=postgres \
+        POSTGRES_PASSWORD=mock-postgres-password \
 {%- endif %}
 {%- if cookiecutter.email_provider == "resend" %}
-        RESEND_API_KEY=$(uuidgen) \
+        RESEND_API_KEY=mock-resend-api-key \
 {%- endif %}
 {%- if cookiecutter.redis == "compose" %}
-        REDIS_PASSWORD=redis \
+        REDIS_PASSWORD=mock-redis-password \
 {%- endif %}
-        SECRET_KEY=$(uuidgen)$(uuidgen) \
+        SECRET_KEY=mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz \
 {%- if cookiecutter.use_sentry == "yes" %}
-        SENTRY_DSN=https://$(uuidgen)@sentry.example.com/1 \
+        SENTRY_DSN=https://mock-sentry-key@sentry.example.com/1 \
 {%- endif %}
         .venv/bin/python manage.py collectstatic --no-input; \
     fi
