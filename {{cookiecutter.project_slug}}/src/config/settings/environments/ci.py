@@ -6,6 +6,7 @@ CELERY_TASK_STORE_EAGER_RESULT = True
 {% if cookiecutter.email_provider != "none" -%}
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 {% endif -%}
+INSTALLED_APPS.append("django_migration_linter")  # noqa: F821  # ty: ignore[unresolved-reference]
 STORAGES["default"] = {  # noqa: F821  # ty: ignore[unresolved-reference]
     "BACKEND": "django.core.files.storage.InMemoryStorage",
 }

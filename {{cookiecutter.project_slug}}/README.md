@@ -297,8 +297,12 @@ cached on the host, so the pull is a no-op. Find earlier tags with
 Do not deploy releases with `up -d --build`; that builds source on the host
 instead of running the published artifact. Rolling back an image does not roll
 back the database: the production stack runs migrations before the API starts,
-so keep migrations backward-compatible at least one release back. If the GitHub
-repository name differs from `{{ cookiecutter.project_slug }}`, update the
+so keep migrations backward-compatible at least one release back. CI enforces
+this contract with `lintmigrations` for project apps. If a deliberately
+backward-incompatible migration has an approved deploy plan, add
+`django_migration_linter.IgnoreMigration()` to that migration's `operations`
+list to mark the exception explicitly. If the GitHub repository name differs
+from `{{ cookiecutter.project_slug }}`, update the
 `image:` lines in `.docker/compose/prod.yaml` to match
 `ghcr.io/<owner>/<repo>`. Private GHCR packages require `docker login ghcr.io`
 on the host with a token that can read packages.
