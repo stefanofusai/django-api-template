@@ -44,6 +44,7 @@ REMOVED_PATHS = [
     *(
         [
             "src/apps/api/throttling.py",
+            "src/config/settings/components/throttling.py",
             "tests/api/integration/throttling_test.py",
             "tests/api/unit/throttling_test.py",
         ]
@@ -81,6 +82,7 @@ REMOVED_PATHS = [
     ),
     *(
         [
+            "src/config/settings/components/cors.py",
             "tests/api/integration/cors_test.py",
         ]
         if USE_CORS == "no"
@@ -88,6 +90,7 @@ REMOVED_PATHS = [
     ),
     *(
         [
+            "src/config/settings/components/csp.py",
             "tests/api/integration/csp_test.py",
         ]
         if USE_CSP == "no"

@@ -13,6 +13,15 @@ DJANGO_ENV = env("DJANGO_ENV")
 
 settings_files = [
     "components/core.py",
+{%- if cookiecutter.use_cors == "yes" %}
+    "components/cors.py",
+{%- endif %}
+{%- if cookiecutter.use_csp == "yes" %}
+    "components/csp.py",
+{%- endif %}
+{%- if cookiecutter.api_throttling == "basic" %}
+    "components/throttling.py",
+{%- endif %}
     "components/apps.py",
     "components/middleware.py",
     "components/authentication.py",

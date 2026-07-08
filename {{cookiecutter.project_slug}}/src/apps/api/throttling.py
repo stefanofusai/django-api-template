@@ -43,19 +43,15 @@ def get_public_api_throttles() -> list[BaseThrottle]:
 
 
 def _should_throttle_anonymous_request(request: HttpRequest) -> bool:
-    if settings.API_THROTTLE_ANON_RATE is None:
-        return False
-
-    if getattr(request.user, "is_authenticated", False):
-        return False
-
-    if request.method == "OPTIONS":
-        return False
-
-    if request.headers.get("authorization"):
-        return False
-
-    return request.path_info.startswith("/api/v1/")
+    return all(
+        (
+            settings.API_THROTTLE_ANON_RATE is not None,
+            not getattr(request.user, "is_authenticated", False),
+            request.method != "OPTIONS",
+            not request.headers.get("authorization"),
+            request.path_info.startswith("/api/v1/"),
+        )
+    )
 
 
 def _get_request_throttle(request: HttpRequest) -> BaseThrottle | None:

@@ -1,12 +1,14 @@
 import uuid
 from datetime import datetime
 
-from ninja import Schema
+from ninja import Field, Schema
+
+NO_NUL_PATTERN = r"^[^\x00]*$"
 
 
 class NoteInSchema(Schema):
-    title: str
-    body: str = ""
+    title: str = Field(pattern=NO_NUL_PATTERN)
+    body: str = Field("", pattern=NO_NUL_PATTERN)
 
 
 class NoteOutSchema(Schema):
