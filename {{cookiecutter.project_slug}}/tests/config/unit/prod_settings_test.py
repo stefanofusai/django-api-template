@@ -7,6 +7,29 @@ if TYPE_CHECKING:
     from faker import Faker
 
 
+def test_prod_settings_place_whitenoise_directly_after_security_middleware(
+    faker: Faker,
+) -> None:
+    env = os.environ | _base_prod_env(faker)
+    env["PYTHONPATH"] = "src"
+    script = (
+        "import config.settings as s; "
+        "security = s.MIDDLEWARE.index('django.middleware.security.SecurityMiddleware'); "
+        "whitenoise = s.MIDDLEWARE.index('whitenoise.middleware.WhiteNoiseMiddleware'); "
+        "raise SystemExit(0 if whitenoise == security + 1 else 1)"
+    )
+
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        check=False,
+        env=env,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
 def test_prod_settings_reject_example_allowed_host_when_example_domain_is_configured(
     faker: Faker,
 ) -> None:

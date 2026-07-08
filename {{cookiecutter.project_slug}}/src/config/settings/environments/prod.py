@@ -66,7 +66,7 @@ EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 {%- endif %}
 LOGGING["handlers"]["console"]["formatter"] = "json"  # noqa: F821  # ty: ignore[unresolved-reference]
 MIDDLEWARE.insert(  # noqa: F821  # ty: ignore[unresolved-reference]
-    1,
+    MIDDLEWARE.index("django.middleware.security.SecurityMiddleware") + 1,  # noqa: F821  # ty: ignore[unresolved-reference]
     "whitenoise.middleware.WhiteNoiseMiddleware",
 )
 SECURE_CONTENT_TYPE_NOSNIFF = True
