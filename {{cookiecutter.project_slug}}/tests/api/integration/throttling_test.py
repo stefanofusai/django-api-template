@@ -3,13 +3,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 from django.core.cache import cache
-from django.test import Client
-from django.test import override_settings
+from django.test import Client, override_settings
 
 {% if cookiecutter.api_auth == "token" -%}
 from apps.core.models import Token
-{% endif -%}
-
+{% endif %}
 if TYPE_CHECKING:
     from apps.core.models import User
     from tests.factories import UserFactory
@@ -31,13 +29,19 @@ def test_authenticated_users_get_separate_counters(
     first_headers = _auth_headers(client, user)
     second_headers = _auth_headers(client, user_factory.create())
 
-    assert client.get("/api/v1/notes", headers=first_headers).status_code == HTTPStatus.OK
-    assert client.get("/api/v1/notes", headers=first_headers).status_code == HTTPStatus.OK
+    assert (
+        client.get("/api/v1/notes", headers=first_headers).status_code == HTTPStatus.OK
+    )
+    assert (
+        client.get("/api/v1/notes", headers=first_headers).status_code == HTTPStatus.OK
+    )
     assert (
         client.get("/api/v1/notes", headers=first_headers).status_code
         == HTTPStatus.TOO_MANY_REQUESTS
     )
-    assert client.get("/api/v1/notes", headers=second_headers).status_code == HTTPStatus.OK
+    assert (
+        client.get("/api/v1/notes", headers=second_headers).status_code == HTTPStatus.OK
+    )
 
 
 @override_settings(API_THROTTLE_ANON_RATE="2/min")
@@ -102,6 +106,7 @@ def test_public_api_requests_are_not_throttled_when_rates_are_unset(
 
 def _auth_headers(client: Client, user: User) -> dict[str, str]:
     {% if cookiecutter.api_auth == "token" -%}
+    _ = client
     raw_token, _ = Token.issue(name="test token", user=user)
     return {"Authorization": f"Bearer {raw_token}"}
     {%- else %}

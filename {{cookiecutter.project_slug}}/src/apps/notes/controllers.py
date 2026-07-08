@@ -21,12 +21,11 @@ from ninja.security import django_auth
 {% if cookiecutter.api_auth == "token" -%}
 from apps.api.auth import bearer_token_auth
 {% endif -%}
-{% if cookiecutter.api_throttling == "basic" -%}
-from apps.api.throttling import get_public_api_throttles
-{% endif -%}
 from apps.api.pagination import BoundedLimitOffsetPagination
 from apps.api.schemas import ErrorSchema, ValidationErrorSchema
-
+{% if cookiecutter.api_throttling == "basic" -%}
+from apps.api.throttling import get_public_api_throttles
+{% endif %}
 from .models import Note
 from .schemas import NoteInSchema, NoteOutSchema
 
@@ -54,7 +53,6 @@ class NotesController(ControllerBase):
         note = Note.objects.create(owner=request.user, **payload.dict())
         return Status(201, note)
 
-
     @http_delete(
         "/{note_id}",
         response={
@@ -71,7 +69,6 @@ class NotesController(ControllerBase):
         note.delete()
         return Status(204, None)
 
-
     @http_get(
         "/{note_id}",
         response={
@@ -85,7 +82,6 @@ class NotesController(ControllerBase):
     def get_note(self, request: HttpRequest, note_id: uuid.UUID) -> Note:
         return get_object_or_404(Note, id=note_id, owner=request.user)
 
-
     @http_get(
         "",
         response={
@@ -97,7 +93,6 @@ class NotesController(ControllerBase):
     @paginate(BoundedLimitOffsetPagination)
     def list_notes(self, request: HttpRequest) -> QuerySet[Note]:
         return Note.objects.filter(owner=request.user)
-
 
     @http_put(
         "/{note_id}",

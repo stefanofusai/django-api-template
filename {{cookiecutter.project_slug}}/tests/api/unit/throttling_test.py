@@ -1,15 +1,13 @@
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
-from django.test import RequestFactory
-from django.test import override_settings
+from django.test import RequestFactory, override_settings
 from ninja_extra.throttling import BaseThrottle
 
 from apps.api.throttling import get_public_api_throttles
 
 
 @override_settings(API_THROTTLE_ANON_RATE="2/min", API_THROTTLE_USER_RATE=None)
-def test_get_public_api_throttles_returns_anon_throttle_when_anon_rate_is_set(
-) -> None:
+def test_get_public_api_throttles_returns_anon_throttle_when_anon_rate_is_set() -> None:
     throttles = get_public_api_throttles()
 
     assert len(throttles) == 1

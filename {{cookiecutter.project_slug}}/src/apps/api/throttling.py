@@ -1,9 +1,7 @@
 from collections.abc import Callable
 
 from django.conf import settings
-from django.http import HttpRequest
-from django.http import HttpResponse
-from django.http import JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from ninja_extra.throttling import AnonRateThrottle, BaseThrottle, UserRateThrottle
 
 
@@ -28,7 +26,7 @@ class PublicAPIThrottleMiddleware:
         if _should_throttle_anonymous_request(request):
             throttle = _get_request_throttle(request)
 
-            if not throttle.allow_request(request):
+            if throttle is not None and not throttle.allow_request(request):
                 return JsonResponse(
                     {"detail": "Request was throttled."},
                     status=429,
@@ -37,8 +35,8 @@ class PublicAPIThrottleMiddleware:
         return self.get_response(request)
 
 
-def get_public_api_throttles() -> tuple[BaseThrottle, ...]:
-    return (DynamicPublicAPIThrottle(),)
+def get_public_api_throttles() -> list[BaseThrottle]:
+    return [DynamicPublicAPIThrottle()]
 
 
 # Utils
@@ -54,7 +52,7 @@ def _should_throttle_anonymous_request(request: HttpRequest) -> bool:
     if request.method == "OPTIONS":
         return False
 
-    if request.META.get("HTTP_AUTHORIZATION"):
+    if request.headers.get("authorization"):
         return False
 
     return request.path_info.startswith("/api/v1/")

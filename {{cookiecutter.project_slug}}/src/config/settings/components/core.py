@@ -1,4 +1,4 @@
-{%- if cookiecutter.use_csp == "yes" %}
+{%- if cookiecutter.use_csp == "yes" -%}
 from django.utils.csp import CSP
 
 {% endif -%}
