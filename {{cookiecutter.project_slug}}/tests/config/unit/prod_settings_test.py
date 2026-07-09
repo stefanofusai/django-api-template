@@ -22,7 +22,69 @@ def test_prod_settings_configures_database_timeouts(faker: Faker) -> None:
     assert result.returncode == 0, result.stderr
     assert result.stdout.splitlines() == ["5", "-c statement_timeout=15000"]
 
+{% if cookiecutter.use_traefik == "yes" or cookiecutter.behind_proxy == "yes" %}
+def test_prod_settings_configures_proxy_security_settings(faker: Faker) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {},
+        (
+            "import config.settings as s; "
+            "print(s.CSRF_COOKIE_SECURE); "
+            "print(s.SECURE_HSTS_INCLUDE_SUBDOMAINS); "
+            "print(s.SECURE_HSTS_PRELOAD); "
+            "print(s.SECURE_HSTS_SECONDS); "
+            "print(s.SECURE_PROXY_SSL_HEADER); "
+            "print(s.SECURE_REDIRECT_EXEMPT); "
+            "print(s.SECURE_SSL_REDIRECT); "
+            "print(s.SESSION_COOKIE_SECURE)"
+        ),
+    )
 
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == [
+        "True",
+        "True",
+        "True",
+        "31536000",
+        "('HTTP_X_FORWARDED_PROTO', 'https')",
+        "['^api/health$', '^api/ready$']",
+        "True",
+        "True",
+    ]
+
+{% else %}
+def test_prod_settings_leaves_proxy_security_settings_disabled_without_proxy(
+    faker: Faker,
+) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {},
+        (
+            "import config.settings as s; "
+            "print(getattr(s, 'CSRF_COOKIE_SECURE', False)); "
+            "print(getattr(s, 'SECURE_HSTS_INCLUDE_SUBDOMAINS', False)); "
+            "print(getattr(s, 'SECURE_HSTS_PRELOAD', False)); "
+            "print(getattr(s, 'SECURE_HSTS_SECONDS', 0)); "
+            "print(getattr(s, 'SECURE_PROXY_SSL_HEADER', None)); "
+            "print(getattr(s, 'SECURE_REDIRECT_EXEMPT', [])); "
+            "print(getattr(s, 'SECURE_SSL_REDIRECT', False)); "
+            "print(getattr(s, 'SESSION_COOKIE_SECURE', False))"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == [
+        "False",
+        "False",
+        "False",
+        "0",
+        "None",
+        "[]",
+        "False",
+        "False",
+    ]
+
+{% endif %}
 def test_prod_settings_honors_database_timeout_overrides_when_configured(
     faker: Faker,
 ) -> None:
