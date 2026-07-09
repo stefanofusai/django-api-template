@@ -126,6 +126,12 @@ def main() -> None:
     for removed_dir in REMOVED_DIRS:
         shutil.rmtree(removed_dir)
 
+    for cache_dir in Path().rglob("__pycache__"):
+        shutil.rmtree(cache_dir)
+
+    for cache_dir in Path().rglob(".ruff_cache"):
+        shutil.rmtree(cache_dir)
+
     if USE_CELERY == "none":
         _prune_celery_skill_metadata()
 
