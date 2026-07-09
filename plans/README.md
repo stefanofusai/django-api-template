@@ -22,7 +22,26 @@ new, with two never-baked knob combos empirically verified and a clean
 pip-audit), but the template's OWN machinery — hooks, guard scripts, boot
 guards, CI matrices — has systematically weaker verification than the
 projects it generates. 010-014 close that gap; 015 is the one direction item
-promoted to a build plan; 016-019 are design spikes.
+promoted to a build plan; 016-019 began as design spikes (since converted —
+see the 2026-07-09 paragraph below).
+
+Plan 020 was added on 2026-07-09 from operator-requested improvements
+(User/Token lack UUID pks; core/notes migration history has drifted from
+current model field order). Investigation found the two requests are
+mechanically coupled — Postgres has no `bigint`→`uuid` cast, so the pk change
+can only land via a fresh regenerated migration, not an incremental
+`AlterField` — so they're written as one combined plan rather than two.
+
+On 2026-07-09 the six design spikes (006, 007, 016-019) were converted into
+build plans and the spike files were removed. The design questions were
+settled during a dedicated planning pass with empirical verification (bakes,
+hash reverse-engineering, a booted browser trial, an end-to-end scaffold
+rehearsal); each verdict and its evidence live inside the corresponding plan
+file. The same pass reverted stale index state from an earlier session: plan
+006 had been marked DONE pointing at a design doc
+(`006-token-lifecycle-design.md`) and a plan 021 had been added to build on
+it, but neither file was ever written. 021's scope (build the token
+endpoints) is folded into the new 006.
 
 **Context every executor needs**: this repo is a **cookiecutter template**.
 Files under `{{cookiecutter.project_slug}}/` contain Jinja and cannot be run
@@ -36,13 +55,13 @@ are `_copy_without_render` - pure YAML/Markdown, no Jinja allowed there.
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| 001  | Fix bake-matrix regressions (throttling_test.py assert collapse only — admin_test/smtp/conftest confirmed already fixed by `75c4dce`) | P1 | S | - | DONE (2026-07-08, commit `5dc15e1` on branch `advisor/001-fix-bake-matrix-regressions`, not yet merged to `main`) |
-| 002  | Reject bearer tokens of deactivated users | P1 | S | - | DONE (2026-07-08, commit `a332d23` on branch `advisor/002-token-auth-inactive-users`, not yet merged to `main`) |
-| 003  | Deploy hardening: lowercase GHCR owner; celery-worker stop_grace_period | P2 | S | - | DONE (2026-07-08, commits `c7c1c26`+`04130f7` on branch `advisor/003-deploy-hardening`, not yet merged to `main`) |
-| 004  | Consistency sweep: CI smoke depends_on, anymail app, docs guards, rtk removal, artifact scrub | P2 | M | 003 (soft) | TODO |
-| 005  | Fast local bake-and-lint gate (root pre-commit) | P2 | M | 001 (**hard**) | TODO |
-| 006  | SPIKE: token lifecycle endpoints design (evaluate allauth headless first) | P3 | M | 002 (soft) | TODO |
-| 007  | SPIKE: nonce-based CSP for script-src (decision gate on admin/Swagger) | P3 | M | - | TODO |
+| 001  | Fix bake-matrix regressions (throttling_test.py assert collapse only — admin_test/smtp/conftest confirmed already fixed by `75c4dce`) | P1 | S | - | DONE (2026-07-08, merged to `main` as `5800f9d`) |
+| 002  | Reject bearer tokens of deactivated users | P1 | S | - | DONE (2026-07-08, merged to `main` as `a332d23`) |
+| 003  | Deploy hardening: lowercase GHCR owner; celery-worker stop_grace_period | P2 | S | - | DONE (2026-07-08, merged to `main` as `075555c`+`8f2afc8`) |
+| 004  | Consistency sweep: CI smoke depends_on, anymail app, docs guards, rtk removal, artifact scrub | P2 | M | 003 (soft) | DONE (2026-07-09, merged to `main` as `c2de6b8`..`b90f136`) |
+| 005  | Fast local bake-and-lint gate (root pre-commit) | P2 | M | 001 (**hard**) | DONE (2026-07-09, merged to `main` as `5c04cc9`+`16a12b3`) |
+| 006  | Build token lifecycle endpoints (create/list/revoke + admin minting) for `api_auth=token` | P3 | M | 002 (soft, DONE); coordinate 017, 020 | TODO |
+| 007  | Fix `use_csp=yes`: self-hosted Swagger docs; drop `unsafe-inline` from script-src (browser-gated) | P2 | M | - | TODO |
 | 008  | Document throttling.py's coupling to ninja-extra cache internals (comment-only) | P3 | S | - | TODO |
 | 009  | Standardize placeholder hostnames: `.test` for machine-consumed values, `example.com` for docs | P3 | S | 004 (soft) | TODO |
 | 010  | Failure-path tests for the coverage-omitted prod boot guards (SECRET_KEY / default DB / default Redis) | P2 | S | 009 (soft) | TODO |
@@ -51,10 +70,11 @@ are `_copy_without_render` - pure YAML/Markdown, no Jinja allowed there.
 | 013  | Unit-test the cookiecutter hooks; guard the post-gen removal lists | P2 | M | 011 (**hard**) | TODO |
 | 014  | Root .gitignore completeness + CONTRIBUTING dev loop starts Postgres | P3 | S | - | TODO |
 | 015  | Media backup/restore parity for `use_s3_media=no` (scripts + runbook) | P3 | M | 013 (soft) | TODO |
-| 016  | SPIKE: skills-lock verify/refresh lifecycle design | P3 | M | - | TODO |
-| 017  | SPIKE: close the OpenAPI "client generation" loop (commit-schema drift check vs alternatives) | P3 | M | - | TODO |
-| 018  | SPIKE: "new API resource" scaffold design (command vs vendored skill vs recipe) | P3 | M | - | TODO |
-| 019  | SPIKE: metrics/OTel decision (may conclude "document, don't build") | P3 | M | - | TODO |
+| 016  | Verify vendored skills against skills-lock.json (fail-closed root guard; hash re-baseline) | P3 | S-M | 011 (**hard**) | TODO |
+| 017  | Commit OpenAPI schemas into the generated repo; CI drift gate; deterministic operation ids | P3 | M | coordinate 006 | TODO |
+| 018  | Build the `new-api-resource` vendored agent skill (40-rule convention checklist) | P3 | L | 016 (soft) | TODO |
+| 019  | Document the metrics recipe (no knob); record the design decision | P3 | S | - | TODO |
+| 020  | Convert User/Token to UUID primary keys and squash core/notes migrations to fresh initials | P2 | M | - | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) |
 REJECTED (with one-line rationale - finding fixed independently or approach
@@ -71,8 +91,8 @@ abandoned)
   area.
 - 005 after 001 (**hard**): until 001 lands, the bake-and-lint gate fails on
   known defects and cannot be committed green.
-- 006 after 002 (soft): the token-lifecycle design must assume 002's
-  `is_active` semantics.
+- 006 after 002 (soft, 002 is DONE): the auth change extends 002's
+  `is_active` reject semantics with a `revoked_at` check.
 - 009 after 004 (soft): both edit
   `{{cookiecutter.project_slug}}/pyproject.toml` (004 a deptry comment, 009
   the pytest env block) and `{{cookiecutter.project_slug}}/AGENTS.md` (004
@@ -89,9 +109,32 @@ abandoned)
 - 015 after 013 (soft): 015 adds removal-list entries that 013's existence
   guard then covers; also coordinate with 003/004 on the generated README's
   Production area.
-- 016-019 are independent design spikes; their deliverables are documents
-  under `plans/`, and implementation happens only via new maintainer-approved
-  plans.
+- 016 after 011 (**hard**): 011 creates the root `tests/` directory, the
+  pure-`check()` guard-script pattern, and the `root-tests` pre-commit hook
+  that 016 extends. 013 also extends root `tests/` — land in README order to
+  avoid merge conflicts.
+- 016 and 018 coordinate on `skills-lock.json` (either order works): 018 adds
+  a source-less `"sourceType": "local"` entry for its first-party skill, and
+  both use the settled hash recipe (`sha256` of raw `SKILL.md` bytes; 016
+  re-baselines the lock to it at `version: 2`).
+- 006 and 017 coordinate on operation ids (either order works): both give
+  their controllers `use_unique_op_id=False`; whichever lands second makes
+  017's operation-id regression test knob-aware (`api_auth=token` bakes also
+  expect the `tokens_*` ids).
+- 019 and 015 both edit the generated README's Production section (015 the
+  `postgres == "compose"` block, 019 the end of the section) — low conflict
+  risk; anchor edits on headings, not line numbers, whichever goes second.
+- 020 has no dependency on the other plans, but it rewrites
+  `core/migrations/0001_initial.py` and `notes/migrations/0001_initial.py`
+  from scratch — if any other TODO plan is later found to touch those files,
+  execute 020 first to avoid rebasing a migration diff.
+- 006 and 020 both touch `core/migrations/`: 006 adds
+  `0003_token_revoked_at.py` on top of `0002_token`; if 020 (the UUID-pk
+  squash) lands afterward, it absorbs 006's migration into its fresh initial
+  and 006's `int`-typed schema `id`/`token_id` fields must become
+  `uuid.UUID`. If 020 lands first, 006 regenerates `0003` against the
+  squashed initial — see 006's Maintenance notes. Coordinate order if both
+  are queued together.
 
 ## Findings considered and rejected
 
@@ -99,10 +142,13 @@ Recorded so nobody re-audits them:
 
 - **`api_auth` knob is a byte-identical no-op when `use_example_api=no`**:
   by-design and documented in the root README's Variables table.
-- **CSP `unsafe-inline` as a vulnerability**: downgraded - the README/knob
-  prompt explicitly document the starter policy as allowing inline
-  scripts/styles; the improvement path is plan 007's nonce spike, not a
-  security fix.
+- **CSP `unsafe-inline` as a vulnerability**: originally downgraded because
+  the README/knob prompt documented the starter policy as allowing inline
+  scripts/styles. Re-assessed 2026-07-09: the 007 planning pass found
+  `use_csp=yes` breaks BOTH browser surfaces today (django-ninja serves CDN
+  Swagger, which `script-src 'self'` blocks; unfold's Alpine.js needs
+  `unsafe-eval`), so plan 007 is now a P2 fix (self-hosted Swagger + drop
+  `unsafe-inline`), not optional hardening.
 - **Root AGENTS.md naming example says `Template CI` while the workflow is
   named `CI`**: one-word doc fix, fold into any future docs pass.
 - **`rtk` references in the generated AGENTS.md**: initially left to
@@ -130,3 +176,24 @@ Rejected by the second (75c4dce) audit on 2026-07-08:
   list/detail schema split would complicate the exemplar. By-design.
 - **axes.W001 in CI bakes** (django-axes flags the CI-only locmem cache):
   inert — prod uses Redis; the CI overlay is not a lockout surface.
+
+Settled by the 2026-07-09 spike-conversion pass (recorded so nobody
+re-investigates):
+
+- **Nonce-based `script-src`**: dead end on this template. Django 6 emits the
+  nonce lazily — only when a rendered template reads `request.csp_nonce` —
+  and no Django-admin, unfold 0.96, or django-ninja template does, so the
+  header never carries a token and no inline script would consume it.
+  Browser-verified during 007's planning. Revisit only if unfold ships
+  nonce-aware templates.
+- **django-allauth headless for token lifecycle**: not adopted — it provides
+  login/signup/2FA session and access tokens for SPA flows via an app-client
+  model, not user-managed named PATs; plan 006 builds a bespoke
+  `TokensController` on the existing `Token` model instead.
+- **Metrics/OTel knob**: settled as "document, don't build" (plan 019);
+  revisit trigger is a downstream project actually asking.
+- **skills-lock `computedHash` provenance**: no candidate recipe reproduces
+  the recorded hashes, but the vendored skill files are byte-identical to
+  upstream (verified for two of three sources) — the hashes were written by
+  opaque tooling. Plan 016 re-baselines to `sha256(raw SKILL.md bytes)` at
+  lock `version: 2`.
