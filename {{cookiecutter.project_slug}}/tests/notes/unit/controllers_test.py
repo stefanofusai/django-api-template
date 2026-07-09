@@ -2,8 +2,8 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
-{% if cookiecutter.api_auth == "token" %}
-from apps.core.models import Token
+{% if cookiecutter.api_auth == "token" -%}
+from pytest_factoryboy import LazyFixture
 {% endif %}
 if TYPE_CHECKING:
     from faker import Faker
@@ -23,12 +23,15 @@ def test_get_note_returns_401_when_anonymous(
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
+{% if cookiecutter.api_auth == "token" -%}
+@pytest.mark.parametrize("token__user", [LazyFixture("note__owner")])
+{% endif -%}
 def test_get_note_returns_note_when_authenticated_owner(
     notes_controller_client: TestClient,
-    note: Note,
+    note: Note,{% if cookiecutter.api_auth == "token" %}
+    raw_token: str,{% endif %}
 ) -> None:
 {% if cookiecutter.api_auth == "token" %}
-    raw_token, _ = Token.issue(name="test token", user=note.owner)
     response = notes_controller_client.get(
         f"/{note.id}",
         headers={"Authorization": f"Bearer {raw_token}"},

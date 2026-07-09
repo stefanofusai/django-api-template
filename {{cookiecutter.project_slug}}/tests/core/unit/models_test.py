@@ -87,7 +87,7 @@ def test_token_prefix_from_returns_prefix_when_token_shape_is_valid() -> None:
 
 
 def test_token_str_returns_token_name(token: Token) -> None:
-    assert str(token) == "test token"
+    assert str(token) == token.name
 {%- endif %}
 
 

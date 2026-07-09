@@ -17,15 +17,11 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.django_db
 
 
+@pytest.mark.parametrize("token__expires_at", [timezone.now() - timedelta(seconds=1)])
 def test_authenticate_raises_401_when_token_is_expired(
     mocker: MockerFixture,
-    user: User,
+    raw_token: str,
 ) -> None:
-    raw_token, _ = Token.issue(
-        expires_at=timezone.now() - timedelta(seconds=1),
-        name="test token",
-        user=user,
-    )
     auth = BearerTokenAuth()
 
     with pytest.raises(InvalidTokenError) as exc_info:

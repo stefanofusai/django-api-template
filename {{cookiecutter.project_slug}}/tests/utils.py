@@ -1,8 +1,4 @@
 from typing import TYPE_CHECKING
-{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
-
-from apps.core.models import Token
-{%- endif %}
 
 if TYPE_CHECKING:
     from ninja.testing import TestClient
@@ -12,12 +8,18 @@ if TYPE_CHECKING:
 
 
 class AuthenticatedTestClient:
-    def __init__(self, client: TestClient, user: User) -> None:
+    def __init__(
+        self,
+        client: TestClient,
+        user: User,
+        {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+        headers: dict[str, str],
+        {%- endif %}
+    ) -> None:
         self._client = client
         self.user = user
 {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
-        raw_token, _ = Token.issue(name="test token", user=user)
-        self._headers = {"Authorization": f"Bearer {raw_token}"}
+        self._headers = headers
 {%- endif %}
 
     def delete(self, path: str) -> NinjaResponse:

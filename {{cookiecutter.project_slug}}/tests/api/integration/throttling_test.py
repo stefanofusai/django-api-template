@@ -1,28 +1,56 @@
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING{% if cookiecutter.api_auth == "token" %}, cast{% endif %}
 
 import pytest
 from django.test import Client, override_settings
 
 {% if cookiecutter.api_auth == "token" -%}
-from apps.core.models import Token
+from tests.factories import TEST_TOKEN_SECRET, TokenFactory
 
 {% endif -%}
 if TYPE_CHECKING:
-    from apps.core.models import User
+    from apps.core.models import {% if cookiecutter.api_auth == "token" %}Token, {% endif %}User
 
 pytestmark = pytest.mark.django_db
 
 
+# Fixtures
+
+
+{% if cookiecutter.api_auth == "token" -%}
+@pytest.fixture
+def auth_headers_for_user() -> Callable[[Client, User], dict[str, str]]:
+    def make_auth_headers(_client: Client, user: User) -> dict[str, str]:
+        token = cast("Token", TokenFactory(user=user))
+        return {"Authorization": f"Bearer pat_{token.prefix}_{TEST_TOKEN_SECRET}"}
+
+    return make_auth_headers
+
+
+{%- else -%}
+@pytest.fixture
+def auth_headers_for_user() -> Callable[[Client, User], dict[str, str]]:
+    def make_auth_headers(client: Client, user: User) -> dict[str, str]:
+        client.force_login(user)
+        return {}
+
+    return make_auth_headers
+
+
+{% endif %}
+
+
 @override_settings(API_THROTTLE_USER_RATE="2/min")
 def test_authenticated_users_get_separate_counters(
+    auth_headers_for_user: Callable[[Client, User], dict[str, str]],
     client: Client,
     user: User,
     user_1: User,
 ) -> None:
     client_1 = Client()
-    headers = _auth_headers(client, user)
-    headers_1 = _auth_headers(client_1, user_1)
+    headers = auth_headers_for_user(client, user)
+    headers_1 = auth_headers_for_user(client_1, user_1)
 
     assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
     assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
@@ -101,10 +129,11 @@ def test_bogus_authorization_requests_share_the_anonymous_ip_budget(
 
 @override_settings(API_THROTTLE_USER_RATE="2/min")
 def test_public_api_requests_return_429_after_configured_limit(
+    auth_headers_for_user: Callable[[Client, User], dict[str, str]],
     client: Client,
     user: User,
 ) -> None:
-    headers = _auth_headers(client, user)
+    headers = auth_headers_for_user(client, user)
     assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
     assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
 
@@ -136,26 +165,13 @@ def test_public_api_requests_are_not_throttled_when_rates_are_unset(
 {% if cookiecutter.api_auth == "token" -%}
 @override_settings(API_THROTTLE_ANON_RATE="2/min", API_THROTTLE_USER_RATE=None)
 def test_valid_token_requests_are_not_counted_against_the_anonymous_budget(
+    auth_headers_for_user: Callable[[Client, User], dict[str, str]],
     client: Client,
     user: User,
 ) -> None:
-    headers = _auth_headers(client, user)
+    headers = auth_headers_for_user(client, user)
 
     assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
     assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
     assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
-
-
-{% endif -%}
-# Utils
-
-
-{% if cookiecutter.api_auth == "token" -%}
-def _auth_headers(_client: Client, user: User) -> dict[str, str]:
-    raw_token, _ = Token.issue(name="test token", user=user)
-    return {"Authorization": f"Bearer {raw_token}"}
-{%- else -%}
-def _auth_headers(client: Client, user: User) -> dict[str, str]:
-    client.force_login(user)
-    return {}
 {%- endif %}

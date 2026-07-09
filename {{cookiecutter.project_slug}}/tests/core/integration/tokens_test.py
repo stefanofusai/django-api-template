@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 import pytest
 
 from apps.core.models import Token
-from tests.factories import UserFactory
 
 if TYPE_CHECKING:
     from ninja.testing import TestClient
@@ -109,7 +108,7 @@ def test_list_tokens_includes_revoked_tokens_when_authenticated(
 
     assert response.status_code == HTTPStatus.OK
     payload = response.data
-    item = next(item for item in payload["items"] if item["id"] == revoked_token.id)
+    item = next(item for item in payload["items"] if item["id"] == revoked_token.pk)
     assert item["revoked_at"] is not None
 
 
@@ -122,17 +121,15 @@ def test_list_tokens_returns_401_when_anonymous(v1_api_client: TestClient) -> No
 def test_list_tokens_returns_only_callers_tokens_when_authenticated(
     authenticated_v1_api_client: AuthenticatedTestClient,
     token: Token,
+    token_1: Token,
 ) -> None:
-    other_user = UserFactory()
-    _, other_token = Token.issue(name="other token", user=other_user)
-
     response = authenticated_v1_api_client.get("/tokens")
 
     assert response.status_code == HTTPStatus.OK
     payload = response.data
     item_ids = [item["id"] for item in payload["items"]]
-    assert token.id in item_ids
-    assert other_token.id not in item_ids
+    assert token.pk in item_ids
+    assert token_1.pk not in item_ids
     for item in payload["items"]:
         assert "digest" not in item
 
@@ -143,7 +140,7 @@ def test_revoke_token_returns_204_and_refuses_reuse(
     token: Token,
     v1_api_client: TestClient,
 ) -> None:
-    response = authenticated_v1_api_client.delete(f"/tokens/{token.id}")
+    response = authenticated_v1_api_client.delete(f"/tokens/{token.pk}")
 
     assert response.status_code == HTTPStatus.NO_CONTENT
     token.refresh_from_db()
@@ -165,22 +162,20 @@ def test_revoke_token_returns_404_when_already_revoked(
     authenticated_v1_api_client: AuthenticatedTestClient,
     revoked_token: Token,
 ) -> None:
-    response = authenticated_v1_api_client.delete(f"/tokens/{revoked_token.id}")
+    response = authenticated_v1_api_client.delete(f"/tokens/{revoked_token.pk}")
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 def test_revoke_token_returns_404_when_owned_by_other_user(
     authenticated_v1_api_client: AuthenticatedTestClient,
+    token_1: Token,
 ) -> None:
-    other_user = UserFactory()
-    _, other_token = Token.issue(name="other token", user=other_user)
-
-    response = authenticated_v1_api_client.delete(f"/tokens/{other_token.id}")
+    response = authenticated_v1_api_client.delete(f"/tokens/{token_1.pk}")
 
     assert response.status_code == HTTPStatus.NOT_FOUND
-    other_token.refresh_from_db()
-    assert other_token.revoked_at is None
+    token_1.refresh_from_db()
+    assert token_1.revoked_at is None
 
 
 def test_revoke_token_returns_404_when_token_does_not_exist(

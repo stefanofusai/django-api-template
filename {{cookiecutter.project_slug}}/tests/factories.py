@@ -4,7 +4,9 @@ from apps.core.models import {% if cookiecutter.use_example_api == "yes" and coo
 {%- if cookiecutter.use_example_api == "yes" %}
 from apps.notes.models import Note
 {%- endif %}
-
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+TEST_TOKEN_SECRET = "test-token-secret"  # noqa: S105
+{% endif %}
 
 class UserFactory(factory.django.DjangoModelFactory):
     username = factory.Sequence(lambda n: f"user-{n}")
@@ -22,10 +24,12 @@ class TokenFactory(factory.django.DjangoModelFactory):
     expires_at = None
     last_used_at = None
     revoked_at = None
-    user = factory.SubFactory(UserFactory)
-    digest = factory.Sequence(lambda n: Token.hash(f"test-token-{n}"))
-    name = factory.Sequence(lambda n: f"token-{n}")
+    name = factory.Faker("sentence")
     prefix = factory.Sequence(lambda n: f"{n:012x}")
+    digest = factory.LazyAttribute(
+        lambda token: Token.hash(f"pat_{token.prefix}_{TEST_TOKEN_SECRET}")
+    )
+    user = factory.SubFactory(UserFactory)
 
     class Meta:
         model = Token

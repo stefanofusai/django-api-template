@@ -10,14 +10,14 @@ from django.utils import timezone
 {% endif -%}
 from hypothesis import settings as hypothesis_settings
 from ninja.testing import TestClient
-from pytest_factoryboy import register
+from pytest_factoryboy import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}LazyFixture, {% endif %}register
 from zeal import zeal_context
 
 from apps.api.api import internal_api, v1_api
 {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
 from apps.core.models import Token
 {% endif -%}
-from tests.factories import {% if cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
+from tests.factories import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}TEST_TOKEN_SECRET, NoteFactory, TokenFactory, UserFactory{% elif cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
 {%- if cookiecutter.use_example_api == "yes" %}
 from tests.utils import AuthenticatedTestClient
 {%- endif %}
@@ -46,6 +46,10 @@ hypothesis_settings.register_profile("ci", deadline=None, max_examples=50)
 hypothesis_settings.load_profile("ci")
 
 register(UserFactory)
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+register(TokenFactory)
+register(TokenFactory, "auth_token", user=LazyFixture("user"))
+{%- endif %}
 {%- if cookiecutter.use_example_api == "yes" %}
 register(NoteFactory)
 {%- endif %}
@@ -88,18 +92,18 @@ def _broker_ready_default(mocker: MockerFixture) -> None:
 {% endif -%}
 {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
 @pytest.fixture
-def issued_token(user: User) -> tuple[str, Token]:
-    return Token.issue(name="test token", user=user)
+def raw_token(token: Token) -> str:
+    return f"pat_{token.prefix}_{TEST_TOKEN_SECRET}"
 
 
 @pytest.fixture
-def raw_token(issued_token: tuple[str, Token]) -> str:
-    return issued_token[0]
+def auth_raw_token(auth_token: Token) -> str:
+    return f"pat_{auth_token.prefix}_{TEST_TOKEN_SECRET}"
 
 
 @pytest.fixture
-def token(issued_token: tuple[str, Token]) -> Token:
-    return issued_token[1]
+def token_auth_headers(auth_raw_token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {auth_raw_token}"}
 
 
 @pytest.fixture
@@ -113,9 +117,15 @@ def revoked_token(token: Token) -> Token:
 {% if cookiecutter.use_example_api == "yes" -%}
 @pytest.fixture
 def authenticated_v1_api_client(
-    v1_api_client: TestClient, user: User
+    v1_api_client: TestClient,
+    user: User,{% if cookiecutter.api_auth == "token" %}
+    token_auth_headers: dict[str, str],{% endif %}
 ) -> AuthenticatedTestClient:
+    {%- if cookiecutter.api_auth == "token" %}
+    return AuthenticatedTestClient(v1_api_client, user, token_auth_headers)
+    {%- else %}
     return AuthenticatedTestClient(v1_api_client, user)
+    {%- endif %}
 
 
 {% endif -%}
