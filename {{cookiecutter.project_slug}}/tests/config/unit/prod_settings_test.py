@@ -29,6 +29,21 @@ def test_prod_settings_place_whitenoise_directly_after_security_middleware(
 
     assert result.returncode == 0, result.stderr
 
+def test_prod_settings_reject_insecure_secret_key_when_scaffold_value_is_kept(
+    faker: Faker,
+) -> None:
+    result = _import_prod_settings(
+        faker,
+        {"SECRET_KEY": "django-insecure-mock-secret-key"},
+    )
+
+    assert result.returncode != 0
+    assert (
+        "SECRET_KEY must be replaced with a securely generated value in production."
+        in result.stderr
+    )
+
+
 
 def test_prod_settings_reject_example_allowed_host_when_example_domain_is_configured(
     faker: Faker,
@@ -40,6 +55,25 @@ def test_prod_settings_reject_example_allowed_host_when_example_domain_is_config
 
     assert result.returncode != 0
     assert "ALLOWED_HOSTS must not contain example.com in production." in result.stderr
+
+
+def test_prod_settings_reject_default_database_password_when_scaffold_value_is_kept(
+    faker: Faker,
+) -> None:
+    result = _import_prod_settings(
+        faker,
+        {
+            "DATABASE_URL": (
+                "postgres://{{ cookiecutter.project_slug.replace('-', '_') }}:{{ cookiecutter.project_slug.replace('-', '_') }}@postgres:5432/{{ cookiecutter.project_slug.replace('-', '_') }}"
+            ),
+        },
+    )
+
+    assert result.returncode != 0
+    assert (
+        "The default database password must be replaced with a securely "
+        "generated value in production." in result.stderr
+    )
 
 
 {% if cookiecutter.use_cors == "yes" -%}
@@ -81,6 +115,21 @@ def test_prod_settings_reject_mismatched_cache_password_when_redis_is_compose(
 
     assert result.returncode != 0
     assert "CACHE_URL password must match REDIS_PASSWORD." in result.stderr
+
+
+def test_prod_settings_reject_default_redis_password_when_scaffold_value_is_kept(
+    faker: Faker,
+) -> None:
+    result = _import_prod_settings(
+        faker,
+        {"REDIS_PASSWORD": "{{ cookiecutter.project_slug.replace('-', '_') }}"},
+    )
+
+    assert result.returncode != 0
+    assert (
+        "The default Redis password must be replaced with a securely "
+        "generated value in production." in result.stderr
+    )
 
 
 {% endif -%}
