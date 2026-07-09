@@ -2,8 +2,6 @@
 
 ## Command Workflow
 
-- If the `rtk` CLI is available, prefix shell commands with `rtk`
-  (token-optimizing proxy); otherwise run commands directly.
 - Put short flags before long flags in shell commands, alphabetize short flags
   and long flags within their groups, and write long flags with values using
   `--flag=value`.
@@ -165,7 +163,6 @@
   - `uv run pre-commit run ty --all-files`
   - `uv run pytest`
   - `uv run pre-commit run --all-files` for broad changes
-  Prefix these with `rtk` when it is available.
 - Register factories in `tests/factories.py` when adding concrete models
   (see `UserFactory`).
 - Use pytest-factoryboy model fixtures directly and prefer attribute
