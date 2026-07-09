@@ -78,6 +78,13 @@ def _anon_budget_exhausted(
     duration = cast("int", throttle.duration)
     now = throttle.timer()
     num_requests = cast("int", throttle.num_requests)
+    # Pre-checks the budget without consuming it, which ninja-extra has no
+    # public API for. This mirrors SimpleRateThrottle's private cache format
+    # (a list of request timestamps, window-filtered) as of django-ninja-extra
+    # 0.31.x. If a bump changes that format, this returns False forever and
+    # the integration throttling tests fail on their final 429 assertion; that
+    # failure means "re-sync this function with the new cache format," not
+    # "the tests are flaky."
     history = [
         timestamp
         for timestamp in throttle.cache.get(key, [])
