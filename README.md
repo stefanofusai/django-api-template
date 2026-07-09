@@ -59,6 +59,11 @@ Compose deployment defaults, and CI gates for the baked project.
   against a real Postgres so migrations and engine semantics are exercised.
 - Production Sentry is boot-required when enabled, so broken observability
   fails before traffic reaches the app.
+- Metrics are a project-level add-on, not a template knob: Sentry already
+  covers error rates and sampled latency, and a scraped `/metrics` endpoint
+  would add an unauthenticated attack surface plus a full knob lifecycle to
+  maintain, which is not worth it for single-operator deployments. The
+  generated README documents the django-prometheus and OpenTelemetry recipes.
 - CORS is opt-in and requires explicit allowed browser origins; throttling is
   deliberately not enabled by default.
 - The `src/` layout keeps import paths honest and avoids accidentally

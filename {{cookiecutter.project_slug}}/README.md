@@ -627,6 +627,24 @@ Size it to your host and workload before enabling it.
 The admin at `/admin/` is exposed wherever the API is routed. Restrict it at
 the proxy with an IP allowlist or route only `/api/` publicly.
 
+### Metrics
+
+The template ships no metrics endpoint or exporter. Sentry, when enabled,
+already captures error rates and sampled request traces and latency, which
+covers most single-operator needs. When you want RED/latency dashboards or
+Prometheus-ecosystem alerting, add one of these at the project level:
+
+- Scrape model: add
+  [`django-prometheus`](https://github.com/korfuri/django-prometheus), which
+  exposes a `/metrics` endpoint. Do NOT expose `/metrics` on the public
+  ingress (the bundled Traefik router, or whatever proxy fronts the API);
+  restrict it to an internal-only listener or an IP-allowlisted route, the
+  same way `/admin/` is protected above.
+- Push model: add
+  [`opentelemetry-instrumentation-django`](https://opentelemetry.io/docs/languages/python/)
+  with an OTLP exporter. It adds no scrape surface but needs a collector
+  endpoint to push to.
+
 ## Testing
 
 Run the test suite:
