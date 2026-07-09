@@ -56,6 +56,7 @@ class User(AbstractUser):
 class Token(CreatedAtModel):
     expires_at = models.DateTimeField(_("expires at"), blank=True, null=True)
     last_used_at = models.DateTimeField(_("last used at"), blank=True, null=True)
+    revoked_at = models.DateTimeField(_("revoked at"), blank=True, null=True)
     user = models.ForeignKey(
         User,
         db_index=True,
@@ -98,6 +99,9 @@ class Token(CreatedAtModel):
 
     def is_expired(self) -> bool:
         return self.expires_at is not None and self.expires_at <= timezone.now()
+
+    def is_revoked(self) -> bool:
+        return self.revoked_at is not None
 
     def mark_used(self) -> None:
         now = timezone.now()

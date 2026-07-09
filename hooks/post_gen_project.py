@@ -101,8 +101,12 @@ REMOVED_PATHS = [
         [
             "src/apps/api/auth.py",
             "src/apps/api/exceptions.py",
+            "src/apps/core/controllers.py",
             "src/apps/core/migrations/0002_token.py",
+            "src/apps/core/migrations/0003_token_revoked_at.py",
+            "src/apps/core/schemas.py",
             "tests/api/unit/auth_test.py",
+            "tests/core/integration/tokens_test.py",
         ]
         if not (USE_EXAMPLE_API == "yes" and API_AUTH == "token")
         else []

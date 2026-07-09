@@ -6,6 +6,9 @@ from ninja_extra import NinjaExtraAPI
 {%- endif %}
 
 {% if cookiecutter.use_example_api == "yes" -%}
+{% if cookiecutter.api_auth == "token" -%}
+from apps.core.controllers import TokensController
+{% endif -%}
 from apps.notes.controllers import NotesController
 {% endif -%}
 from config.pyproject import project_name
@@ -30,4 +33,7 @@ v1_api = {% if cookiecutter.use_example_api == "yes" %}NinjaExtraAPI{% else %}Ni
 )
 {%- if cookiecutter.use_example_api == "yes" %}
 v1_api.register_controllers(NotesController)
+{%- if cookiecutter.api_auth == "token" %}
+v1_api.register_controllers(TokensController)
+{%- endif %}
 {%- endif %}
