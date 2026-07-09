@@ -1,7 +1,5 @@
 from collections.abc import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}Callable, {% endif %}Iterator
-{%- if cookiecutter.use_example_api == "yes" or cookiecutter.use_celery != "none" %}
 from typing import TYPE_CHECKING
-{%- endif %}
 
 import pytest
 from django.core.cache import cache
@@ -18,19 +16,14 @@ from tests.factories import {% if cookiecutter.use_example_api == "yes" %}NoteFa
 {%- if cookiecutter.use_example_api == "yes" %}
 from tests.utils import AuthenticatedTestClient
 {%- endif %}
-{%- if cookiecutter.use_example_api == "yes" or cookiecutter.use_celery != "none" %}
 
 if TYPE_CHECKING:
-    {%- if cookiecutter.use_celery != "none" and cookiecutter.use_example_api == "yes" %}
+    from django.test import Client
+    {%- if cookiecutter.use_celery != "none" %}
     from pytest_mock import MockerFixture
+    {%- endif %}
 
     from apps.core.models import User
-    {%- elif cookiecutter.use_celery != "none" %}
-    from pytest_mock import MockerFixture
-    {%- elif cookiecutter.use_example_api == "yes" %}
-    from apps.core.models import User
-    {%- endif %}
-{%- endif %}
 
 TEST_TYPE_MARKERS = {
     "integration": pytest.mark.integration,
@@ -71,6 +64,12 @@ def _zeal(request: pytest.FixtureRequest) -> Iterator[None]:
 
     with zeal_context():
         yield
+
+
+@pytest.fixture
+def authenticated_client(client: Client, user: User) -> Client:
+    client.force_login(user)
+    return client
 
 
 {% if cookiecutter.use_celery != "none" -%}
