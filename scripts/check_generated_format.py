@@ -61,6 +61,7 @@ def main() -> int:
                 continue
 
             print(f"PASS {name}")
+
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
