@@ -11,9 +11,14 @@ Edit the template, then bake a project and run checks inside the bake:
 ```shell
 uvx cookiecutter . --no-input -o /tmp/bake
 cd /tmp/bake/my-project
+cp .env.example .env
+docker compose -f .docker/compose/dev.yaml --env-file=.env up -d --wait postgres
 uv run pytest
 uv run pre-commit run --all-files
 ```
+
+Tests connect to the dev-compose Postgres on `localhost:5432` and honor a
+`DATABASE_URL` override.
 
 For template-level changes, also run the root pre-commit hooks:
 
