@@ -30,13 +30,13 @@ class TokenAdmin(ModelAdmin):
         "created_at",
         "expires_at",
         "last_used_at",
+        "revoked_at",
         "name",
         "prefix",
-        "revoked_at",
         "user",
     )
     list_select_related = ("user",)
-    readonly_fields = ("created_at", "last_used_at", "prefix", "revoked_at")
+    readonly_fields = ("created_at", "last_used_at", "revoked_at", "prefix")
 
     def get_fields(
         self, _request: HttpRequest, obj: Token | None = None
