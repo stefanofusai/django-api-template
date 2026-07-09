@@ -18,6 +18,13 @@ if [ "$#" -lt 1 ]; then
     exit 2
 fi
 
+case $1 in
+    -h|--help)
+        echo "$USAGE"
+        exit 0
+        ;;
+esac
+
 COMMAND=$1
 shift
 

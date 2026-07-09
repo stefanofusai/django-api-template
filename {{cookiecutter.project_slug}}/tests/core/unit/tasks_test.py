@@ -1,6 +1,6 @@
 from datetime import timedelta
-{% if cookiecutter.email_provider != "none" %}from typing import TYPE_CHECKING
-{% endif %}
+from typing import TYPE_CHECKING
+
 import pytest
 {% if cookiecutter.email_provider != "none" -%}
 from django.conf import settings
@@ -23,25 +23,26 @@ from apps.core.tasks import (
     {%- endif %}
 )
 
-{% if cookiecutter.email_provider != "none" -%}
 if TYPE_CHECKING:
     from faker import Faker
-{% endif -%}
+
 pytestmark = pytest.mark.django_db
 
 
-def test_clear_expired_sessions_deletes_expired_rows_when_dispatched_eagerly() -> None:
+def test_clear_expired_sessions_deletes_expired_rows_when_dispatched_eagerly(
+    faker: Faker,
+) -> None:
     # Session is a third-party model with no registered factory, and expiry
     # timestamps are the behavior under test, so create rows directly.
     expired = Session.objects.create(
         expire_date=timezone.now() - timedelta(days=1),
         session_data="expired",
-        session_key="plan010expired",
+        session_key=faker.unique.uuid4(),
     )
     live = Session.objects.create(
         expire_date=timezone.now() + timedelta(days=1),
         session_data="live",
-        session_key="plan010live",
+        session_key=faker.unique.uuid4(),
     )
 
     clear_expired_sessions.delay()
@@ -51,17 +52,19 @@ def test_clear_expired_sessions_deletes_expired_rows_when_dispatched_eagerly() -
 {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
 
 
-def test_flush_expired_tokens_deletes_expired_rows_when_dispatched_eagerly() -> None:
+def test_flush_expired_tokens_deletes_expired_rows_when_dispatched_eagerly(
+    faker: Faker,
+) -> None:
     # OutstandingToken is a third-party model with no registered factory, and
     # expiry timestamps are the behavior under test, so create rows directly.
     expired = OutstandingToken.objects.create(
         expires_at=timezone.now() - timedelta(days=1),
-        jti="plan004expired",
+        jti=faker.unique.uuid4(),
         token="expired",  # noqa: S106 -- opaque test token, not a password.
     )
     live = OutstandingToken.objects.create(
         expires_at=timezone.now() + timedelta(days=1),
-        jti="plan004live",
+        jti=faker.unique.uuid4(),
         token="live",  # noqa: S106 -- opaque test token, not a password.
     )
 

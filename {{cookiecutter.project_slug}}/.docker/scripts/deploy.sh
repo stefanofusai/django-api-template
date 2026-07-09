@@ -6,7 +6,21 @@ set -eu
 # with an earlier tag. Run from the project root. The database schema is not
 # rolled back; keep migrations backward-compatible one release back.
 
-APP_VERSION=${1:?usage: deploy.sh <tag, e.g. v1.2.3>}
+USAGE="usage: deploy.sh <tag, e.g. v1.2.3>"
+
+if [ "$#" -lt 1 ]; then
+    echo "$USAGE" >&2
+    exit 2
+fi
+
+case $1 in
+    -h|--help)
+        echo "$USAGE"
+        exit 0
+        ;;
+esac
+
+APP_VERSION=$1
 
 case $APP_VERSION in
     v[0-9]*.[0-9]*.[0-9]*) ;;
