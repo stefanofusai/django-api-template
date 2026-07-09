@@ -37,8 +37,8 @@ are `_copy_without_render` - pure YAML/Markdown, no Jinja allowed there.
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | 001  | Fix bake-matrix regressions (throttling_test.py assert collapse only — admin_test/smtp/conftest confirmed already fixed by `75c4dce`) | P1 | S | - | DONE (2026-07-08, commit `5dc15e1` on branch `advisor/001-fix-bake-matrix-regressions`, not yet merged to `main`) |
-| 002  | Reject bearer tokens of deactivated users | P1 | S | - | TODO |
-| 003  | Deploy hardening: lowercase GHCR owner; celery-worker stop_grace_period | P2 | S | - | TODO |
+| 002  | Reject bearer tokens of deactivated users | P1 | S | - | DONE (2026-07-08, commit `a332d23` on branch `advisor/002-token-auth-inactive-users`, not yet merged to `main`) |
+| 003  | Deploy hardening: lowercase GHCR owner; celery-worker stop_grace_period | P2 | S | - | DONE (2026-07-08, commits `c7c1c26`+`04130f7` on branch `advisor/003-deploy-hardening`, not yet merged to `main`) |
 | 004  | Consistency sweep: CI smoke depends_on, anymail app, docs guards, rtk removal, artifact scrub | P2 | M | 003 (soft) | TODO |
 | 005  | Fast local bake-and-lint gate (root pre-commit) | P2 | M | 001 (**hard**) | TODO |
 | 006  | SPIKE: token lifecycle endpoints design (evaluate allauth headless first) | P3 | M | 002 (soft) | TODO |

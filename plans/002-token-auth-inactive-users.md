@@ -117,6 +117,14 @@ conventional commits.
 **In scope** (the only files you should modify):
 - `{{cookiecutter.project_slug}}/src/apps/api/auth.py`
 - `{{cookiecutter.project_slug}}/tests/api/unit/auth_test.py`
+- `{{cookiecutter.project_slug}}/tests/factories.py` — **added 2026-07-08 by
+  operator direction after the first execution round** (see Execution note):
+  `UserFactory` doesn't declare `is_active`, so the plan's originally
+  specified `user__is_active` parametrize override can't work as written.
+  The approved fix is to declare `is_active = True` on `UserFactory` (a
+  no-op for every other test, since that's already Django's own default for
+  `User.is_active`) so the parametrize override style — already used for
+  `user__is_staff`/`user__is_superuser` in `admin_test.py` — works here too.
 
 **Out of scope** (do NOT touch, even though they look related):
 - `src/apps/core/models.py` (`Token.is_expired`) — expiry semantics are
@@ -151,6 +159,33 @@ assume.)
 
 **Verify**: in a fresh bake (see commands),
 `uvx ruff@0.15.16 format --check . && uvx ruff@0.15.16 check .` → exit 0.
+
+### Step 1.5: Declare `is_active` on `UserFactory` (added 2026-07-08)
+
+In `{{cookiecutter.project_slug}}/tests/factories.py`, add `is_active = True`
+to `UserFactory`, alphabetically ordered among the existing boolean
+declarations:
+
+```python
+class UserFactory(factory.django.DjangoModelFactory):
+    username = factory.Sequence(lambda n: f"user-{n}")
+    email = factory.Sequence(lambda n: f"user-{n}@example.com")
+    is_active = True
+    is_staff = False
+    is_superuser = False
+
+    class Meta:
+        model = User
+```
+
+This is a no-op for every other test — `is_active=True` is already Django's
+own default for `User`. It exists solely so pytest-factoryboy generates the
+`user__is_active` override fixture (it only generates `<model>__<attr>`
+fixtures for attributes actually declared on the factory class).
+
+**Verify**: no standalone command — covered by Step 2's and Step 3's test
+runs below (if this is missing or misspelled, Step 2 fails collection with
+"function uses no argument 'user__is_active'").
 
 ### Step 2: Add the regression test
 
@@ -201,7 +236,7 @@ Machine-checkable. ALL must hold:
 - [ ] Baked `uvx ruff@0.15.16 format --check .` and `check .` exit 0
 - [ ] `grep -n "is_active" '{{cookiecutter.project_slug}}/src/apps/api/auth.py'`
       returns exactly one match inside the rejection condition
-- [ ] `git status --short` shows changes ONLY to the two in-scope files
+- [ ] `git status --short` shows changes ONLY to the three in-scope files
 - [ ] `plans/README.md` status row updated
 
 ## STOP conditions
@@ -217,6 +252,27 @@ Stop and report back (do not improvise) if:
   report.)
 - django-zeal flags an N+1 anywhere after your change — the guard must not
   add queries; report the zeal output.
+
+## Execution note (2026-07-08)
+
+**Round 1** (commit `76b5f15`): `@pytest.mark.parametrize("user__is_active",
+[False])` didn't work — pytest-factoryboy only generates `<model>__<attr>`
+override fixtures for attributes declared on the factory class, and
+`UserFactory` didn't declare `is_active`. The executor worked around this by
+setting `user.is_active = False` directly in the test body, staying strictly
+within the original two-file scope, and flagged the workaround for review.
+
+**Round 2** (operator direction, commit `a332d23`, amends `76b5f15` on the
+same branch): the operator preferred matching the existing convention
+(`admin_test.py` already uses `user__is_staff` / `user__is_superuser`
+parametrize overrides) over the workaround. Scope was expanded (see Scope
+section) to add Step 1.5: declare `is_active = True` on `UserFactory`, then
+revert Step 2's test to the original parametrize form. This is the version
+now in effect — Step 1.5 and Step 2 above reflect Round 2, not Round 1's
+workaround. Reviewer independently re-baked and re-ran the full suite (84
+passed, 100% coverage) and confirmed the parametrize fixture resolves
+(`test_authenticate_raises_401_when_user_is_inactive[False]` in the test
+output) before approving.
 
 ## Maintenance notes
 

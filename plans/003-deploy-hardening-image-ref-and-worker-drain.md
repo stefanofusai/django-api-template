@@ -240,6 +240,23 @@ Stop and report back (do not improvise) if:
 - You find yourself wanting to edit `release.yaml` or `deploy.sh` — the fix
   belongs in prod.yaml + README only.
 
+## Execution note (2026-07-08)
+
+Executed as commits `c7c1c26` (image lowercasing + README sentence) and
+`04130f7` (worker `stop_grace_period`) on branch `advisor/003-deploy-hardening`
+(not yet merged to `main`). Steps 1, 2, and 4 landed exactly as specified.
+
+Step 3 needed one round of revision: the README already had a pre-existing
+paragraph (this plan's "Current state" excerpt didn't know about it) telling
+users what to do if the repo name differs from the slug. The executor's first
+pass added the new sentence without touching it, producing two overlapping
+explanations of the same repo-name/slug coupling ~24 lines apart. Reviewer
+asked for consolidation: the new upfront sentence stays (states the
+constraint and why), the older paragraph was trimmed to drop the repeated
+"differs from `{{ project_slug }}`" framing and keep only the remedy +
+unrelated GHCR-login sentence. Final wording verified rendered and clean on
+review.
+
 ## Maintenance notes
 
 - If a knob ever decouples the GitHub repo name from `project_slug`, the
