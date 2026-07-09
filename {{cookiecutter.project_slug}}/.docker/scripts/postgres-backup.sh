@@ -10,7 +10,7 @@ set -eu
 # into a live app corrupts in-flight requests.
 
 USAGE="usage: postgres-backup.sh backup <backup-dir> [keep-count]
-       postgres-backup.sh restore <dump-file>
+       postgres-backup.sh restore <dump-file> [--force]
        postgres-backup.sh verify <dump-file>"
 
 if [ "$#" -lt 1 ]; then
@@ -34,6 +34,7 @@ case $COMMAND in
 
         STAMP=$(date -u +%Y%m%dT%H%M%SZ)
         TMP_DUMP="$BACKUP_DIR/$STAMP.dump.tmp"
+        trap 'rm -f "$TMP_DUMP"' EXIT
 
         docker compose -f .docker/compose/prod.yaml --env-file=.env exec -T postgres \
             sh -c 'pg_dump --format=custom --username="$POSTGRES_USER" "$POSTGRES_DB"' \
@@ -46,6 +47,7 @@ case $COMMAND in
         fi
 
         mv "$TMP_DUMP" "$BACKUP_DIR/$STAMP.dump"
+        trap - EXIT
 
         # Keep the newest KEEP_COUNT dumps; timestamps sort lexicographically.
         # Portable "all but newest N": count, then delete the oldest (total - N).
@@ -59,9 +61,33 @@ case $COMMAND in
         ;;
     restore)
         DUMP_FILE=${1:?$USAGE}
+        FORCE=${2:-}
+
+        if [ -n "$FORCE" ] && [ "$FORCE" != "--force" ]; then
+            echo "$USAGE" >&2
+            exit 2
+        fi
+
         if [ ! -f "$DUMP_FILE" ]; then
             echo "no such dump file: $DUMP_FILE" >&2
             exit 2
+        fi
+
+        if [ "$FORCE" != "--force" ]; then
+            RUNNING_SERVICES=$(
+                docker compose -f .docker/compose/prod.yaml --env-file=.env ps --services --status=running
+            )
+            RUNNING_APP_SERVICES=$(
+                printf '%s\n' "$RUNNING_SERVICES" \
+                    | grep -v -x -e postgres -e redis -e traefik || true
+            )
+
+            if [ -n "$RUNNING_APP_SERVICES" ]; then
+                echo "refusing to restore while app services are running:" >&2
+                echo "$RUNNING_APP_SERVICES" >&2
+                echo "stop them first (docker compose ... stop api ...) or pass --force" >&2
+                exit 2
+            fi
         fi
 
         docker compose -f .docker/compose/prod.yaml --env-file=.env exec -T postgres \

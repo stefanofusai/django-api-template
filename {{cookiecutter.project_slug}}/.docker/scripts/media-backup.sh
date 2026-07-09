@@ -10,7 +10,7 @@ set -eu
 # without deleting files created after the backup.
 
 USAGE="usage: media-backup.sh backup <backup-dir> [keep-count]
-       media-backup.sh restore <archive>
+       media-backup.sh restore <archive> [--force]
        media-backup.sh verify <archive>"
 
 if [ "$#" -lt 1 ]; then
@@ -36,6 +36,7 @@ case $COMMAND in
 
         STAMP=$(date -u +%Y%m%dT%H%M%SZ)
         TMP_ARCHIVE="$BACKUP_DIR/$STAMP.tar.gz.tmp"
+        trap 'rm -f "$TMP_ARCHIVE"' EXIT
 
         MEDIA_VOLUME=$(
             docker compose -f .docker/compose/prod.yaml --env-file=.env config --format json \
@@ -55,6 +56,7 @@ case $COMMAND in
         fi
 
         mv "$TMP_ARCHIVE" "$BACKUP_DIR/$STAMP.tar.gz"
+        trap - EXIT
 
         # Keep the newest KEEP_COUNT archives; timestamps sort lexicographically.
         # Portable "all but newest N": count, then delete the oldest (total - N).
@@ -68,6 +70,13 @@ case $COMMAND in
         ;;
     restore)
         ARCHIVE=${1:?$USAGE}
+        FORCE=${2:-}
+
+        if [ -n "$FORCE" ] && [ "$FORCE" != "--force" ]; then
+            echo "$USAGE" >&2
+            exit 2
+        fi
+
         if [ ! -f "$ARCHIVE" ]; then
             echo "no such archive: $ARCHIVE" >&2
             exit 2
@@ -84,6 +93,23 @@ case $COMMAND in
         '; then
             echo "archive contains unsafe media paths: $ARCHIVE" >&2
             exit 2
+        fi
+
+        if [ "$FORCE" != "--force" ]; then
+            RUNNING_SERVICES=$(
+                docker compose -f .docker/compose/prod.yaml --env-file=.env ps --services --status=running
+            )
+            RUNNING_APP_SERVICES=$(
+                printf '%s\n' "$RUNNING_SERVICES" \
+                    | grep -v -x -e postgres -e redis -e traefik || true
+            )
+
+            if [ -n "$RUNNING_APP_SERVICES" ]; then
+                echo "refusing to restore while app services are running:" >&2
+                echo "$RUNNING_APP_SERVICES" >&2
+                echo "stop them first (docker compose ... stop api ...) or pass --force" >&2
+                exit 2
+            fi
         fi
 
         MEDIA_VOLUME=$(

@@ -428,6 +428,10 @@ run:
 ./.docker/scripts/postgres-backup.sh restore /var/backups/<project>/<stamp>.dump
 ```
 
+The restore script refuses to run while `api` or worker services are still
+running. Pass `--force` only for non-Compose restores or emergency contexts
+where you have separately quiesced all writers.
+
 Rehearse restores periodically so the procedure is proven before it is
 needed under pressure. Use
 `./.docker/scripts/postgres-backup.sh verify <dump>` to restore a dump into
@@ -471,6 +475,10 @@ services first, then run:
 ```shell
 ./.docker/scripts/media-backup.sh restore /var/backups/<project>-media/<stamp>.tar.gz
 ```
+
+The restore script refuses to run while `api` or worker services are still
+running. Pass `--force` only for non-Compose restores or emergency contexts
+where you have separately quiesced all writers.
 
 Restores extract files over the existing media tree and do not remove files
 created after the backup. Rehearse restores periodically, and use
