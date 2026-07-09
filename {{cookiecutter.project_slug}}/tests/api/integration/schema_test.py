@@ -59,14 +59,13 @@ schema = schemathesis.pytest.from_fixture("api_schema")
 
 @pytest.fixture
 def authenticated_schema_headers(
-    note: Note,
+    note: Note,  # noqa: ARG001 -- kept for fixture ordering, unused directly
     {%- if cookiecutter.api_auth == "token" %}
     raw_token: str,
     {%- else %}
     user: User,
     {%- endif %}
 ) -> dict[str, str]:
-    _ = note
     {%- if cookiecutter.api_auth == "token" %}
     return {
         "Authorization": f"Bearer {raw_token}",

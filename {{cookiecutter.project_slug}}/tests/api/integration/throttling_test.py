@@ -151,8 +151,7 @@ def test_valid_token_requests_are_not_counted_against_the_anonymous_budget(
 
 
 {% if cookiecutter.api_auth == "token" -%}
-def _auth_headers(client: Client, user: User) -> dict[str, str]:
-    _ = client
+def _auth_headers(_client: Client, user: User) -> dict[str, str]:
     raw_token, _ = Token.issue(name="test token", user=user)
     return {"Authorization": f"Bearer {raw_token}"}
 {%- else -%}
