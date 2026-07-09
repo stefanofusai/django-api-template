@@ -110,7 +110,7 @@ DEP002 = [
     # Loaded via INSTALLED_APPS in settings/components/apps.py.
     "django-axes",
 {%- if cookiecutter.email_provider == "resend" %}
-    # Loaded via EMAIL_BACKEND dotted path in settings/environments/prod.py.
+    # Loaded via INSTALLED_APPS and the EMAIL_BACKEND dotted path.
     "django-anymail",
 {%- endif %}
 {%- if cookiecutter.use_celery == "worker+beat" %}

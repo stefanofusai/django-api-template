@@ -9,6 +9,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Third-party
+{%- if cookiecutter.email_provider == "resend" %}
+    "anymail",
+{%- endif %}
     "axes",
 {%- if cookiecutter.use_cors == "yes" %}
     "corsheaders",
