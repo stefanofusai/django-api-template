@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from django.core.management.base import BaseCommand, CommandParser
+from django.core.serializers.json import DjangoJSONEncoder
 
 from apps.api.api import internal_api, v1_api
 
@@ -27,6 +28,7 @@ class Command(BaseCommand):
         output = cast("str | None", options["output"])
         schema = json.dumps(
             dict(self.apis[api_name].get_openapi_schema()),
+            cls=DjangoJSONEncoder,
             indent=2,
             sort_keys=True,
         )

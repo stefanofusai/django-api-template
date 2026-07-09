@@ -4,12 +4,13 @@ from ninja import NinjaAPI
 {%- if cookiecutter.use_example_api == "yes" %}
 from ninja_extra import NinjaExtraAPI
 {%- endif %}
-
 {% if cookiecutter.use_example_api == "yes" -%}
-{% if cookiecutter.api_auth == "token" -%}
-from apps.core.controllers import TokensController
-{% endif -%}
+{% if cookiecutter.api_auth == "jwt" -%}
+from ninja_jwt.controller import NinjaJWTDefaultController
+from ninja_jwt.routers.blacklist import blacklist_router
+{% endif %}
 from apps.notes.controllers import NotesController
+{% else %}
 {% endif -%}
 from config.pyproject import project_name
 
@@ -32,8 +33,9 @@ v1_api = {% if cookiecutter.use_example_api == "yes" %}NinjaExtraAPI{% else %}Ni
     urls_namespace="v1",
 )
 {%- if cookiecutter.use_example_api == "yes" %}
-v1_api.register_controllers(NotesController)
-{%- if cookiecutter.api_auth == "token" %}
-v1_api.register_controllers(TokensController)
+{%- if cookiecutter.api_auth == "jwt" %}
+v1_api.register_controllers(NinjaJWTDefaultController)
+v1_api.add_router("/token", blacklist_router)
 {%- endif %}
+v1_api.register_controllers(NotesController)
 {%- endif %}

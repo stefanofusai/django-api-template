@@ -60,16 +60,14 @@ schema = schemathesis.pytest.from_fixture("api_schema")
 @pytest.fixture
 def authenticated_schema_headers(
     note: Note,  # noqa: ARG001 -- kept for fixture ordering, unused directly
-    {%- if cookiecutter.api_auth == "token" %}
-    raw_token: str,
+    {%- if cookiecutter.api_auth == "jwt" %}
+    jwt_auth_headers: dict[str, str],
     {%- else %}
     user: User,
     {%- endif %}
 ) -> dict[str, str]:
-    {%- if cookiecutter.api_auth == "token" %}
-    return {
-        "Authorization": f"Bearer {raw_token}",
-    }
+    {%- if cookiecutter.api_auth == "jwt" %}
+    return jwt_auth_headers
     {%- else %}
     client = Client()
     client.force_login(user)
@@ -91,6 +89,11 @@ def authenticated_schema_headers(
 {%- endif %}
 @schema.parametrize()
 def test_api_schema_conforms_to_openapi_contract_when_anonymous(case: Case) -> None:
+    {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
+    if _is_third_party_jwt_operation(case):
+        return
+
+    {%- endif %}
     case.call_and_validate(checks=OPENAPI_CONTRACT_CHECKS)
 {%- if cookiecutter.use_example_api == "yes" %}
 
@@ -106,6 +109,11 @@ def test_api_schema_conforms_to_openapi_contract_when_authenticated(
 ) -> None:
     if case.method.upper() == "GET" and case.path == "/api/v1/notes":
         case.query = {"limit": 1, "offset": 0}
+    {%- if cookiecutter.api_auth == "jwt" %}
+    if _is_third_party_jwt_operation(case):
+        return
+
+    {%- endif %}
 
     case.call_and_validate(
         checks=OPENAPI_CONTRACT_CHECKS,
@@ -127,4 +135,25 @@ def test_v1_openapi_schema_is_well_formed_when_template_is_fresh() -> None:
 
     assert v1_schema.raw_schema["info"]["version"] == "1.0.0"
     assert v1_schema.raw_schema["paths"] == {}
+{%- endif %}
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
+
+
+@pytest.mark.django_db
+def test_v1_openapi_schema_includes_jwt_token_routes() -> None:
+    v1_schema = schemathesis.openapi.from_wsgi("/api/v1/openapi.json", application)
+
+    assert {
+        "/api/v1/token/blacklist",
+        "/api/v1/token/pair",
+        "/api/v1/token/refresh",
+        "/api/v1/token/verify",
+    }.issubset(v1_schema.raw_schema["paths"])
+
+
+# Utils
+
+
+def _is_third_party_jwt_operation(case: Case) -> bool:
+    return case.path.startswith("/api/v1/token/")
 {%- endif %}

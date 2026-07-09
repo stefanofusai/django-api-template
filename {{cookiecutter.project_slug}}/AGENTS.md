@@ -98,15 +98,6 @@
 ## Django And Configuration
 
 - Respect `django-extra-checks`: models need `__str__`, `Meta.ordering`, admin registration, gettext verbose/help text, explicit FK `related_name` and `db_index`, choice constraints, and `UniqueConstraint` instead of `unique_together`.
-{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
-- Expose a model method as `@property` when it is zero-argument,
-  side-effect-free, and derives a value (typically a bool) purely from the
-  instance's own fields — e.g. `Token.is_expired`, `Token.is_revoked` —
-  matching Django's own convention (`AbstractBaseUser.is_authenticated`,
-  `is_anonymous`). Keep it a regular method when it writes to the database,
-  mutates state, or takes an argument (e.g. `Token.mark_used()`,
-  `Token.issue()`, `Token.hash(raw_token)`).
-{%- endif %}
 - In settings modules, put declarations and settings mutations before function
   calls or similar side effects. For example, initialize integrations such as
   `sentry_sdk.init(...)` after the settings values they depend on have been
@@ -136,10 +127,10 @@
 - The API has no default auth. Endpoints requiring protection must add ninja
   auth (global `auth=` on the API instance, or per-router/per-operation);
   never ship a mutating endpoint unauthenticated.
-{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
-- The example notes API's opaque bearer-token auth (`apps.api.auth.BearerTokenAuth`)
-  is an example auth mode, not a general-purpose credential system. New mutating
-  endpoints still need their own explicit auth wired in.
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
+- The example JWT mode uses `django-ninja-jwt`, `apps.api.auth.jwt_auth`, and
+  the library controllers. Do not add custom credential storage unless a
+  project explicitly needs personal access tokens.
 {%- endif %}
 {%- if cookiecutter.use_celery != "none" %}
 - Celery results are opt-in per task: use `@shared_task(ignore_result=False)`
@@ -156,11 +147,6 @@
 {%- else %}
 - `/api/health` and `/api/ready` remain plain function-based routers on
   `internal_api`.
-{%- endif %}
-{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
-- Domain error raise sites use `ninja_extra.exceptions.APIException`
-  subclasses, such as `apps.api.exceptions.InvalidTokenError`, rather than
-  `ninja.errors.HttpError`.
 {%- endif %}
 - Mount business routers on `v1_api` (under `/api/v1/`); `internal_api` is reserved for internal probes and must stay unversioned.
 

@@ -6,7 +6,7 @@
     "author_email": "john.doe@example.com",
     "github_username": "johndoe",
     "domain_name": "example.com",
-    "api_auth": ["session", "token"],
+    "api_auth": ["session", "jwt"],
     "api_throttling": ["none", "basic"],
     "behind_proxy": ["yes", "no"],
     "email_provider": ["resend", "smtp", "none"],
@@ -31,7 +31,7 @@
         "api_auth": {
             "__prompt__": "Authentication used by the example notes API",
             "session": "Django session auth with CSRF",
-            "token": "Opaque bearer tokens for non-browser clients"
+            "jwt": "JWT access and refresh tokens via django-ninja-jwt"
         },
         "api_throttling": {
             "__prompt__": "Public API throttling",

@@ -1,23 +1,20 @@
-from collections.abc import Iterator
+from collections.abc import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}Callable, {% endif %}Iterator
 {%- if cookiecutter.use_example_api == "yes" or cookiecutter.use_celery != "none" %}
 from typing import TYPE_CHECKING
 {%- endif %}
 
 import pytest
 from django.core.cache import cache
-{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
-from django.utils import timezone
-{% endif -%}
 from hypothesis import settings as hypothesis_settings
 from ninja.testing import TestClient
-from pytest_factoryboy import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}LazyFixture, {% endif %}register
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" -%}
+from ninja_jwt.tokens import RefreshToken
+{% endif -%}
+from pytest_factoryboy import register
 from zeal import zeal_context
 
 from apps.api.api import internal_api, v1_api
-{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
-from apps.core.models import Token
-{% endif -%}
-from tests.factories import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}TEST_TOKEN_SECRET, NoteFactory, TokenFactory, UserFactory{% elif cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
+from tests.factories import {% if cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
 {%- if cookiecutter.use_example_api == "yes" %}
 from tests.utils import AuthenticatedTestClient
 {%- endif %}
@@ -46,10 +43,6 @@ hypothesis_settings.register_profile("ci", deadline=None, max_examples=50)
 hypothesis_settings.load_profile("ci")
 
 register(UserFactory)
-{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
-register(TokenFactory)
-register(TokenFactory, "auth_token", user=LazyFixture("user"))
-{%- endif %}
 {%- if cookiecutter.use_example_api == "yes" %}
 register(NoteFactory)
 {%- endif %}
@@ -90,27 +83,21 @@ def _broker_ready_default(mocker: MockerFixture) -> None:
 
 
 {% endif -%}
-{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" -%}
 @pytest.fixture
-def raw_token(token: Token) -> str:
-    return f"pat_{token.prefix}_{TEST_TOKEN_SECRET}"
-
-
-@pytest.fixture
-def auth_raw_token(auth_token: Token) -> str:
-    return f"pat_{auth_token.prefix}_{TEST_TOKEN_SECRET}"
+def jwt_auth_headers(
+    user: User, jwt_auth_headers_for_user: Callable[[User], dict[str, str]]
+) -> dict[str, str]:
+    return jwt_auth_headers_for_user(user)
 
 
 @pytest.fixture
-def token_auth_headers(auth_raw_token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {auth_raw_token}"}
+def jwt_auth_headers_for_user() -> Callable[[User], dict[str, str]]:
+    def make_auth_headers(user: User) -> dict[str, str]:
+        refresh = RefreshToken.for_user(user)
+        return {"Authorization": f"Bearer {refresh.access_token}"}  # ty: ignore[unresolved-attribute]
 
-
-@pytest.fixture
-def revoked_token(token: Token) -> Token:
-    token.revoked_at = timezone.now()
-    token.save(update_fields=("revoked_at",))
-    return token
+    return make_auth_headers
 
 
 {% endif -%}
@@ -118,11 +105,11 @@ def revoked_token(token: Token) -> Token:
 @pytest.fixture
 def authenticated_v1_api_client(
     v1_api_client: TestClient,
-    user: User,{% if cookiecutter.api_auth == "token" %}
-    token_auth_headers: dict[str, str],{% endif %}
+    user: User,{% if cookiecutter.api_auth == "jwt" %}
+    jwt_auth_headers: dict[str, str],{% endif %}
 ) -> AuthenticatedTestClient:
-    {%- if cookiecutter.api_auth == "token" %}
-    return AuthenticatedTestClient(v1_api_client, user, token_auth_headers)
+    {%- if cookiecutter.api_auth == "jwt" %}
+    return AuthenticatedTestClient(v1_api_client, user, jwt_auth_headers)
     {%- else %}
     return AuthenticatedTestClient(v1_api_client, user)
     {%- endif %}

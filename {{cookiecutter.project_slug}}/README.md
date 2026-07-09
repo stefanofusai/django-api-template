@@ -236,11 +236,16 @@ open http://localhost:8000/api/v1/docs
 ```
 {%- if cookiecutter.use_example_api == "yes" %}
 
-Try the example `notes` resource ({% if cookiecutter.api_auth == "token" %}bearer-token-authenticated{% else %}session-authenticated{% endif %} class-based controller CRUD)
+Try the example `notes` resource ({% if cookiecutter.api_auth == "jwt" %}JWT-authenticated{% else %}session-authenticated{% endif %} class-based controller CRUD)
 documented at `/api/v1/docs`.
 The list endpoint demonstrates filtering, ordering, pagination, and searching
 with query parameters such as `?title=planning`, `?ordering=title`, and
 `?search=apricot`.
+{%- if cookiecutter.api_auth == "jwt" %}
+JWT endpoints are available at `/api/v1/token/pair`,
+`/api/v1/token/refresh`, `/api/v1/token/verify`, and
+`/api/v1/token/blacklist`.
+{%- endif %}
 {%- endif %}
 
 API docs and the OpenAPI schema are public in development and staff-only in

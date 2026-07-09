@@ -12,7 +12,7 @@ COMBOS = {
     "default": [],
     "maximal": [
         "use_example_api=yes",
-        "api_auth=token",
+        "api_auth=jwt",
         "api_throttling=basic",
         "use_cors=yes",
         "use_csp=yes",

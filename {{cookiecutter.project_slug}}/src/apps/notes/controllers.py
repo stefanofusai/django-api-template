@@ -20,8 +20,8 @@ from ninja_extra.pagination import paginate
 from ninja_extra.schemas import NinjaPaginationResponseSchema
 from ninja_extra.searching import Searching, searching
 
-{% if cookiecutter.api_auth == "token" -%}
-from apps.api.auth import bearer_token_auth
+{% if cookiecutter.api_auth == "jwt" -%}
+from apps.api.auth import jwt_auth
 {% endif -%}
 from apps.api.pagination import BoundedLimitOffsetPagination
 from apps.api.schemas import ErrorSchema, ValidationErrorSchema
@@ -34,7 +34,7 @@ from .schemas import NoteFilterSchema, NoteInSchema, NoteOutSchema
 
 @api_controller(
     "/notes",
-    auth={% if cookiecutter.api_auth == "token" %}bearer_token_auth{% else %}django_auth{% endif %},
+    auth={% if cookiecutter.api_auth == "jwt" %}jwt_auth{% else %}django_auth{% endif %},
     tags=["notes"],
 {%- if cookiecutter.api_throttling == "basic" %}
     throttle=get_public_api_throttles(),

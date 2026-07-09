@@ -1,16 +1,12 @@
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import TYPE_CHECKING{% if cookiecutter.api_auth == "token" %}, cast{% endif %}
+from typing import TYPE_CHECKING
 
 import pytest
 from django.test import Client, override_settings
 
-{% if cookiecutter.api_auth == "token" -%}
-from tests.factories import TEST_TOKEN_SECRET, TokenFactory
-
-{% endif -%}
 if TYPE_CHECKING:
-    from apps.core.models import {% if cookiecutter.api_auth == "token" %}Token, {% endif %}User
+    from apps.core.models import User
 
 pytestmark = pytest.mark.django_db
 
@@ -18,12 +14,13 @@ pytestmark = pytest.mark.django_db
 # Fixtures
 
 
-{% if cookiecutter.api_auth == "token" -%}
+{% if cookiecutter.api_auth == "jwt" -%}
 @pytest.fixture
-def auth_headers_for_user() -> Callable[[Client, User], dict[str, str]]:
+def auth_headers_for_user(
+    jwt_auth_headers_for_user: Callable[[User], dict[str, str]],
+) -> Callable[[Client, User], dict[str, str]]:
     def make_auth_headers(_client: Client, user: User) -> dict[str, str]:
-        token = cast("Token", TokenFactory(user=user))
-        return {"Authorization": f"Bearer pat_{token.prefix}_{TEST_TOKEN_SECRET}"}
+        return jwt_auth_headers_for_user(user)
 
     return make_auth_headers
 
@@ -84,7 +81,7 @@ def test_anonymous_ips_get_separate_counters(client: Client) -> None:
     }
 
 
-{% if cookiecutter.api_auth == "token" -%}
+{% if cookiecutter.api_auth == "jwt" -%}
 @override_settings(API_THROTTLE_ANON_RATE="2/min")
 def test_anonymous_requests_with_bogus_authorization_header_return_429_after_configured_limit(
     client: Client,
@@ -162,9 +159,9 @@ def test_public_api_requests_are_not_throttled_when_rates_are_unset(
         }
 
 
-{% if cookiecutter.api_auth == "token" -%}
+{% if cookiecutter.api_auth == "jwt" -%}
 @override_settings(API_THROTTLE_ANON_RATE="2/min", API_THROTTLE_USER_RATE=None)
-def test_valid_token_requests_are_not_counted_against_the_anonymous_budget(
+def test_valid_jwt_requests_are_not_counted_against_the_anonymous_budget(
     auth_headers_for_user: Callable[[Client, User], dict[str, str]],
     client: Client,
     user: User,

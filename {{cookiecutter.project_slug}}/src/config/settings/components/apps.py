@@ -27,6 +27,10 @@ INSTALLED_APPS = [
 {%- if cookiecutter.api_throttling == "basic" or cookiecutter.use_example_api == "yes" %}
     "ninja_extra",
 {%- endif %}
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
+    "ninja_jwt",
+    "ninja_jwt.token_blacklist",
+{%- endif %}
     # Project
     "apps.api",
     "apps.core",

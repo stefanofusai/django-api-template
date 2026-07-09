@@ -26,6 +26,9 @@ settings_files = [
     "components/apps.py",
     "components/middleware.py",
     "components/authentication.py",
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
+    "components/jwt.py",
+{%- endif %}
     "components/templates.py",
     "components/database.py",
     "components/cache.py",
