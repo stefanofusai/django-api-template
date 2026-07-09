@@ -22,8 +22,8 @@ def test_user_add_form_creates_second_user_when_emails_differ(
     password = faker.password(length=16, special_chars=False)
 
     for username, email in (
-        (faker.user_name(), faker.email()),
-        (faker.user_name(), faker.email()),
+        (faker.unique.user_name(), faker.unique.email()),
+        (faker.unique.user_name(), faker.unique.email()),
     ):
         response = authenticated_client.post(
             reverse("admin:core_user_add"),
