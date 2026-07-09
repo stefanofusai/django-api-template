@@ -57,6 +57,21 @@ def test_authenticate_raises_401_when_user_is_inactive(
     assert exc_info.value.status_code == HTTPStatus.UNAUTHORIZED
 
 
+def test_authenticate_raises_401_when_token_is_revoked(
+    mocker: MockerFixture,
+    user: User,
+) -> None:
+    raw_token, token = Token.issue(name="test token", user=user)
+    token.revoked_at = timezone.now()
+    token.save(update_fields=("revoked_at",))
+    auth = BearerTokenAuth()
+
+    with pytest.raises(InvalidTokenError) as exc_info:
+        auth.authenticate(mocker.Mock(), raw_token)
+
+    assert exc_info.value.status_code == HTTPStatus.UNAUTHORIZED
+
+
 def test_authenticate_returns_user_and_sets_request_user_when_token_is_valid(
     mocker: MockerFixture,
     user: User,

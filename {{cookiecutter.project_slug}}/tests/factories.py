@@ -21,6 +21,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 class TokenFactory(factory.django.DjangoModelFactory):
     expires_at = None
     last_used_at = None
+    revoked_at = None
     user = factory.SubFactory(UserFactory)
     digest = factory.Sequence(lambda n: Token.hash(f"test-token-{n}"))
     name = factory.Sequence(lambda n: f"token-{n}")

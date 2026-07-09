@@ -70,6 +70,19 @@ def test_token_issue_stores_optional_expiration(user: User) -> None:
     assert token.expires_at == expires_at
 
 
+def test_is_revoked_returns_false_when_not_revoked(user: User) -> None:
+    _, token = Token.issue(name="test token", user=user)
+
+    assert token.is_revoked() is False
+
+
+def test_is_revoked_returns_true_when_revoked(user: User) -> None:
+    _, token = Token.issue(name="test token", user=user)
+    token.revoked_at = timezone.now()
+
+    assert token.is_revoked() is True
+
+
 def test_token_prefix_from_returns_none_when_token_shape_is_invalid() -> None:
     assert Token.prefix_from("jwt_deadbeefcafe_test-secret") is None
     assert Token.prefix_from("pat__test-secret") is None
