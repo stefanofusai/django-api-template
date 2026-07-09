@@ -67,6 +67,10 @@ jobs:
             project_name: My Project
             extra-args: use_example_api=yes use_celery=none email_provider=none use_sentry=no use_s3_media=no use_traefik=no
             slug: my-project
+          - case: example-session-auth-throttling
+            project_name: My Project
+            extra-args: use_example_api=yes api_auth=session api_throttling=basic
+            slug: my-project
           - case: external-backing
             project_name: My Project
             extra-args: postgres=external redis=external use_traefik=no

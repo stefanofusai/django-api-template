@@ -35,7 +35,7 @@ def auth_headers_for_user() -> Callable[[Client, User], dict[str, str]]:
     return make_auth_headers
 
 
-{% endif %}
+{%- endif %}
 
 
 @override_settings(API_THROTTLE_USER_RATE="2/min")
@@ -146,6 +146,19 @@ def test_internal_probes_are_not_throttled(client: Client) -> None:
         assert client.get("/api/ready").status_code == HTTPStatus.OK
 
 
+@override_settings(API_THROTTLE_ANON_RATE="2/min", API_THROTTLE_USER_RATE=None)
+def test_authenticated_requests_are_not_counted_against_the_anonymous_budget(
+    auth_headers_for_user: Callable[[Client, User], dict[str, str]],
+    client: Client,
+    user: User,
+) -> None:
+    headers = auth_headers_for_user(client, user)
+
+    assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
+    assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
+    assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
+
+
 @override_settings(API_THROTTLE_ANON_RATE=None, API_THROTTLE_USER_RATE=None)
 def test_public_api_requests_are_not_throttled_when_rates_are_unset(
     client: Client,
@@ -157,18 +170,3 @@ def test_public_api_requests_are_not_throttled_when_rates_are_unset(
             HTTPStatus.UNAUTHORIZED,
             HTTPStatus.FORBIDDEN,
         }
-
-
-{% if cookiecutter.api_auth == "jwt" -%}
-@override_settings(API_THROTTLE_ANON_RATE="2/min", API_THROTTLE_USER_RATE=None)
-def test_valid_jwt_requests_are_not_counted_against_the_anonymous_budget(
-    auth_headers_for_user: Callable[[Client, User], dict[str, str]],
-    client: Client,
-    user: User,
-) -> None:
-    headers = auth_headers_for_user(client, user)
-
-    assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
-    assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
-    assert client.get("/api/v1/notes", headers=headers).status_code == HTTPStatus.OK
-{%- endif %}
