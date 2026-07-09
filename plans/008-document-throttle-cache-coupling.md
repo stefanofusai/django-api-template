@@ -79,15 +79,13 @@ The tripwire tests (do NOT modify them; they are referenced by the comment):
 
 Repo comment conventions (visible throughout `src/`): comments state
 constraints and consequences, not mechanics; sentence case; wrapped near 79
-columns. Exemplar in the same file: the module docstring, and
-`Token.mark_used()`'s "Keep last_used_at minute-granular so reads do not
-write every request." in `src/apps/core/models.py`.
+columns. Exemplar in the same file: the module docstring.
 
 ## Commands you will need
 
 | Purpose | Command | Expected on success |
 |---------|---------|---------------------|
-| Bake the combo | `uvx cookiecutter . -o /tmp/verify-008 --no-input use_example_api=yes api_auth=token api_throttling=basic` | project generated |
+| Bake the combo | `uvx cookiecutter . -o /tmp/verify-008 --no-input use_example_api=yes api_auth=jwt api_throttling=basic` | project generated |
 | Lint/format (in bake) | `uvx ruff@0.15.16 format --check . && uvx ruff@0.15.16 check .` | exit 0 (see STOP note re plan 001) |
 
 ## Scope
@@ -135,7 +133,7 @@ looks like and what it means.
 
 **Verify**:
 ```
-uvx cookiecutter . -o /tmp/verify-008 --no-input use_example_api=yes api_auth=token api_throttling=basic
+uvx cookiecutter . -o /tmp/verify-008 --no-input use_example_api=yes api_auth=jwt api_throttling=basic
 cd /tmp/verify-008/my-project && uvx ruff@0.15.16 format --check . && uvx ruff@0.15.16 check .
 ```
 → exit 0. (If `ruff format` fails on `tests/api/integration/throttling_test.py`
@@ -179,5 +177,5 @@ self-explaining.
   `SimpleRateThrottle.would_allow(request)`); if it ships, replace this
   function's body with the API call and delete the comment.
 - When Dependabot bumps `django-ninja-extra`, a red
-  `example-token-auth-throttling` bake case failing on a 429 assertion is
+  `example-jwt-auth-throttling` bake case failing on a 429 assertion is
   this coupling — the comment now says so at the site.

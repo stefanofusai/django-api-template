@@ -136,7 +136,7 @@ commands), which drive every decision below:
 
 | Purpose | Command | Expected on success |
 |---------|---------|---------------------|
-| Bake (example API on) | `uvx cookiecutter . -o /tmp/verify-017 --no-input use_example_api=yes api_auth=token` | project at `/tmp/verify-017/my-project` |
+| Bake (example API on) | `uvx cookiecutter . -o /tmp/verify-017 --no-input use_example_api=yes api_auth=jwt` | project at `/tmp/verify-017/my-project` |
 | Bake (example API off) | `uvx cookiecutter . -o /tmp/verify-017-noapi --no-input use_example_api=no` | project at `/tmp/verify-017-noapi/my-project` |
 | Install CI deps (in bake) | `uv sync --group=ci --locked --no-default-groups` | exit 0 |
 | Export a schema (in bake) | `uv run --group=ci --locked --no-default-groups manage.py export_openapi_schema --api=v1 --output=docs/openapi/openapi-v1.json` (with the workflow env exported) | file written, exit 0 |
@@ -197,7 +197,7 @@ In `{{cookiecutter.project_slug}}/src/apps/notes/controllers.py`, add
 ```python
 @api_controller(
     "/notes",
-    auth={% if cookiecutter.api_auth == "token" %}bearer_token_auth{% else %}django_auth{% endif %},
+    auth={% if cookiecutter.api_auth == "jwt" %}jwt_auth{% else %}django_auth{% endif %},
     tags=["notes"],
 {%- if cookiecutter.api_throttling == "basic" %}
     throttle=get_public_api_throttles(),
@@ -487,14 +487,13 @@ Stop and report back if:
   same `use_unique_op_id=False` (or the schema regains non-deterministic ids
   and the drift gate flaps); the Step 2 regression test only covers the notes
   controller, so extend it alongside any new controller.
-- **Coordinate with plan 006 (token lifecycle endpoints).** 006 adds a
-  `TokensController` for `use_example_api=yes api_auth=token` bakes, and its
-  plan already includes `use_unique_op_id=False`. Whichever lands second must
-  make the Step 2 test knob-aware: wrap the expected-id set so
-  `api_auth=token` bakes also expect the `tokens_*` operation ids (a
-  `{% raw %}{% if cookiecutter.api_auth == "token" %}{% endraw %}` guard in the
-  Jinja test source), otherwise the exact-set assertion fails once the tokens
-  routes exist.
+- **Coordinate with plan 021 (JWT replacement).** 021 removes plan 006's
+  custom `TokensController` and registers `django-ninja-jwt` controllers for
+  `use_example_api=yes api_auth=jwt` bakes. If 021 lands first, make the Step
+  2 expected-id set and committed `openapi-v1.json` include the stable
+  `/token/*` JWT operation ids instead of any `tokens_*` ids. If the library
+  emits nondeterministic operation ids, stop and resolve that before landing a
+  committed-schema drift gate.
 - The root ci.yaml bake matrix does not execute generated workflows, so the
   drift gate is not exercised in this template's own CI — its verification is
   the bake rehearsal in this plan and, thereafter, generated repos' own CI.

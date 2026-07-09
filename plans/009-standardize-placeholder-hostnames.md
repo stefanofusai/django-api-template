@@ -134,7 +134,7 @@ the bullet goes there, near the env-var bullets.
 | Purpose | Command | Expected on success |
 |---------|---------|---------------------|
 | Locate all sites | `grep -rn 'example\.com' '{{cookiecutter.project_slug}}' .github/workflows/ci.yaml \| grep -v '/.agents/'` | the lists above |
-| Bake (cors, full) | `uvx cookiecutter . -o /tmp/verify-009/cors --no-input use_example_api=yes api_auth=token api_throttling=basic use_cors=yes use_csp=yes` | project generated |
+| Bake (cors, full) | `uvx cookiecutter . -o /tmp/verify-009/cors --no-input use_example_api=yes api_auth=jwt api_throttling=basic use_cors=yes use_csp=yes` | project generated |
 | Bake (smtp) | `uvx cookiecutter . -o /tmp/verify-009/smtp --no-input email_provider=smtp` | project generated |
 | Suite (in bake, needs Docker) | `cp .env.example .env && docker compose -f .docker/compose/dev.yaml --env-file=.env up -d --wait postgres && uv sync --locked && uv run pytest` | all pass, 100% coverage |
 | Lint (in bake) | `uvx ruff@0.15.16 format --check . && uvx ruff@0.15.16 check .` | exit 0 |

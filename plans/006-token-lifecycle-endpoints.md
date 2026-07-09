@@ -1,5 +1,11 @@
 # Plan 006: Build token lifecycle endpoints (create / list / revoke) for `api_auth=token`
 
+> **Superseded on 2026-07-09**: Do not execute this plan unless the maintainer
+> explicitly revives the custom opaque-token implementation. Plan 021 replaces
+> the entire `api_auth=token` mode with `api_auth=jwt` backed by
+> `django-ninja-jwt`, so the `Token` model, token schemas, token lifecycle
+> endpoints, token admin, and token tests described here are obsolete.
+
 > **Executor instructions**: Follow this plan step by step. Run every
 > verification command and confirm the expected result before moving to the
 > next step. If anything in the "STOP conditions" section occurs, stop and

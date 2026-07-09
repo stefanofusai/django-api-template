@@ -1,5 +1,11 @@
 # Plan 020: Convert User/Token to UUID primary keys and squash core/notes migrations to fresh initials
 
+> **Superseded on 2026-07-09**: Do not execute this plan as written. Plan 021
+> removes the custom `Token` model entirely while replacing `api_auth=token`
+> with `api_auth=jwt`, so every Token-specific migration and schema step below
+> is obsolete. If the maintainer still wants `User` UUID primary keys and a
+> notes migration squash after Plan 021 lands, write a new User-only plan.
+
 > **Executor instructions**: Follow this plan step by step. Run every
 > verification command and confirm the expected result before moving to the
 > next step. If anything in the "STOP conditions" section occurs, stop and
@@ -97,6 +103,7 @@ class User(AbstractUser):
 class Token(CreatedAtModel):
     expires_at = models.DateTimeField(_("expires at"), blank=True, null=True)
     last_used_at = models.DateTimeField(_("last used at"), blank=True, null=True)
+    revoked_at = models.DateTimeField(_("revoked at"), blank=True, null=True)
     user = models.ForeignKey(
         User,
         db_index=True,
@@ -107,7 +114,8 @@ class Token(CreatedAtModel):
     digest = models.CharField(_("digest"), max_length=64, unique=True)
     name = models.CharField(_("name"), max_length=100)
     prefix = models.CharField(_("prefix"), db_index=True, max_length=12)
-    # ... __str__, hash, issue, is_expired, mark_used, prefix_from unchanged ...
+    # ... __str__, hash, issue, is_expired, is_revoked, mark_used,
+    # ... prefix_from unchanged ...
 ```
 
 `{{cookiecutter.project_slug}}/src/apps/notes/models.py` (entire file, the
@@ -161,7 +169,16 @@ regardless of knobs).
 
 `{{cookiecutter.project_slug}}/src/apps/core/migrations/0002_token.py`
 creates `Token` with a `BigAutoField` id, depending on `("core",
-"0001_initial")`. This file is deleted post-generation by
+"0001_initial")`.
+
+`{{cookiecutter.project_slug}}/src/apps/core/migrations/0003_token_revoked_at.py`
+adds `Token.revoked_at`, depending on `("core", "0002_token")`. Plan 006
+introduced this migration after this plan was first written; when this plan
+squashes `Token` into a fresh `0001_initial.py`, the generated `Token`
+`CreateModel` must include `revoked_at` directly and
+`0003_token_revoked_at.py` must be deleted alongside `0002_token.py`.
+
+Both token migrations are deleted post-generation by
 `hooks/post_gen_project.py` whenever the combo is **not**
 `use_example_api=yes AND api_auth=token` — see `REMOVED_PATHS` there:
 
@@ -170,8 +187,12 @@ creates `Token` with a `BigAutoField` id, depending on `("core",
         [
             "src/apps/api/auth.py",
             "src/apps/api/exceptions.py",
+            "src/apps/core/controllers.py",
             "src/apps/core/migrations/0002_token.py",
+            "src/apps/core/migrations/0003_token_revoked_at.py",
+            "src/apps/core/schemas.py",
             "tests/api/unit/auth_test.py",
+            "tests/core/integration/tokens_test.py",
         ]
         if not (USE_EXAMPLE_API == "yes" and API_AUTH == "token")
         else []
@@ -265,14 +286,18 @@ include_apps = ["core"{% if cookiecutter.use_example_api == "yes" %}, "notes"{% 
   rewritten, merged, Jinja-conditional.
 - `{{cookiecutter.project_slug}}/src/apps/core/migrations/0002_token.py` —
   deleted.
+- `{{cookiecutter.project_slug}}/src/apps/core/migrations/0003_token_revoked_at.py`
+  — deleted.
 - `{{cookiecutter.project_slug}}/src/apps/notes/migrations/0001_initial.py` —
   rewritten, merged (no Jinja needed).
 - `{{cookiecutter.project_slug}}/src/apps/notes/migrations/0002_note_notes_note_owner_i_b6b830_idx.py`
   — deleted.
 - `hooks/post_gen_project.py` — remove the now-nonexistent
-  `"src/apps/core/migrations/0002_token.py"` entry from `REMOVED_PATHS`
-  (leaving it would raise `FileNotFoundError` on every non-token-auth bake,
-  since `Path(removed_path).unlink()` has no `missing_ok=True`).
+  `"src/apps/core/migrations/0002_token.py"` and
+  `"src/apps/core/migrations/0003_token_revoked_at.py"` entries from
+  `REMOVED_PATHS` (leaving either would raise `FileNotFoundError` on every
+  non-token-auth bake, since `Path(removed_path).unlink()` has no
+  `missing_ok=True`).
 
 **Out of scope** (do NOT touch, even though they look related):
 - `{{cookiecutter.project_slug}}/src/apps/notes/models.py` — `Note` already
@@ -350,6 +375,7 @@ In the template source (not a bake — edit these files directly):
 ```
 rm '{{cookiecutter.project_slug}}/src/apps/core/migrations/0001_initial.py'
 rm '{{cookiecutter.project_slug}}/src/apps/core/migrations/0002_token.py'
+rm '{{cookiecutter.project_slug}}/src/apps/core/migrations/0003_token_revoked_at.py'
 rm '{{cookiecutter.project_slug}}/src/apps/notes/migrations/0001_initial.py'
 rm '{{cookiecutter.project_slug}}/src/apps/notes/migrations/0002_note_notes_note_owner_i_b6b830_idx.py'
 ```
@@ -374,7 +400,9 @@ uv run manage.py makemigrations core notes
 
 This creates exactly two new files:
 `src/apps/core/migrations/0001_initial.py` (with `CreateModel(User)` and
-`CreateModel(Token)`, both with UUID ids — Token's FK to
+`CreateModel(Token)`, both with UUID ids, and with `Token.revoked_at`
+embedded in the `Token` field list rather than emitted as a separate
+`AddField` migration — Token's FK to
 `settings.AUTH_USER_MODEL` needs no `swappable_dependency` since `User` is
 created in the same file, same as today) and
 `src/apps/notes/migrations/0001_initial.py` (with `CreateModel(Note)`,
@@ -445,19 +473,24 @@ or silently include/exclude the wrong operations (this check catches that
 too, since a mismatch between rendered migration and rendered model state
 shows up as detected changes).
 
-### Step 7: Remove the dead `REMOVED_PATHS` entry
+### Step 7: Remove the dead `REMOVED_PATHS` entries
 
-In `hooks/post_gen_project.py`, `src/apps/core/migrations/0002_token.py` no
-longer exists as a file, so remove it from this list (leave the sibling
-entries untouched):
+In `hooks/post_gen_project.py`,
+`src/apps/core/migrations/0002_token.py` and
+`src/apps/core/migrations/0003_token_revoked_at.py` no longer exist as files,
+so remove them from this list (leave the sibling token-only entries untouched):
 
 ```python
     *(
         [
             "src/apps/api/auth.py",
             "src/apps/api/exceptions.py",
+            "src/apps/core/controllers.py",
             "src/apps/core/migrations/0002_token.py",
+            "src/apps/core/migrations/0003_token_revoked_at.py",
+            "src/apps/core/schemas.py",
             "tests/api/unit/auth_test.py",
+            "tests/core/integration/tokens_test.py",
         ]
         if not (USE_EXAMPLE_API == "yes" and API_AUTH == "token")
         else []
@@ -471,7 +504,10 @@ becomes:
         [
             "src/apps/api/auth.py",
             "src/apps/api/exceptions.py",
+            "src/apps/core/controllers.py",
+            "src/apps/core/schemas.py",
             "tests/api/unit/auth_test.py",
+            "tests/core/integration/tokens_test.py",
         ]
         if not (USE_EXAMPLE_API == "yes" and API_AUTH == "token")
         else []
@@ -519,6 +555,7 @@ Machine-checkable. ALL must hold:
 - [ ] `core/migrations/` contains only `__init__.py` and `0001_initial.py`
 - [ ] `notes/migrations/` contains only `__init__.py` and `0001_initial.py`
 - [ ] `grep -c "0002_token" hooks/post_gen_project.py` → `0`
+- [ ] `grep -c "0003_token_revoked_at" hooks/post_gen_project.py` → `0`
 - [ ] In all four bake-matrix combos: `makemigrations --check --dry-run`
       exits 0, `lintmigrations` exits 0, `pytest` passes at 100% coverage,
       `ruff format --check` + `ruff check` exit 0, `ty` (via pre-commit)
