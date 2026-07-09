@@ -1,13 +1,16 @@
 #!/bin/sh
 set -eu
 
-# Dumps the bundled Compose Postgres with pg_dump custom format and
-# prunes old dumps, or verifies an existing dump in a throwaway container.
-# Run from the project root (compose -f paths are relative). Schedule via
-# host cron; copy dumps off-host — a backup on the same disk as the database
-# does not survive host loss.
+# Dumps the bundled Compose Postgres with pg_dump custom format, restores a
+# dump into the live bundled Compose Postgres, or verifies an existing dump in a
+# throwaway container. Run from the project root (compose -f paths are relative).
+# Schedule backups via host cron; copy dumps off-host — a backup on the same
+# disk as the database does not survive host loss. Stop the api and worker
+# services before restore; --clean drops and recreates objects, so a restore
+# into a live app corrupts in-flight requests.
 
 USAGE="usage: postgres-backup.sh backup <backup-dir> [keep-count]
+       postgres-backup.sh restore <dump-file>
        postgres-backup.sh verify <dump-file>"
 
 if [ "$#" -lt 1 ]; then
@@ -53,6 +56,17 @@ case $COMMAND in
                 rm -f "$old_dump"
             done
         fi
+        ;;
+    restore)
+        DUMP_FILE=${1:?$USAGE}
+        if [ ! -f "$DUMP_FILE" ]; then
+            echo "no such dump file: $DUMP_FILE" >&2
+            exit 2
+        fi
+
+        docker compose -f .docker/compose/prod.yaml --env-file=.env exec -T postgres \
+            sh -c 'pg_restore --clean --dbname="$POSTGRES_DB" --if-exists --username="$POSTGRES_USER"' \
+            < "$DUMP_FILE"
         ;;
     verify)
         DUMP_FILE=${1:?$USAGE}

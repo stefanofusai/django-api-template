@@ -414,7 +414,7 @@ To restore, stop the `api` service and any worker services first, then
 run:
 
 ```shell
-./.docker/scripts/postgres-restore.sh /var/backups/<project>/<stamp>.dump
+./.docker/scripts/postgres-backup.sh restore /var/backups/<project>/<stamp>.dump
 ```
 
 Rehearse restores periodically so the procedure is proven before it is
@@ -442,6 +442,29 @@ Set `DATABASE_URL` to the external PostgreSQL-compatible endpoint and append
 `verify-full` with a CA bundle. The `POSTGRES_*` variables only feed the local
 development Compose stack and are ignored by production. Your provider owns
 backups, high availability, and upgrades.
+{%- endif %}
+{% if cookiecutter.use_s3_media == "no" %}
+The bundled media volume has no backup mechanism of its own. Use
+`.docker/scripts/media-backup.sh` to archive files from the Compose media
+volume through a throwaway tar container and prune old archives. Schedule it
+with host cron, for example:
+
+```shell
+0 4 * * * cd /path/to/{{ cookiecutter.project_slug }} && ./.docker/scripts/media-backup.sh backup /var/backups/{{ cookiecutter.project_slug }}-media
+```
+
+Copy archives off-host; an archive left on the same disk as the media volume
+does not survive host loss. To restore, stop the `api` service and any worker
+services first, then run:
+
+```shell
+./.docker/scripts/media-backup.sh restore /var/backups/<project>-media/<stamp>.tar.gz
+```
+
+Restores extract files over the existing media tree and do not remove files
+created after the backup. Rehearse restores periodically, and use
+`./.docker/scripts/media-backup.sh verify <archive>` to check that an archive
+can be listed before relying on it.
 {%- endif %}
 {% if cookiecutter.use_sentry == "yes" -%}
 Set `SENTRY_DSN` from your Sentry project settings; production boot fails if it

@@ -5,8 +5,8 @@ import shutil
 import subprocess
 import sys
 
-API_AUTH = {{ cookiecutter.api_auth | tojson }}
-API_THROTTLING = {{ cookiecutter.api_throttling | tojson }}
+API_AUTH = {{cookiecutter.api_auth | tojson}}
+API_THROTTLING = {{cookiecutter.api_throttling | tojson}}
 COMPOSE_MIN_VERSION = (5, 3, 0)
 COMPOSE_VERSION_WARNING = (
     "WARNING: Docker Compose 5.3.0 or newer is required for the generated "
@@ -20,25 +20,22 @@ MARKDOWN_FILES = [
     "AGENTS.md",
     "README.md",
 ]
-POSTGRES = {{ cookiecutter.postgres | tojson }}
-TRAEFIK_TLS = {{ cookiecutter.traefik_tls | tojson }}
-USE_CELERY = {{ cookiecutter.use_celery | tojson }}
-USE_CORS = {{ cookiecutter.use_cors | tojson }}
-USE_CSP = {{ cookiecutter.use_csp | tojson }}
-USE_EXAMPLE_API = {{ cookiecutter.use_example_api | tojson }}
-USE_SENTRY = {{ cookiecutter.use_sentry | tojson }}
-USE_TRAEFIK = {{ cookiecutter.use_traefik | tojson }}
+POSTGRES = {{cookiecutter.postgres | tojson}}
+TRAEFIK_TLS = {{cookiecutter.traefik_tls | tojson}}
+USE_CELERY = {{cookiecutter.use_celery | tojson}}
+USE_CORS = {{cookiecutter.use_cors | tojson}}
+USE_CSP = {{cookiecutter.use_csp | tojson}}
+USE_EXAMPLE_API = {{cookiecutter.use_example_api | tojson}}
+USE_S3_MEDIA = {{cookiecutter.use_s3_media | tojson}}
+USE_SENTRY = {{cookiecutter.use_sentry | tojson}}
+USE_TRAEFIK = {{cookiecutter.use_traefik | tojson}}
 UV_LOCK_WARNING = (
     "WARNING: uv.lock was not generated; CI, the ty hook, and uv-audit use "
     "--locked and will fail until you run uv lock"
 )
 
 REMOVED_DIRS = [
-    *(
-        [".agents/skills/django-celery-expert"]
-        if USE_CELERY == "none"
-        else []
-    ),
+    *([".agents/skills/django-celery-expert"] if USE_CELERY == "none" else []),
     *(["src/apps/notes", "tests/notes"] if USE_EXAMPLE_API == "no" else []),
 ]
 REMOVED_PATHS = [
@@ -61,7 +58,6 @@ REMOVED_PATHS = [
     *(
         [
             ".docker/scripts/postgres-backup.sh",
-            ".docker/scripts/postgres-restore.sh",
         ]
         if POSTGRES != "compose"
         else []
@@ -113,16 +109,20 @@ REMOVED_PATHS = [
         else []
     ),
     *(
-        ["src/config/settings/components/sentry.py"]
-        if USE_SENTRY == "no"
+        [
+            ".docker/scripts/media-backup.sh",
+        ]
+        if USE_S3_MEDIA == "yes"
         else []
     ),
+    *(["src/config/settings/components/sentry.py"] if USE_SENTRY == "no" else []),
     *(
         [".docker/traefik-dynamic.yaml"]
         if not (USE_TRAEFIK == "yes" and TRAEFIK_TLS == "external")
         else []
     ),
 ]
+
 
 def main() -> None:
     missing = [
@@ -229,7 +229,9 @@ def _warn_on_unsupported_compose() -> None:
         )
 
     except (OSError, subprocess.CalledProcessError):
-        print(f"{COMPOSE_VERSION_WARNING}; docker compose version could not be checked.")
+        print(
+            f"{COMPOSE_VERSION_WARNING}; docker compose version could not be checked."
+        )
         return
 
     compose_version = _parse_compose_version(result.stdout)
@@ -239,10 +241,7 @@ def _warn_on_unsupported_compose() -> None:
 
     if compose_version < COMPOSE_MIN_VERSION:
         version_text = ".".join(str(part) for part in compose_version)
-        print(
-            f"{COMPOSE_VERSION_WARNING}; detected Docker Compose "
-            f"{version_text}."
-        )
+        print(f"{COMPOSE_VERSION_WARNING}; detected Docker Compose {version_text}.")
 
 
 if __name__ == "__main__":
