@@ -60,7 +60,7 @@ are `_copy_without_render` - pure YAML/Markdown, no Jinja allowed there.
 | 003  | Deploy hardening: lowercase GHCR owner; celery-worker stop_grace_period | P2 | S | - | DONE (2026-07-08, merged to `main` as `075555c`+`8f2afc8`) |
 | 004  | Consistency sweep: CI smoke depends_on, anymail app, docs guards, rtk removal, artifact scrub | P2 | M | 003 (soft) | DONE (2026-07-09, merged to `main` as `c2de6b8`..`b90f136`) |
 | 005  | Fast local bake-and-lint gate (root pre-commit) | P2 | M | 001 (**hard**) | DONE (2026-07-09, merged to `main` as `5c04cc9`+`16a12b3`) |
-| 006  | Build token lifecycle endpoints (create/list/revoke + admin minting) for `api_auth=token` | P3 | M | 002 (soft, DONE); coordinate 017, 020 | TODO |
+| 006  | Build token lifecycle endpoints (create/list/revoke + admin minting) for `api_auth=token` | P3 | M | 002 (soft, DONE); coordinate 017, 020 | APPROVED (2026-07-09, reviewed in worktree `agent-a6b07a09de2faef3b` branch `worktree-agent-a6b07a09de2faef3b`, commits `3deb483`+`82a8262`; not yet merged — pending user decision) |
 | 007  | Fix `use_csp=yes`: self-hosted Swagger docs; drop `unsafe-inline` from script-src (browser-gated) | P2 | M | - | TODO |
 | 008  | Document throttling.py's coupling to ninja-extra cache internals (comment-only) | P3 | S | - | TODO |
 | 009  | Standardize placeholder hostnames: `.test` for machine-consumed values, `example.com` for docs | P3 | S | 004 (soft) | TODO |
