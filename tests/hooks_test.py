@@ -11,7 +11,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 HOOK_PATH = ROOT / "hooks/post_gen_project.py"
 JINJA_CONSTANT = re.compile(
-    r"^(?P<name>[A-Z_]+) = \{\{ cookiecutter\.(?P<knob>\w+) \| tojson \}\}$",
+    r"^(?P<name>[A-Z0-9_]+) = \{\{\s*cookiecutter\.(?P<knob>\w+) \| tojson\s*\}\}$",
     re.MULTILINE,
 )
 TEMPLATE_ROOT = ROOT / "{{cookiecutter.project_slug}}"
@@ -24,6 +24,7 @@ TEST_CONTEXT = {
     "use_cors": "no",
     "use_csp": "no",
     "use_example_api": "no",
+    "use_s3_media": "yes",
     "use_sentry": "yes",
     "use_traefik": "yes",
 }
@@ -127,25 +128,18 @@ def _extract_removal_entries() -> list[str]:
     literals = re.findall(r'"([^"]+)"', region)
 
     return [
-        literal
-        for literal in literals
-        if "/" in literal or literal.startswith(".")
+        literal for literal in literals if "/" in literal or literal.startswith(".")
     ]
 
 
 def _line_index(lines: list[str], expected: str) -> int:
-    return next(
-        index
-        for index, line in enumerate(lines)
-        if line.strip() == expected
-    )
+    return next(index for index, line in enumerate(lines) if line.strip() == expected)
 
 
 def _load_hook_module() -> types.ModuleType:
     source = JINJA_CONSTANT.sub(
         lambda match: (
-            f"{match.group('name')} = "
-            f"{json.dumps(TEST_CONTEXT[match.group('knob')])}"
+            f"{match.group('name')} = {json.dumps(TEST_CONTEXT[match.group('knob')])}"
         ),
         HOOK_PATH.read_text(),
     )

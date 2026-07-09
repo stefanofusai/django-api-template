@@ -30,7 +30,9 @@ def check(lock_text: str | None, actual_hashes: dict[str, str]) -> list[str]:
         actual = actual_hashes.get(name)
 
         if actual is None:
-            problems.append(f"{SKILLS_DIR}/{name}/SKILL.md: vendored skill file is missing")
+            problems.append(
+                f"{SKILLS_DIR}/{name}/SKILL.md: vendored skill file is missing"
+            )
         elif actual != entry.get("computedHash"):
             problems.append(
                 f"{SKILLS_DIR}/{name}/SKILL.md: hash {actual} does not match "

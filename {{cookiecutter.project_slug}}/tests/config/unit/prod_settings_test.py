@@ -29,6 +29,7 @@ def test_prod_settings_place_whitenoise_directly_after_security_middleware(
 
     assert result.returncode == 0, result.stderr
 
+
 def test_prod_settings_reject_insecure_secret_key_when_scaffold_value_is_kept(
     faker: Faker,
 ) -> None:
@@ -42,7 +43,6 @@ def test_prod_settings_reject_insecure_secret_key_when_scaffold_value_is_kept(
         "SECRET_KEY must be replaced with a securely generated value in production."
         in result.stderr
     )
-
 
 
 def test_prod_settings_reject_example_allowed_host_when_example_domain_is_configured(
