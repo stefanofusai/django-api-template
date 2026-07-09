@@ -94,6 +94,12 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: generated-format
+        name: generated projects pass ruff format and check
+        entry: python scripts/check_generated_format.py
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: postgres-image-pin
         name: postgres image pins agree across compose and workflows
         entry: python scripts/check_postgres_image.py
