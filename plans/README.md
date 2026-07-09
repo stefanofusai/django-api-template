@@ -32,7 +32,7 @@ your row when done.
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | 001  | Collect `email` on the admin add-user form (second admin-created user currently 500s) | P1 | S | — | TODO |
-| 002  | Reject `author_email` containing quotes/backslashes before it corrupts generated pyproject.toml | P2 | S | — | TODO |
+| 002  | Reject `author_email` containing quotes/backslashes before it corrupts generated pyproject.toml | P2 | S | — | DONE |
 | 003  | Backup scripts: guard destructive restores; stop orphaning `.tmp` files | P2 | S | — | TODO |
 | 004  | JWT operational hygiene: schedule `flushexpiredtokens`; pin post-issuance deactivation lockout; comment the Schemathesis exclusion | P2 | M | — | TODO |
 | 005  | Consistency sweep: README quickstart export steps, AGENTS.md test-client guidance, dev Redis auth gating, postgres-image guard coverage, GHCR naming docs, `plans/` refs | P3 | M | 004 (soft) | TODO |

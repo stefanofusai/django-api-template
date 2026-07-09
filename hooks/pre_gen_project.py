@@ -35,6 +35,12 @@ def main() -> None:
     if not EMAIL_PATTERN.fullmatch(AUTHOR_EMAIL):
         sys.exit("author_email must be a valid email address.")
 
+    if FORBIDDEN_CHARS_PATTERN.search(AUTHOR_EMAIL):
+        sys.exit(
+            "author_email must not contain double quotes or backslashes "
+            "because it is written into pyproject.toml."
+        )
+
     if FORBIDDEN_CHARS_PATTERN.search(AUTHOR_NAME):
         sys.exit(
             "author_name must not contain double quotes, backslashes, or "

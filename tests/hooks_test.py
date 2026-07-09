@@ -9,16 +9,23 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-HOOK_PATH = ROOT / "hooks/post_gen_project.py"
 JINJA_CONSTANT = re.compile(
     r"^(?P<name>[A-Z0-9_]+) = \{\{\s*cookiecutter\.(?P<knob>\w+) \| tojson\s*\}\}$",
     re.MULTILINE,
 )
+POST_GEN_HOOK_PATH = ROOT / "hooks/post_gen_project.py"
+PRE_GEN_HOOK_PATH = ROOT / "hooks/pre_gen_project.py"
 TEMPLATE_ROOT = ROOT / "{{cookiecutter.project_slug}}"
 TEST_CONTEXT = {
     "api_auth": "session",
     "api_throttling": "none",
+    "author_email": "john.doe@example.com",
+    "author_name": "John Doe",
+    "description": "A Django Ninja API service.",
+    "domain_name": "example.com",
+    "github_username": "johndoe",
     "postgres": "compose",
+    "project_slug": "my-project",
     "traefik_tls": "letsencrypt",
     "use_celery": "worker+beat",
     "use_cors": "no",
@@ -77,6 +84,24 @@ def test_parse_compose_version_returns_none_without_digits() -> None:
     assert module._parse_compose_version("no digits here") is None
 
 
+def test_pre_gen_accepts_default_author_email() -> None:
+    module = _load_hook_module(PRE_GEN_HOOK_PATH)
+
+    module.main()
+
+
+def test_pre_gen_rejects_author_email_with_double_quote() -> None:
+    module = _load_hook_module(
+        PRE_GEN_HOOK_PATH,
+        TEST_CONTEXT | {"author_email": 'has"quote@example.com'},
+    )
+
+    with pytest.raises(SystemExit) as raised:
+        module.main()
+
+    assert "author_email" in str(raised.value)
+
+
 def test_prune_celery_skill_metadata_removes_only_celery_skill() -> None:
     module = _load_hook_module()
     lock = {
@@ -115,7 +140,7 @@ def test_prune_celery_skill_metadata_removes_only_celery_skill() -> None:
 
 
 def _extract_removal_entries() -> list[str]:
-    source = HOOK_PATH.read_text()
+    source = POST_GEN_HOOK_PATH.read_text()
     lines = source.splitlines(keepends=True)
     start = _line_index(lines, "REMOVED_DIRS = [")
     paths_start = _line_index(lines, "REMOVED_PATHS = [")
@@ -136,13 +161,17 @@ def _line_index(lines: list[str], expected: str) -> int:
     return next(index for index, line in enumerate(lines) if line.strip() == expected)
 
 
-def _load_hook_module() -> types.ModuleType:
+def _load_hook_module(
+    hook_path: Path = POST_GEN_HOOK_PATH,
+    context: dict[str, str] | None = None,
+) -> types.ModuleType:
+    context = TEST_CONTEXT if context is None else context
     source = JINJA_CONSTANT.sub(
         lambda match: (
-            f"{match.group('name')} = {json.dumps(TEST_CONTEXT[match.group('knob')])}"
+            f"{match.group('name')} = {json.dumps(context[match.group('knob')])}"
         ),
-        HOOK_PATH.read_text(),
+        hook_path.read_text(),
     )
-    module = types.ModuleType("post_gen_project")
-    exec(compile(source, str(HOOK_PATH), "exec"), module.__dict__)  # noqa: S102
+    module = types.ModuleType(hook_path.stem)
+    exec(compile(source, str(hook_path), "exec"), module.__dict__)  # noqa: S102
     return module

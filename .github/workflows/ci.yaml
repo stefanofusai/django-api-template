@@ -163,6 +163,8 @@ jobs:
             extra-args: domain_name=no-dot
           - case: bad-email
             extra-args: author_email=nope
+          - case: bad-email-quote
+            extra-args: author_email='has"quote@example.com'
           - case: bad-knob
             extra-args: use_celery=bogus
           - case: bad-slug
