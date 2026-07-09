@@ -154,6 +154,10 @@ def test_v1_openapi_schema_includes_jwt_token_routes() -> None:
 # Utils
 
 
+# Deliberate exclusion, not an oversight: /token/* operations are owned by
+# django-ninja-jwt (schema and behavior come from the library), so the
+# contract gate covers only first-party routes. jwt_test.py covers the
+# token endpoints functionally.
 def _is_third_party_jwt_operation(case: Case) -> bool:
     return case.path.startswith("/api/v1/token/")
 {%- endif %}

@@ -1,24 +1,32 @@
 from datetime import timedelta
-{% if cookiecutter.email_provider != "none" -%}
-from typing import TYPE_CHECKING
-
+{% if cookiecutter.email_provider != "none" %}from typing import TYPE_CHECKING
+{% endif %}
 import pytest
+{% if cookiecutter.email_provider != "none" -%}
 from django.conf import settings
+{% endif -%}
 from django.contrib.sessions.models import Session
+{% if cookiecutter.email_provider != "none" -%}
 from django.core import mail
+{% endif -%}
 from django.utils import timezone
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" -%}
+from ninja_jwt.token_blacklist.models import OutstandingToken
+{% endif %}
+from apps.core.tasks import (
+    clear_expired_sessions,
+    {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
+    flush_expired_tokens,
+    {%- endif %}
+    {%- if cookiecutter.email_provider != "none" %}
+    send_email,
+    {%- endif %}
+)
 
-from apps.core.tasks import clear_expired_sessions, send_email
-
+{% if cookiecutter.email_provider != "none" -%}
 if TYPE_CHECKING:
     from faker import Faker
-{% else %}
-import pytest
-from django.contrib.sessions.models import Session
-from django.utils import timezone
-
-from apps.core.tasks import clear_expired_sessions
-{% endif %}
+{% endif -%}
 pytestmark = pytest.mark.django_db
 
 
@@ -40,6 +48,28 @@ def test_clear_expired_sessions_deletes_expired_rows_when_dispatched_eagerly() -
 
     assert not Session.objects.filter(pk=expired.pk).exists()
     assert Session.objects.filter(pk=live.pk).exists()
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
+
+
+def test_flush_expired_tokens_deletes_expired_rows_when_dispatched_eagerly() -> None:
+    # OutstandingToken is a third-party model with no registered factory, and
+    # expiry timestamps are the behavior under test, so create rows directly.
+    expired = OutstandingToken.objects.create(
+        expires_at=timezone.now() - timedelta(days=1),
+        jti="plan004expired",
+        token="expired",  # noqa: S106 -- opaque test token, not a password.
+    )
+    live = OutstandingToken.objects.create(
+        expires_at=timezone.now() + timedelta(days=1),
+        jti="plan004live",
+        token="live",  # noqa: S106 -- opaque test token, not a password.
+    )
+
+    flush_expired_tokens.delay()
+
+    assert not OutstandingToken.objects.filter(pk=expired.pk).exists()
+    assert OutstandingToken.objects.filter(pk=live.pk).exists()
+{%- endif %}
 {%- if cookiecutter.email_provider != "none" %}
 
 

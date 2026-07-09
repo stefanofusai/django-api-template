@@ -14,6 +14,12 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute=0),
         "task": "apps.core.tasks.clear_expired_sessions",
     },
+    {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
+    "flush-expired-tokens": {
+        "schedule": crontab(minute=0),
+        "task": "apps.core.tasks.flush_expired_tokens",
+    },
+    {%- endif %}
 }
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 {%- endif %}

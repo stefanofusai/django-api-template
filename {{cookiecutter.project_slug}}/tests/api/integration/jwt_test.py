@@ -18,6 +18,28 @@ def valid_password(faker: Faker) -> str:
     return faker.password(length=16, special_chars=False)
 
 
+def test_access_token_is_rejected_when_user_deactivated_after_issuance(
+    user: User,
+    valid_password: str,
+    v1_api_client: TestClient,
+) -> None:
+    _set_password(user, valid_password)
+    pair_response = v1_api_client.post(
+        "/token/pair",
+        json={"password": valid_password, "username": user.username},
+    )
+
+    user.is_active = False
+    user.save(update_fields=("is_active",))
+
+    response = v1_api_client.get(
+        "/notes",
+        headers={"Authorization": f"Bearer {pair_response.data['access']}"},
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
 def test_blacklisted_refresh_token_cannot_be_refreshed(
     user: User,
     valid_password: str,

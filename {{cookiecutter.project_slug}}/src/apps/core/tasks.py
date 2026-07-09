@@ -11,6 +11,13 @@ from django.core.management import call_command
 @shared_task
 def clear_expired_sessions() -> None:
     call_command("clearsessions")
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
+
+
+@shared_task
+def flush_expired_tokens() -> None:
+    call_command("flushexpiredtokens")
+{%- endif %}
 {%- if cookiecutter.email_provider != "none" %}
 
 

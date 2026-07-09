@@ -245,6 +245,14 @@ with query parameters such as `?title=planning`, `?ordering=title`, and
 JWT endpoints are available at `/api/v1/token/pair`,
 `/api/v1/token/refresh`, `/api/v1/token/verify`, and
 `/api/v1/token/blacklist`.
+{%- if cookiecutter.use_celery == "worker+beat" %}
+Refresh-token rotation blacklists old tokens; the scheduled
+`flush-expired-tokens` Celery beat task purges expired blacklist rows daily.
+{%- else %}
+Refresh-token rotation blacklists old tokens; run
+`python manage.py flushexpiredtokens` periodically, for example from host
+cron or another scheduler, to keep the `token_blacklist` tables bounded.
+{%- endif %}
 {%- endif %}
 {%- endif %}
 
