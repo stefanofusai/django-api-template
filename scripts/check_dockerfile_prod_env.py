@@ -7,10 +7,8 @@ PROD_SETTINGS_PATH = Path(
 )
 
 
-def main() -> int:
-    dockerfile = DOCKERFILE_PATH.read_text()
-    prod_settings = PROD_SETTINGS_PATH.read_text()
-
+def check(dockerfile: str, prod_settings: str) -> list[str]:
+    """Return human-readable problems; empty list means the check passes."""
     required_env = []
 
     if 'env("POSTGRES_PASSWORD")' in prod_settings:
@@ -29,15 +27,26 @@ def main() -> int:
             "CELERY_BROKER_URL=redis://:mock-redis-password@localhost:6379/1"
         )
 
-    missing_env = [env for env in required_env if env not in dockerfile]
+    if not required_env:
+        return [
+            f"{PROD_SETTINGS_PATH}: no known env(...) accesses found; "
+            "check_dockerfile_prod_env.py's detection is stale - update it",
+        ]
 
-    if missing_env:
-        for env in missing_env:
-            print(f"{DOCKERFILE_PATH}: collectstatic build env is missing {env}")
+    return [
+        f"{DOCKERFILE_PATH}: collectstatic build env is missing {env}"
+        for env in required_env
+        if env not in dockerfile
+    ]
 
-        return 1
 
-    return 0
+def main() -> int:
+    problems = check(DOCKERFILE_PATH.read_text(), PROD_SETTINGS_PATH.read_text())
+
+    for problem in problems:
+        print(problem)
+
+    return 1 if problems else 0
 
 
 if __name__ == "__main__":

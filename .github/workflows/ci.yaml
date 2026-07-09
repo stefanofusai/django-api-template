@@ -151,6 +151,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - case: bad-author-name
+            extra-args: author_name='has "quotes"'
           - case: bad-description
             extra-args: description='has "quotes"'
           - case: bad-domain
@@ -161,6 +163,10 @@ jobs:
             extra-args: use_celery=bogus
           - case: bad-slug
             extra-args: project_name='My  Project'
+          - case: bad-slug-length
+            extra-args: project_slug=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          - case: bad-username
+            extra-args: github_username=-bad-
     steps:
       - name: Check out repository
         uses: actions/checkout@v6.0.3

@@ -106,3 +106,9 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: root-tests
+        name: root guard-script unit tests
+        entry: uvx pytest tests
+        language: system
+        pass_filenames: false
+        always_run: true

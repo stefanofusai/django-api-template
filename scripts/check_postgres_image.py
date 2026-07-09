@@ -14,31 +14,38 @@ FILES = [
 PATTERN = re.compile(r"\bpostgres:(\d+\.\d+(?:\.\d+)?)\b")
 
 
+def check(canonical_tags: set[str], file_tags: dict[Path, set[str]]) -> list[str]:
+    """Return human-readable problems; empty list means the check passes."""
+    if len(canonical_tags) != 1:
+        return [
+            f"expected exactly one postgres tag in {CANONICAL}, found {canonical_tags}",
+        ]
+
+    mismatches = [
+        (path, tags) for path, tags in file_tags.items() if tags != canonical_tags
+    ]
+
+    if not mismatches:
+        return []
+
+    return [
+        f"postgres image drift: canonical {canonical_tags} in {CANONICAL}",
+        *[
+            f"  {path}: {tags or 'NO postgres:<major.minor> tag found'}"
+            for path, tags in mismatches
+        ],
+    ]
+
+
 def main() -> int:
     """Return non-zero when Postgres image pins drift."""
     expected = _tags(CANONICAL)
+    problems = check(expected, {path: _tags(path) for path in FILES})
 
-    if len(expected) != 1:
-        sys.stderr.write(
-            f"expected exactly one postgres tag in {CANONICAL}, found {expected}\n",
-        )
-        return 1
+    for problem in problems:
+        sys.stderr.write(f"{problem}\n")
 
-    mismatches = [
-        (path, tags) for path in FILES for tags in [_tags(path)] if tags != expected
-    ]
-
-    if mismatches:
-        sys.stderr.write(f"postgres image drift: canonical {expected} in {CANONICAL}\n")
-
-        for path, tags in mismatches:
-            sys.stderr.write(
-                f"  {path}: {tags or 'NO postgres:<major.minor> tag found'}\n",
-            )
-
-        return 1
-
-    return 0
+    return 1 if problems else 0
 
 
 # Utils
