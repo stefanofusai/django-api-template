@@ -1,3 +1,5 @@
+from typing import cast
+
 from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
@@ -17,7 +19,7 @@ from apps.api.auth import bearer_token_auth
 from apps.api.pagination import BoundedLimitOffsetPagination
 from apps.api.schemas import ErrorSchema, ValidationErrorSchema
 
-from .models import Token
+from .models import Token, User
 from .schemas import TokenCreatedSchema, TokenCreateSchema, TokenOutSchema
 
 
@@ -39,16 +41,26 @@ class TokensController(ControllerBase):
     )
     def create_token(
         self, request: HttpRequest, payload: TokenCreateSchema
-    ) -> Status[Token]:
+    ) -> Status[TokenCreatedSchema]:
+        user = cast("User", request.user)
         raw_token, token = Token.issue(
             expires_at=payload.expires_at,
             name=payload.name,
-            user=request.user,
+            user=user,
         )
-        # Attach the raw token so TokenCreatedSchema surfaces it once; it is
-        # derived from the digest and never stored or retrievable again.
-        token.token = raw_token
-        return Status(201, token)
+        return Status(
+            201,
+            TokenCreatedSchema(
+                id=token.pk,
+                name=token.name,
+                prefix=token.prefix,
+                created_at=token.created_at,
+                expires_at=token.expires_at,
+                last_used_at=token.last_used_at,
+                revoked_at=token.revoked_at,
+                token=raw_token,
+            ),
+        )
 
     @http_delete(
         "/{token_id}",

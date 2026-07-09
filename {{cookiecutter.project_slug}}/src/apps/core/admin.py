@@ -12,7 +12,8 @@ from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationFo
 from .models import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}Token, User{% else %}User{% endif %}
 {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
 if TYPE_CHECKING:
-    from django.forms import ModelForm
+    from django.db.models import Model
+    from django.forms import Form
     from django.http import HttpRequest
 {% endif %}
 
@@ -39,8 +40,10 @@ class TokenAdmin(ModelAdmin):
     readonly_fields = ("created_at", "last_used_at", "revoked_at", "prefix")
 
     def get_fields(
-        self, _request: HttpRequest, obj: Token | None = None
+        self, request: HttpRequest, obj: Token | None = None
     ) -> tuple[str, ...]:
+        del request
+
         if obj is None:
             # Add form: never expose digest; issue() derives it.
             return ("name", "user", "expires_at")
@@ -57,9 +60,9 @@ class TokenAdmin(ModelAdmin):
     def save_model(
         self,
         request: HttpRequest,
-        obj: Token,
-        form: ModelForm,
-        change: bool,  # noqa: FBT001 -- Django's ModelAdmin.save_model contract
+        obj: Model,
+        form: Form,
+        change: object,
     ) -> None:
         if change:
             super().save_model(request, obj, form, change)
