@@ -596,7 +596,7 @@ container healthcheck. Use `/api/ready` as readiness: it checks that the
 database and cache are reachable for load-balancer routing.
 
 Persistent database connections default to 60 seconds with health checks. Set
-`CONN_MAX_AGE=0` when running behind PgBouncer in transaction mode{% if cookiecutter.postgres == "external" -%}
+`DATABASE_CONN_MAX_AGE=0` when running behind PgBouncer in transaction mode{% if cookiecutter.postgres == "external" -%}
 , RDS Proxy, Neon's pooled endpoint, or another transaction-mode pooler
 {%- endif %}.
 

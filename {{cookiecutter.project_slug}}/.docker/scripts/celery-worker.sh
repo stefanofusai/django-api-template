@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+export DATABASE_STATEMENT_TIMEOUT=${CELERY_DATABASE_STATEMENT_TIMEOUT:-300000}
+
 exec celery \
     -A config \
     worker \

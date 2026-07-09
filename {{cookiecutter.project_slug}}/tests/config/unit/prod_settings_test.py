@@ -7,6 +7,74 @@ if TYPE_CHECKING:
     from faker import Faker
 
 
+def test_prod_settings_configures_database_timeouts(faker: Faker) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {},
+        (
+            "import config.settings as s; "
+            "options = s.DATABASES['default']['OPTIONS']; "
+            "print(options['connect_timeout']); "
+            "print(options['options'])"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == ["5", "-c statement_timeout=15000"]
+
+
+def test_prod_settings_honors_database_timeout_overrides_when_configured(
+    faker: Faker,
+) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {
+            "DATABASE_CONNECT_TIMEOUT": "7",
+            "DATABASE_STATEMENT_TIMEOUT": "45000",
+        },
+        (
+            "import config.settings as s; "
+            "options = s.DATABASES['default']['OPTIONS']; "
+            "print(options['connect_timeout']); "
+            "print(options['options'])"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == ["7", "-c statement_timeout=45000"]
+
+
+def test_prod_settings_preserves_database_url_options_when_setting_timeouts(
+    faker: Faker,
+) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {
+            "DATABASE_STATEMENT_TIMEOUT": "45000",
+            "DATABASE_URL": (
+                "postgres://my_project:mock-postgres-password@postgres:5432/"
+                "my_project?connect_timeout=10&options=-c%20statement_timeout%3D99"
+                "&sslmode=require"
+            ),
+            "POSTGRES_PASSWORD": "mock-postgres-password",
+        },
+        (
+            "import config.settings as s; "
+            "options = s.DATABASES['default']['OPTIONS']; "
+            "print(options['connect_timeout']); "
+            "print(options['options']); "
+            "print(options['sslmode'])"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == [
+        "10",
+        "-c statement_timeout=45000",
+        "require",
+    ]
+
+
 def test_prod_settings_place_whitenoise_directly_after_security_middleware(
     faker: Faker,
 ) -> None:
@@ -184,11 +252,19 @@ def _import_prod_settings(
     faker: Faker,
     overrides: dict[str, str],
 ) -> subprocess.CompletedProcess[str]:
+    return _run_prod_settings_script(faker, overrides, "import config.settings")
+
+
+def _run_prod_settings_script(
+    faker: Faker,
+    overrides: dict[str, str],
+    script: str,
+) -> subprocess.CompletedProcess[str]:
     env = os.environ | _base_prod_env(faker) | overrides
     env["PYTHONPATH"] = "src"
 
     return subprocess.run(
-        [sys.executable, "-c", "import config.settings"],
+        [sys.executable, "-c", script],
         capture_output=True,
         check=False,
         env=env,
