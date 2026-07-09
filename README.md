@@ -20,8 +20,8 @@ Compose deployment defaults, and CI gates for the baked project.
 - Dependabot for Compose, Docker, GitHub Actions, pre-commit hooks, and uv
 - Dockerfile and Docker Compose definitions for development and production
 - `django-split-settings` with `ci`, `dev`, and `prod` overlays
-- OpenAPI schema export command and schema artifact workflow for client
-  generation
+- OpenAPI schema export command with committed `docs/openapi/` schemas and a
+  CI drift gate, ready for client generation
 - Optional Celery worker and beat services, chosen at bake time
 - Optional CORS support for explicit browser origins
 - Optional Django native Content Security Policy for browser-rendered surfaces

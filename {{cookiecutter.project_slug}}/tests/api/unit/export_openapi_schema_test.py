@@ -23,3 +23,30 @@ def test_export_openapi_schema_writes_valid_json_to_stdout_when_no_output() -> N
     schema = json.loads(stdout.getvalue())
     assert schema["openapi"]
     assert "/api/health" in schema["paths"]
+{%- if cookiecutter.use_example_api == "yes" %}
+
+
+def test_export_openapi_schema_uses_stable_operation_ids() -> None:
+    stdout = StringIO()
+
+    call_command("export_openapi_schema", "--api=v1", stdout=stdout)
+
+    schema = json.loads(stdout.getvalue())
+    operation_ids = {
+        operation["operationId"]
+        for path in schema["paths"].values()
+        for operation in path.values()
+    }
+    assert operation_ids == {
+        "notes_create_note",
+        "notes_delete_note",
+        "notes_get_note",
+        "notes_list_notes",
+        "notes_update_note",
+{%- if cookiecutter.api_auth == "token" %}
+        "tokens_create_token",
+        "tokens_list_tokens",
+        "tokens_revoke_token",
+{%- endif %}
+    }
+{%- endif %}

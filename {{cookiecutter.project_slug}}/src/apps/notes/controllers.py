@@ -39,6 +39,7 @@ from .schemas import NoteFilterSchema, NoteInSchema, NoteOutSchema
 {%- if cookiecutter.api_throttling == "basic" %}
     throttle=get_public_api_throttles(),
 {%- endif %}
+    use_unique_op_id=False,
 )
 class NotesController(ControllerBase):
     @http_post(

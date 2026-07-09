@@ -184,6 +184,9 @@ def main() -> None:
         "  uv sync --locked\n"
         "  cp .env.example .env\n"
         "  uv run pre-commit install --install-hooks\n"
+        "  mkdir -p docs/openapi\n"
+        "  uv run python manage.py export_openapi_schema --api=internal --output=docs/openapi/openapi-internal.json\n"
+        "  uv run python manage.py export_openapi_schema --api=v1 --output=docs/openapi/openapi-v1.json\n"
         "  git add -A && git commit -m 'feat: initial project scaffold'\n"
     )
 

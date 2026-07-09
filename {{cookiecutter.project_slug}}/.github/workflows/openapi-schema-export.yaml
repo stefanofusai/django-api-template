@@ -35,12 +35,18 @@ jobs:
           DJANGO_ENV: ci
           SECRET_KEY: mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz
         run: |
-          uv run --group=ci --locked --no-default-groups manage.py export_openapi_schema --api=internal --output=openapi-internal.json
-          uv run --group=ci --locked --no-default-groups manage.py export_openapi_schema --api=v1 --output=openapi-v1.json
+          mkdir -p docs/openapi
+          uv run --group=ci --locked --no-default-groups manage.py export_openapi_schema --api=internal --output=docs/openapi/openapi-internal.json
+          uv run --group=ci --locked --no-default-groups manage.py export_openapi_schema --api=v1 --output=docs/openapi/openapi-v1.json
+      - name: Check for schema drift
+        run: |
+          git add --intent-to-add docs/openapi/
+          if ! git diff --exit-code -- docs/openapi/; then
+            echo "::error::Committed OpenAPI schemas under docs/openapi/ are stale. Regenerate them (see the README's API section) and commit the result."
+            exit 1
+          fi
       - name: Upload OpenAPI schemas
         uses: actions/upload-artifact@v7.0.1
         with:
           name: openapi-schemas
-          path: |
-            openapi-internal.json
-            openapi-v1.json
+          path: docs/openapi/

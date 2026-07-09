@@ -256,10 +256,16 @@ self-hosted static assets, and `unsafe-eval` is retained because the
 django-unfold admin theme requires it, while inline styles are still allowed.
 {%- endif %}
 
-Export OpenAPI schema files for client generation:
+The versioned (`v1`) and internal OpenAPI schemas are committed under
+`docs/openapi/` so API contract changes surface as reviewable diffs, and the
+`OpenAPI Schema Export` workflow fails any pull request whose committed
+schemas are stale. Regenerate and commit them whenever you change the API, and
+point your OpenAPI client generator at these files:
 
 ```shell
-python manage.py export_openapi_schema --api=v1 --output=openapi-v1.json
+mkdir -p docs/openapi
+uv run python manage.py export_openapi_schema --api=internal --output=docs/openapi/openapi-internal.json
+uv run python manage.py export_openapi_schema --api=v1 --output=docs/openapi/openapi-v1.json
 ```
 
 Use Django Admin:
