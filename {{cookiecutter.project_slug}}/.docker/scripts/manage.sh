@@ -13,12 +13,5 @@ if [ "$#" -lt 1 ]; then
     exit 2
 fi
 
-case $1 in
-    -h|--help)
-        echo "$USAGE"
-        exit 0
-        ;;
-esac
-
 exec docker compose -f .docker/compose/prod.yaml --env-file=.env \
     exec api python manage.py "$@"
