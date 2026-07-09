@@ -98,6 +98,15 @@
 ## Django And Configuration
 
 - Respect `django-extra-checks`: models need `__str__`, `Meta.ordering`, admin registration, gettext verbose/help text, explicit FK `related_name` and `db_index`, choice constraints, and `UniqueConstraint` instead of `unique_together`.
+{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
+- Expose a model method as `@property` when it is zero-argument,
+  side-effect-free, and derives a value (typically a bool) purely from the
+  instance's own fields — e.g. `Token.is_expired`, `Token.is_revoked` —
+  matching Django's own convention (`AbstractBaseUser.is_authenticated`,
+  `is_anonymous`). Keep it a regular method when it writes to the database,
+  mutates state, or takes an argument (e.g. `Token.mark_used()`,
+  `Token.issue()`, `Token.hash(raw_token)`).
+{%- endif %}
 - In settings modules, put declarations and settings mutations before function
   calls or similar side effects. For example, initialize integrations such as
   `sentry_sdk.init(...)` after the settings values they depend on have been
@@ -157,6 +166,14 @@
   requested by name — see `_clear_cache`, `_zeal`, and `_broker_ready_default`
   in `tests/conftest.py`). Autouse fixtures the whole suite needs belong in
   `tests/conftest.py`, not duplicated per module.
+- When a test needs a fixture only for its side effect and never references
+  it in the body, request it via `@pytest.mark.usefixtures("fixture_name")`
+  instead of declaring it as a parameter and voiding it with
+  `_ = fixture_name` (see `tests/api/unit/pagination_test.py`). This only
+  works for test functions/classes.{% if cookiecutter.use_example_api == "yes" %} A fixture that depends on
+  another fixture purely for side effect still needs the explicit
+  parameter, voided with `_ = ...` if unused (see
+  `authenticated_schema_headers` in `tests/api/integration/schema_test.py`).{% endif %}
 - The full suite enforces 100% coverage. Focused test commands are useful, but final verification should include `uv run pytest`.
 - Run relevant checks before completion:
   - `uv run pre-commit run ruff-check --all-files`

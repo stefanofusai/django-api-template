@@ -34,12 +34,11 @@ def test_authenticate_raises_401_when_token_is_expired(
     assert exc_info.value.status_code == HTTPStatus.UNAUTHORIZED
 
 
+@pytest.mark.usefixtures("revoked_token")
 def test_authenticate_raises_401_when_token_is_revoked(
     mocker: MockerFixture,
     raw_token: str,
-    revoked_token: Token,
 ) -> None:
-    _ = revoked_token
     auth = BearerTokenAuth()
 
     with pytest.raises(InvalidTokenError) as exc_info:
