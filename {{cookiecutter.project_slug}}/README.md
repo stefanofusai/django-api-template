@@ -391,7 +391,7 @@ uv run python -c "from django.core.management.utils import get_random_secret_key
 {% if cookiecutter.postgres == "compose" -%}
 Use the generated value for `SECRET_KEY`, and set a strong
 `POSTGRES_PASSWORD` and `REDIS_PASSWORD`. Keep `REDIS_PASSWORD` in sync with
-the credentials embedded in `CACHE_URL` and `CELERY_BROKER_URL`. The production
+the credentials embedded in `CACHE_URL`{% if cookiecutter.use_celery != "none" %} and `CELERY_BROKER_URL`{% endif %}. The production
 stack reads the same `.env` file as development, and production boot refuses
 `django-insecure-` keys, the shipped slug-default database password, or the
 shipped slug-default Redis password.
@@ -432,7 +432,7 @@ Use the generated value for `SECRET_KEY`. The production stack reads the same
 keys.
 {%- if cookiecutter.redis == "compose" %}
 Set a strong `REDIS_PASSWORD` too. Keep it in sync with the credentials
-embedded in `CACHE_URL` and `CELERY_BROKER_URL`; production boot refuses the
+embedded in `CACHE_URL`{% if cookiecutter.use_celery != "none" %} and `CELERY_BROKER_URL`{% endif %}; production boot refuses the
 shipped slug-default Redis password.
 {%- endif %}
 
