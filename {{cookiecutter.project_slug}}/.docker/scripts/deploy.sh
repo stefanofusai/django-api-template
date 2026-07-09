@@ -22,10 +22,10 @@ esac
 
 APP_VERSION=$1
 
-case $APP_VERSION in
-    v[0-9]*.[0-9]*.[0-9]*) ;;
-    *) echo "tag must look like v<major>.<minor>.<patch>" >&2; exit 2 ;;
-esac
+if ! expr "$APP_VERSION" : 'v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' >/dev/null; then
+    echo "tag must look like v<major>.<minor>.<patch>" >&2
+    exit 2
+fi
 
 [ -f .env ] || { echo "no .env here; run from the project root" >&2; exit 2; }
 {%- if cookiecutter.use_traefik == "yes" %}
@@ -36,12 +36,25 @@ command -v docker-rollout >/dev/null 2>&1 || {
 }
 {%- endif %}
 
-if grep -q '^APP_VERSION=' .env; then
-    sed -i.bak "s/^APP_VERSION=.*/APP_VERSION=$APP_VERSION/" .env
-    rm -f .env.bak
-else
-    printf 'APP_VERSION=%s\n' "$APP_VERSION" >> .env
-fi
+env_tmp=".env.tmp.$$"
+trap 'rm -f "$env_tmp"' EXIT HUP INT TERM
+
+awk -v app_version="$APP_VERSION" '
+    BEGIN { replaced = 0 }
+    !replaced && /^APP_VERSION=/ {
+        print "APP_VERSION=" app_version
+        replaced = 1
+        next
+    }
+    { print }
+    END {
+        if (!replaced) {
+            print "APP_VERSION=" app_version
+        }
+    }
+' .env > "$env_tmp"
+mv "$env_tmp" .env
+trap - EXIT HUP INT TERM
 
 docker compose -f .docker/compose/prod.yaml --env-file=.env pull
 {%- if cookiecutter.use_traefik == "yes" %}
