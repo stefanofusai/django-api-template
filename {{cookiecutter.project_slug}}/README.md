@@ -251,8 +251,9 @@ you add the first endpoint that needs protection, set a global auth class
 {%- if cookiecutter.use_csp == "yes" %}
 
 Content Security Policy headers are enabled through Django's native CSP
-middleware. The starter policy is compatible with Swagger UI and intentionally
-allows inline scripts and styles.
+middleware. The starter policy blocks inline scripts: Swagger UI is served from
+self-hosted static assets, and `unsafe-eval` is retained because the
+django-unfold admin theme requires it, while inline styles are still allowed.
 {%- endif %}
 
 Export OpenAPI schema files for client generation:

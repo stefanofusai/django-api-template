@@ -78,7 +78,7 @@
         "use_csp": {
             "__prompt__": "Django native Content Security Policy",
             "no": "Do not emit Content-Security-Policy headers",
-            "yes": "Enable a Swagger-compatible starter CSP for browser-rendered surfaces"
+            "yes": "Enable a starter CSP that blocks inline scripts across browser-rendered surfaces"
         },
         "use_example_api": {
             "__prompt__": "Example notes API resource",

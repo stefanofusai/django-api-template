@@ -33,4 +33,6 @@ INSTALLED_APPS = [
 {%- if cookiecutter.use_example_api == "yes" %}
     "apps.notes",
 {%- endif %}
+    # Keep after apps.api so Django uses the project's export_openapi_schema command.
+    "ninja",
 ]
