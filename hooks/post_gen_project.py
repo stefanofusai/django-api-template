@@ -3,6 +3,7 @@ import json
 import re
 import shutil
 import subprocess
+import sys
 
 API_AUTH = {{ cookiecutter.api_auth | tojson }}
 API_THROTTLING = {{ cookiecutter.api_throttling | tojson }}
@@ -124,6 +125,17 @@ REMOVED_PATHS = [
 ]
 
 def main() -> None:
+    missing = [
+        entry
+        for entry in [*REMOVED_PATHS, *REMOVED_DIRS]
+        if not Path(entry).exists()
+    ]
+    if missing:
+        sys.exit(
+            "post_gen_project: removal-list entries not found in the "
+            f"generated project (stale after a rename?): {missing}"
+        )
+
     for removed_path in REMOVED_PATHS:
         Path(removed_path).unlink()
 
