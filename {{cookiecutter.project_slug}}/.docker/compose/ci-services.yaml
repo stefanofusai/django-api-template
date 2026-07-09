@@ -4,6 +4,16 @@
 services: {}
 {%- else -%}
 services:
+  api:
+    depends_on:
+{%- if cookiecutter.postgres == "external" %}
+      postgres:
+        condition: service_healthy
+{%- endif %}
+{%- if cookiecutter.redis == "external" %}
+      redis:
+        condition: service_healthy
+{%- endif %}
 {%- if cookiecutter.postgres == "external" %}
   postgres:
     environment:
