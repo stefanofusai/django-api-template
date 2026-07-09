@@ -24,8 +24,8 @@ class BearerTokenAuth(HttpBearer):
 
         if (
             stored_token is None
-            or stored_token.is_expired()
-            or stored_token.is_revoked()
+            or stored_token.is_expired
+            or stored_token.is_revoked
             or not stored_token.user.is_active
         ):
             raise InvalidTokenError

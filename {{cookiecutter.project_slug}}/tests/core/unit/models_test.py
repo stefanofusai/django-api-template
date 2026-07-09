@@ -20,11 +20,11 @@ def test_get_user_model_returns_custom_user_when_project_is_configured() -> None
 
 
 def test_is_revoked_returns_false_when_not_revoked(token: Token) -> None:
-    assert token.is_revoked() is False
+    assert token.is_revoked is False
 
 
 def test_is_revoked_returns_true_when_revoked(revoked_token: Token) -> None:
-    assert revoked_token.is_revoked() is True
+    assert revoked_token.is_revoked is True
 
 
 def test_mark_used_skips_write_when_last_used_at_is_fresh(

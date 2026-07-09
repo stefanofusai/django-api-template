@@ -97,9 +97,11 @@ class Token(CreatedAtModel):
         )
         return raw_token, token
 
+    @property
     def is_expired(self) -> bool:
         return self.expires_at is not None and self.expires_at <= timezone.now()
 
+    @property
     def is_revoked(self) -> bool:
         return self.revoked_at is not None
 
