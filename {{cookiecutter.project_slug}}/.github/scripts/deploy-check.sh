@@ -12,6 +12,9 @@ CACHE_URL=redis://:mock-redis-password@localhost:6379/0 \
 {%- if cookiecutter.use_celery != "none" %}
 CELERY_BROKER_URL=redis://:mock-redis-password@localhost:6379/1 \
 {%- endif %}
+{%- if cookiecutter.use_cors == "yes" %}
+CORS_ALLOWED_ORIGINS=https://app.example.test \
+{%- endif %}
 CSRF_TRUSTED_ORIGINS=https://localhost \
 DATABASE_URL=postgres://postgres:mock-postgres-password@localhost:5432/postgres \
 {%- if cookiecutter.email_provider != "none" %}
@@ -40,6 +43,9 @@ AWS_STORAGE_BUCKET_NAME=mock-storage-bucket \
 CACHE_URL=redis://:mock-redis-password@localhost:6379/0 \
 {%- if cookiecutter.use_celery != "none" %}
 CELERY_BROKER_URL=redis://:mock-redis-password@localhost:6379/1 \
+{%- endif %}
+{%- if cookiecutter.use_cors == "yes" %}
+CORS_ALLOWED_ORIGINS=https://app.example.test \
 {%- endif %}
 CSRF_TRUSTED_ORIGINS=https://localhost \
 DATABASE_URL=postgres://postgres:mock-postgres-password@localhost:5432/postgres \
