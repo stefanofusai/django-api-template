@@ -10,9 +10,7 @@ from django.test import Client
 {% endif -%}
 from schemathesis import Case, CheckFunction
 from schemathesis.checks import CHECKS, load_all_checks
-{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
-from apps.core.models import Token
-{% endif %}
+
 # Production serves ASGI (config.asgi), but the OpenAPI schema is identical
 # under either protocol and Schemathesis' ASGI transport runs the ASGI
 # lifespan protocol, which Django's ASGIHandler rejects. Load the WSGI app
@@ -20,7 +18,9 @@ from apps.core.models import Token
 from config.wsgi import application
 {% if cookiecutter.use_example_api == "yes" %}
 if TYPE_CHECKING:
+    {%- if cookiecutter.api_auth == "session" %}
     from apps.core.models import User
+    {%- endif %}
     from apps.notes.models import Note
 {% endif %}
 OPENAPI_CONTRACT_CHECK_NAMES = (
@@ -60,12 +60,14 @@ schema = schemathesis.pytest.from_fixture("api_schema")
 @pytest.fixture
 def authenticated_schema_headers(
     note: Note,
+    {%- if cookiecutter.api_auth == "token" %}
+    raw_token: str,
+    {%- else %}
     user: User,
+    {%- endif %}
 ) -> dict[str, str]:
     _ = note
     {%- if cookiecutter.api_auth == "token" %}
-    raw_token, _ = Token.issue(name="contract test token", user=user)
-
     return {
         "Authorization": f"Bearer {raw_token}",
     }

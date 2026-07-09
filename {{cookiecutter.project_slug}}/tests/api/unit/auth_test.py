@@ -17,15 +17,6 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.django_db
 
 
-def test_authenticate_raises_401_when_token_is_unknown(mocker: MockerFixture) -> None:
-    auth = BearerTokenAuth()
-
-    with pytest.raises(InvalidTokenError) as exc_info:
-        auth.authenticate(mocker.Mock(), "unknown-token")
-
-    assert exc_info.value.status_code == HTTPStatus.UNAUTHORIZED
-
-
 def test_authenticate_raises_401_when_token_is_expired(
     mocker: MockerFixture,
     user: User,
@@ -43,12 +34,12 @@ def test_authenticate_raises_401_when_token_is_expired(
     assert exc_info.value.status_code == HTTPStatus.UNAUTHORIZED
 
 
-@pytest.mark.parametrize("user__is_active", [False])
-def test_authenticate_raises_401_when_user_is_inactive(
+def test_authenticate_raises_401_when_token_is_revoked(
     mocker: MockerFixture,
-    user: User,
+    raw_token: str,
+    revoked_token: Token,
 ) -> None:
-    raw_token, _ = Token.issue(name="test token", user=user)
+    _ = revoked_token
     auth = BearerTokenAuth()
 
     with pytest.raises(InvalidTokenError) as exc_info:
@@ -57,13 +48,20 @@ def test_authenticate_raises_401_when_user_is_inactive(
     assert exc_info.value.status_code == HTTPStatus.UNAUTHORIZED
 
 
-def test_authenticate_raises_401_when_token_is_revoked(
+def test_authenticate_raises_401_when_token_is_unknown(mocker: MockerFixture) -> None:
+    auth = BearerTokenAuth()
+
+    with pytest.raises(InvalidTokenError) as exc_info:
+        auth.authenticate(mocker.Mock(), "unknown-token")
+
+    assert exc_info.value.status_code == HTTPStatus.UNAUTHORIZED
+
+
+@pytest.mark.parametrize("user__is_active", [False])
+def test_authenticate_raises_401_when_user_is_inactive(
     mocker: MockerFixture,
-    user: User,
+    raw_token: str,
 ) -> None:
-    raw_token, token = Token.issue(name="test token", user=user)
-    token.revoked_at = timezone.now()
-    token.save(update_fields=("revoked_at",))
     auth = BearerTokenAuth()
 
     with pytest.raises(InvalidTokenError) as exc_info:
@@ -74,9 +72,9 @@ def test_authenticate_raises_401_when_token_is_revoked(
 
 def test_authenticate_returns_user_and_sets_request_user_when_token_is_valid(
     mocker: MockerFixture,
+    raw_token: str,
     user: User,
 ) -> None:
-    raw_token, _ = Token.issue(name="test token", user=user)
     auth = BearerTokenAuth()
     request = mocker.Mock()
 
@@ -88,9 +86,9 @@ def test_authenticate_returns_user_and_sets_request_user_when_token_is_valid(
 
 def test_authenticate_updates_last_used_at_when_token_is_valid(
     mocker: MockerFixture,
-    user: User,
+    raw_token: str,
+    token: Token,
 ) -> None:
-    raw_token, token = Token.issue(name="test token", user=user)
     auth = BearerTokenAuth()
 
     auth.authenticate(mocker.Mock(), raw_token)

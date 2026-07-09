@@ -19,21 +19,6 @@ pytestmark = pytest.mark.django_db
 
 @pytest.mark.parametrize("user__is_staff", [True])
 @pytest.mark.parametrize("user__is_superuser", [True])
-def test_token_changelist_returns_200_when_staff(
-    client: Client,
-    token: Token,
-    user: User,
-) -> None:
-    assert token.pk is not None
-    client.force_login(user)
-
-    response = client.get(reverse("admin:core_token_changelist"))
-
-    assert response.status_code == HTTPStatus.OK
-
-
-@pytest.mark.parametrize("user__is_staff", [True])
-@pytest.mark.parametrize("user__is_superuser", [True])
 def test_token_add_mints_token_and_shows_it_once(
     client: Client,
     user: User,
@@ -77,6 +62,21 @@ def test_token_change_updates_name(
     assert response.status_code == HTTPStatus.OK
     token.refresh_from_db()
     assert token.name == "renamed token"
+
+
+@pytest.mark.parametrize("user__is_staff", [True])
+@pytest.mark.parametrize("user__is_superuser", [True])
+def test_token_changelist_returns_200_when_staff(
+    client: Client,
+    token: Token,
+    user: User,
+) -> None:
+    assert token.pk is not None
+    client.force_login(user)
+
+    response = client.get(reverse("admin:core_token_changelist"))
+
+    assert response.status_code == HTTPStatus.OK
 {%- endif %}
 
 

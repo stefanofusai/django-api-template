@@ -5,13 +5,19 @@ from typing import TYPE_CHECKING
 
 import pytest
 from django.core.cache import cache
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
+from django.utils import timezone
+{% endif -%}
 from hypothesis import settings as hypothesis_settings
 from ninja.testing import TestClient
 from pytest_factoryboy import register
 from zeal import zeal_context
 
 from apps.api.api import internal_api, v1_api
-from tests.factories import {% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}NoteFactory, TokenFactory, UserFactory{% elif cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
+from apps.core.models import Token
+{% endif -%}
+from tests.factories import {% if cookiecutter.use_example_api == "yes" %}NoteFactory, UserFactory{% else %}UserFactory{% endif %}
 {%- if cookiecutter.use_example_api == "yes" %}
 from tests.utils import AuthenticatedTestClient
 {%- endif %}
@@ -42,9 +48,6 @@ hypothesis_settings.load_profile("ci")
 register(UserFactory)
 {%- if cookiecutter.use_example_api == "yes" %}
 register(NoteFactory)
-{%- endif %}
-{%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
-register(TokenFactory)
 {%- endif %}
 
 
@@ -80,6 +83,30 @@ def _broker_ready_default(mocker: MockerFixture) -> None:
     # is configured), so default every test to a healthy broker; tests that
     # care about broker state override this patch in their own body.
     mocker.patch("apps.api.routes.ready._broker_ready", return_value=True)
+
+
+{% endif -%}
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" -%}
+@pytest.fixture
+def issued_token(user: User) -> tuple[str, Token]:
+    return Token.issue(name="test token", user=user)
+
+
+@pytest.fixture
+def raw_token(issued_token: tuple[str, Token]) -> str:
+    return issued_token[0]
+
+
+@pytest.fixture
+def token(issued_token: tuple[str, Token]) -> Token:
+    return issued_token[1]
+
+
+@pytest.fixture
+def revoked_token(token: Token) -> Token:
+    token.revoked_at = timezone.now()
+    token.save(update_fields=("revoked_at",))
+    return token
 
 
 {% endif -%}
