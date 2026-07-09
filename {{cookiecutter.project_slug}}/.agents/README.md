@@ -9,3 +9,8 @@ They are copied from upstream repositories under redistributable licenses:
 - `django-perf-review`: `getsentry/skills`, Apache-2.0.
 - `django-safe-migration`: `vintasoftware/django-ai-plugins`, MIT.
 - `postgres`: `planetscale/database-skills`, MIT.
+
+## First-party skills
+
+- `new-api-resource`: maintained in this template (no upstream source);
+  scaffolds a new API resource per `AGENTS.md`.

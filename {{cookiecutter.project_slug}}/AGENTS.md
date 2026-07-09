@@ -187,6 +187,8 @@
   - `uv run pre-commit run --all-files` for broad changes
 - Register factories in `tests/factories.py` when adding concrete models
   (see `UserFactory`).
+- To add a new API resource, use the `new-api-resource` agent skill in
+  `.agents/skills/`.
 - Use pytest-factoryboy model fixtures directly and prefer attribute
   parametrization for factory-backed model setup.
 - When a test needs multiple model instances, register named model fixtures

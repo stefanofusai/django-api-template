@@ -31,6 +31,11 @@
       "skillPath": "plugins/django-safe-migration/skills/django-safe-migration/SKILL.md",
       "computedHash": "8662eda5fc3028856af3b8d44001634015b8522bc34ce4ad026531804860633a"
     },
+    "new-api-resource": {
+      "computedHash": "caac60b9da477123593dcd730b31dc78330168d18633f61057a3ee93617b163f",
+      "skillPath": ".agents/skills/new-api-resource/SKILL.md",
+      "sourceType": "local"
+    },
     "postgres": {
       "source": "planetscale/database-skills",
       "sourceType": "github",
