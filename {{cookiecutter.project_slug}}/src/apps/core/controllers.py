@@ -52,12 +52,12 @@ class TokensController(ControllerBase):
             201,
             TokenCreatedSchema(
                 id=token.pk,
-                name=token.name,
-                prefix=token.prefix,
                 created_at=token.created_at,
                 expires_at=token.expires_at,
                 last_used_at=token.last_used_at,
                 revoked_at=token.revoked_at,
+                name=token.name,
+                prefix=token.prefix,
                 token=raw_token,
             ),
         )

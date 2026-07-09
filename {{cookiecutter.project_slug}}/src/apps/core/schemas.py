@@ -33,12 +33,12 @@ class TokenCreateSchema(Schema):
 
 class TokenOutSchema(Schema):
     id: int
-    name: str
-    prefix: str
     created_at: datetime
     expires_at: datetime | None
     last_used_at: datetime | None
     revoked_at: datetime | None
+    name: str
+    prefix: str
 
 
 class TokenCreatedSchema(TokenOutSchema):
