@@ -45,11 +45,11 @@ RUN if [ "$UV_DEPENDENCY_GROUP" = "prod" ]; then \
         CSRF_TRUSTED_ORIGINS=https://localhost \
         DATABASE_URL=postgres://postgres:mock-postgres-password@localhost:5432/postgres \
 {%- if cookiecutter.email_provider != "none" %}
-        DEFAULT_FROM_EMAIL=noreply@example.com \
+        DEFAULT_FROM_EMAIL=noreply@example.test \
 {%- endif %}
         DJANGO_ENV=prod \
 {%- if cookiecutter.email_provider == "smtp" %}
-        EMAIL_HOST=smtp.example.com \
+        EMAIL_HOST=smtp.example.test \
 {%- endif %}
 {%- if cookiecutter.postgres == "compose" %}
         POSTGRES_PASSWORD=mock-postgres-password \
@@ -62,7 +62,7 @@ RUN if [ "$UV_DEPENDENCY_GROUP" = "prod" ]; then \
 {%- endif %}
         SECRET_KEY=mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz \
 {%- if cookiecutter.use_sentry == "yes" %}
-        SENTRY_DSN=https://mock-sentry-key@sentry.example.com/1 \
+        SENTRY_DSN=https://mock-sentry-key@sentry.example.test/1 \
 {%- endif %}
         .venv/bin/python manage.py collectstatic --no-input; \
     fi

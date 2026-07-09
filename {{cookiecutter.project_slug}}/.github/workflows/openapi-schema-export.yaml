@@ -31,7 +31,7 @@ jobs:
           ALLOWED_HOSTS: localhost
           CACHE_URL: locmemcache://
           DATABASE_URL: postgres://postgres:mock-postgres-password@localhost:5432/postgres
-          DEFAULT_FROM_EMAIL: noreply@example.com
+          DEFAULT_FROM_EMAIL: noreply@example.test
           DJANGO_ENV: ci
           SECRET_KEY: mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz
         run: |

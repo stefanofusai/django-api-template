@@ -124,6 +124,11 @@
   ≥50 chars with ≥5 unique chars so `manage.py check --deploy` passes. Never
   generate mock values at runtime (`uuidgen`, `$RANDOM`), and never promote a
   mock value to a real credential.
+- Placeholder hostnames follow a two-tier rule: `example.com` appears only in
+  human-facing documentation (README prose, `.env.example` comments) and the
+  production `ALLOWED_HOSTS` boot sentinel; machine-consumed placeholders in
+  tests, CI scripts, workflows, and the Docker build env use reserved `.test`
+  hostnames such as `smtp.example.test`, which can never resolve publicly.
 - Keep `.env.example` grouped by concern, not globally byte-sorted. Alphabetize keys only within each block.
 - In `.env.example`, comments must be own-line only; never put inline comments after a value.
 - In `.env.example`, empty uncommented values mean required in production and must have a boot guard or prod-only consumer that fails loudly.

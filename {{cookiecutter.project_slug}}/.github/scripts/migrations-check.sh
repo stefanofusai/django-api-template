@@ -7,11 +7,11 @@ set -eu
 ALLOWED_HOSTS=localhost \
 CACHE_URL=locmemcache:// \
 {%- if cookiecutter.use_cors == "yes" %}
-CORS_ALLOWED_ORIGINS=https://app.example.com \
+CORS_ALLOWED_ORIGINS=https://app.example.test \
 {%- endif %}
 DATABASE_URL=postgres://postgres:mock-postgres-password@localhost:5432/postgres \
 {%- if cookiecutter.email_provider != "none" %}
-DEFAULT_FROM_EMAIL=noreply@example.com \
+DEFAULT_FROM_EMAIL=noreply@example.test \
 {%- endif %}
 DJANGO_ENV=ci \
 SECRET_KEY=mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz \
@@ -21,11 +21,11 @@ uv run --group=ci --locked --no-default-groups \
 ALLOWED_HOSTS=localhost \
 CACHE_URL=locmemcache:// \
 {%- if cookiecutter.use_cors == "yes" %}
-CORS_ALLOWED_ORIGINS=https://app.example.com \
+CORS_ALLOWED_ORIGINS=https://app.example.test \
 {%- endif %}
 DATABASE_URL=postgres://postgres:mock-postgres-password@localhost:5432/postgres \
 {%- if cookiecutter.email_provider != "none" %}
-DEFAULT_FROM_EMAIL=noreply@example.com \
+DEFAULT_FROM_EMAIL=noreply@example.test \
 {%- endif %}
 DJANGO_ENV=ci \
 SECRET_KEY=mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz \

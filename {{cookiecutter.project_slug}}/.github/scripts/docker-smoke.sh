@@ -49,7 +49,7 @@ replace_env DATABASE_URL "postgres://{{ cookiecutter.project_slug.replace('-', '
 replace_env DATABASE_URL "postgres://ci:${postgres_password}@postgres:5432/ci"
 {%- endif %}
 {%- if cookiecutter.email_provider == "smtp" %}
-replace_env EMAIL_HOST "smtp.example.com"
+replace_env EMAIL_HOST "smtp.example.test"
 {%- endif %}
 {%- if cookiecutter.postgres == "compose" %}
 replace_env POSTGRES_PASSWORD "$postgres_password"
@@ -68,5 +68,5 @@ replace_env RESEND_API_KEY "mock-resend-api-key"
 {%- endif %}
 replace_env SECRET_KEY "mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz"
 {%- if cookiecutter.use_sentry == "yes" %}
-replace_env SENTRY_DSN "https://mock-sentry-key@sentry.example.com/1"
+replace_env SENTRY_DSN "https://mock-sentry-key@sentry.example.test/1"
 {%- endif %}

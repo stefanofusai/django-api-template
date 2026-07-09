@@ -269,7 +269,7 @@ jobs:
           sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=$redis_password|" .env
           sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=mock-resend-api-key|" .env
           sed -i "s|^SECRET_KEY=.*|SECRET_KEY=mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz|" .env
-          sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://mock-sentry-key@sentry.example.com/1|" .env
+          sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://mock-sentry-key@sentry.example.test/1|" .env
       - name: Prepare external-backing production env file
         if: matrix.variant == 'external-backing'
         working-directory: /tmp/smoke/my-project
@@ -287,7 +287,7 @@ jobs:
           sed -i "s|^POSTGRES_USER=.*|POSTGRES_USER=ci|" .env
           sed -i "s|^RESEND_API_KEY=.*|RESEND_API_KEY=mock-resend-api-key|" .env
           sed -i "s|^SECRET_KEY=.*|SECRET_KEY=mock-secret-key-0123456789-abcdefghijklmnopqrstuvwxyz|" .env
-          sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://mock-sentry-key@sentry.example.com/1|" .env
+          sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=https://mock-sentry-key@sentry.example.test/1|" .env
           printf '%s\n' "REDIS_PASSWORD=$redis_password" >> .env
       - name: Prepare minimal production env file
         if: matrix.variant == 'minimal'

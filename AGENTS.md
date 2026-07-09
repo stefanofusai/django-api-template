@@ -127,6 +127,11 @@
   deployment need to configure them.
 - Add environment variables only for secrets, deployment topology, or resource
   sizing.
+- Use `example.com` placeholders only in human-facing documentation and
+  cookiecutter defaults; machine-consumed placeholders in template tests, CI,
+  and the Docker build env use `.test` hostnames such as
+  `sentry.example.test`. The production boot sentinel deliberately checks for
+  `example.com` because that is the `domain_name` default.
 - Do not add empty optional values to `.env.example`; document optional AWS
   variables as commented examples.
 - Keep Docker images pinned, not floating.

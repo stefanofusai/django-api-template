@@ -127,7 +127,7 @@ def _base_prod_env(faker: Faker) -> dict[str, str]:
         "RESEND_API_KEY": f"re_{faker.pystr(min_chars=24, max_chars=24)}",
 {%- endif %}
         "SECRET_KEY": faker.bothify(text="mock-secret-key-????????-########-????????"),
-        "SENTRY_DSN": f"https://{sentry_key}@sentry.example.com/1",
+        "SENTRY_DSN": f"https://{sentry_key}@sentry.example.test/1",
     }
 
 
