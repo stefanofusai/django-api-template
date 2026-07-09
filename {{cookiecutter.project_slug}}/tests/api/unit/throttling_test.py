@@ -104,6 +104,21 @@ def test_ninja_extra_throttle_rates_are_populated_when_env_is_set() -> None:
 
 
 @override_settings(API_THROTTLE_ANON_RATE="1/min", API_THROTTLE_USER_RATE=None)
+def test_public_api_middleware_allows_options_request_when_budget_exhausted() -> None:
+    get_request = RequestFactory().get("/api/v1/notes")
+    get_request.user = AnonymousUser()
+    options_request = RequestFactory().options("/api/v1/notes")
+    options_request.user = AnonymousUser()
+    middleware = PublicAPIThrottleMiddleware(
+        lambda _request: HttpResponse(status=HTTPStatus.OK),
+    )
+
+    assert middleware(get_request).status_code == HTTPStatus.OK
+    assert middleware(get_request).status_code == HTTPStatus.TOO_MANY_REQUESTS
+    assert middleware(options_request).status_code == HTTPStatus.OK
+
+
+@override_settings(API_THROTTLE_ANON_RATE="1/min", API_THROTTLE_USER_RATE=None)
 def test_public_api_middleware_counts_unauthorized_authorization_requests() -> None:
     request = RequestFactory().get(
         "/api/v1/notes",
