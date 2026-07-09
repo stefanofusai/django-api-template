@@ -370,6 +370,8 @@ in-flight requests for up to `GUNICORN_GRACEFUL_TIMEOUT` seconds while Traefik
 has already removed the backend from rotation. Those pieces cover both sides of
 replacement: the new backend is not relied on until its HTTP health check
 passes, and the old backend keeps serving until gunicorn finishes draining.
+Traefik deliberately uses `/api/health` for container liveness; route external
+readiness decisions through `/api/ready`, which also checks backing services.
 {%- elif cookiecutter.use_traefik == "yes" and cookiecutter.traefik_tls == "external" %}
 The production stack includes Traefik. Traefik serves TLS from
 `.docker/certs/cert.pem` and `.docker/certs/key.pem`, routes only to healthy
@@ -385,6 +387,8 @@ in-flight requests for up to `GUNICORN_GRACEFUL_TIMEOUT` seconds while Traefik
 has already removed the backend from rotation. Those pieces cover both sides of
 replacement: the new backend is not relied on until its HTTP health check
 passes, and the old backend keeps serving until gunicorn finishes draining.
+Traefik deliberately uses `/api/health` for container liveness; route external
+readiness decisions through `/api/ready`, which also checks backing services.
 {%- else %}
 {%- if cookiecutter.behind_proxy == "yes" %}
 Bring your own ingress. The production `api` service publishes
@@ -611,13 +615,15 @@ instance on databases 0 and 1. Memory is bounded by `REDIS_MAXMEMORY` (default
 256mb); under memory pressure, Redis's default `noeviction` policy rejects
 writes instead of evicting keys, which surfaces as cache write errors and
 blocked task enqueues rather than silent eviction or host OOM. Raise the value
-or split Redis instances if cache volume grows.
+or split Redis instances if cache volume grows. Password login lockout also
+depends on the cache, so Redis outages can make admin login fail closed.
 {%- elif cookiecutter.redis == "compose" %}
 Redis runs append-only for cache durability. Memory is bounded by
 `REDIS_MAXMEMORY` (default 256mb); under memory pressure, Redis's default
 `noeviction` policy rejects writes instead of evicting keys, which surfaces as
 cache write errors rather than silent eviction or host OOM. Raise the value or
-split instances as cache volume grows.
+split instances as cache volume grows. Password login lockout also depends on
+the cache, so Redis outages can make admin login fail closed.
 {%- elif cookiecutter.use_celery != "none" %}
 Set `CACHE_URL=rediss://:<password>@<host>:<port>/0` and
 `CELERY_BROKER_URL=rediss://:<password>@<host>:<port>/1?ssl_cert_reqs=required`
@@ -625,11 +631,14 @@ to your Redis-compatible provider's TLS endpoint. Celery requires the
 `ssl_cert_reqs` parameter on `rediss://` broker URLs. The broker database must
 use a `noeviction` policy at the provider or task enqueues can fail under
 memory pressure. Keep cache and broker on separate databases, or separate
-instances, as with the bundled setup.
+instances, as with the bundled setup. Password login lockout also depends on
+the cache, so Redis outages can make admin login fail closed.
 {%- else %}
 Set `CACHE_URL=rediss://:<password>@<host>:<port>/0` to your
 Redis-compatible provider's TLS endpoint. Use a `noeviction` policy at the
-provider so cache writes fail explicitly under memory pressure.
+provider so cache writes fail explicitly under memory pressure. Password login
+lockout also depends on the cache, so Redis outages can make admin login fail
+closed.
 {%- endif %}
 
 Container logs are capped at roughly 50 MB per container (`json-file` driver,
