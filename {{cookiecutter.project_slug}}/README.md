@@ -301,11 +301,16 @@ For release-based deploys, bump `[project] version` in `pyproject.toml`,
 commit, tag `v<version>`, and push the tag. Only strict `vX.Y.Z` tags trigger
 the release workflow. It runs the full test suite before publishing
 `ghcr.io/<owner>/<repo>:v<version>` and refuses tags that do not match the
-project version, keeping image tags aligned with Sentry release names. The
-GitHub repository must be named `{{ cookiecutter.project_slug }}`: the release
-workflow publishes to `ghcr.io/<owner>/<repo-name>` while the Compose stack
-below pulls `ghcr.io/<owner>/{{ cookiecutter.project_slug }}`, and the two only
-agree when the repository name equals the project slug.
+project version, keeping image tags aligned with Sentry release names.
+
+The production Compose file pulls
+`ghcr.io/{{ cookiecutter.github_username | lower }}/{{ cookiecutter.project_slug }}`
+while the release workflow pushes to the actual `owner/repo` of the GitHub
+repository. These must coincide: the repository should be named
+`{{ cookiecutter.project_slug }}` and owned by
+`{{ cookiecutter.github_username | lower }}`. If the repository is renamed or
+moved to an org, update the three `image:` lines in
+`.docker/compose/prod.yaml` to the matching `ghcr.io/<owner>/<repo>` path.
 
 Deploy or roll back with one command from the project root:
 
@@ -329,9 +334,7 @@ so keep migrations backward-compatible at least one release back. CI enforces
 this contract with `lintmigrations` for project apps. If a deliberately
 backward-incompatible migration has an approved deploy plan, add
 `django_migration_linter.IgnoreMigration()` to that migration's `operations`
-list to mark the exception explicitly. If the repository can't be named to
-match, update the `image:` lines in `.docker/compose/prod.yaml` to
-`ghcr.io/<owner>/<repo>` instead. Private GHCR packages require
+list to mark the exception explicitly. Private GHCR packages require
 `docker login ghcr.io` on the host with a token that can read packages.
 
 Run management commands against the running production stack through the

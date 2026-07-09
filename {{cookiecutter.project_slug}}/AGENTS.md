@@ -185,12 +185,28 @@
   that change Django settings; do not mock or patch `django.conf.settings` or
   derived settings objects directly.
 - Avoid direct `Model.objects.create(...)` and direct Django model construction in tests unless the test specifically needs an invalid unsaved object; use factory `.build(...)` for those invalid cases.
-- Use Faker/factory values for incidental names, URLs, UUIDs, and response metadata.
-- Keep fixed literals only when they are the behavior under test.
+- Use Faker/factory values for realistic incidental names, URLs, UUIDs,
+  credentials, and response metadata. When a test creates multiple values
+  that must be distinct, use `faker.unique` rather than relying on ordinary
+  Faker calls not to collide.
+- Keep fixed literals when they are the behavior under test or when they make
+  opaque sentinel setup clearer than generated data.
 - Test names must follow `test_<subject>_<expected_behavior>_when_<condition>`, using `for_<scenario>` when it reads better.
 - Keep test functions alphabetized within each file.
-- Test API endpoints through the ninja `TestClient` fixtures (`internal_api_client`, `v1_api_client`, `authenticated_client`) using `response.data` and router-relative paths; pass `user=` (or use `authenticated_client`) for authenticated endpoints.
-- When a test must use Django's test `client` for full-URL/routing behavior, resolve URLs with `django.urls.reverse(...)` instead of hardcoding paths, and read the body via `response.json()`.
+- Test API endpoints through the ninja `TestClient` fixtures
+  (`internal_api_client`, `v1_api_client`{% if cookiecutter.use_example_api == "yes" %}, `authenticated_v1_api_client`{% endif %})
+  using `response.data` and router-relative paths.
+{% if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" -%}
+- For authenticated endpoints use `authenticated_v1_api_client`, which sends
+  a Bearer access token via `headers` (see `tests/utils.py`); do not pass
+  `user=` for JWT-authenticated routes.
+{% elif cookiecutter.use_example_api == "yes" -%}
+- For authenticated endpoints use `authenticated_v1_api_client`, or pass
+  `user=` to a bare client for session-authenticated routes.
+{% endif -%}
+- Test Django views through the `client` or `authenticated_client` fixtures.
+  Resolve URLs with `django.urls.reverse(...)` instead of hardcoding paths,
+  and read JSON bodies via `response.json()`.
 
 ## Pre-Commit And Type Checking
 

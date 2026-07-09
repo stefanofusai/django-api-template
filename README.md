@@ -92,7 +92,7 @@ uvx cookiecutter gh:stefanofusai/django-api-template
 | `description` | `A Django Ninja API service.` | Generated README and package description. Must not contain `"`, `\`, or newlines. |
 | `author_name` | `John Doe` | Package author and maintainer name. Must not contain `"`, `\`, or newlines. |
 | `author_email` | `john.doe@example.com` | Package author and maintainer email. |
-| `github_username` | `johndoe` | Badge and Dependabot assignee username. |
+| `github_username` | `johndoe` | GitHub owner (user or org) used for Dependabot assignees and the GHCR image path. |
 | `domain_name` | `example.com` | Deployment domain pre-filled into `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, and `TRAEFIK_DOMAIN`. |
 | `api_auth` | `session` | Authentication used by the example notes API: `session` (Django session auth with CSRF) or `jwt` (JWT access and refresh tokens via `django-ninja-jwt`); only takes effect when `use_example_api=yes`. |
 | `api_throttling` | `none` | Public API throttling: `none` disables throttling, `basic` enables cache-backed fixed-window throttling. |
@@ -153,6 +153,9 @@ After generation:
 uv sync --locked
 cp .env.example .env
 uv run pre-commit install --install-hooks
+mkdir -p docs/openapi
+uv run python manage.py export_openapi_schema --api=internal --output=docs/openapi/openapi-internal.json
+uv run python manage.py export_openapi_schema --api=v1 --output=docs/openapi/openapi-v1.json
 git add -A
 git commit -m "feat: initial project scaffold"
 ```

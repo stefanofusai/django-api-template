@@ -114,10 +114,12 @@ services:
       - redis-server
       - --appendonly
       - "yes"
+{%- if cookiecutter.redis == "compose" %}
       - --requirepass
       - ${REDIS_PASSWORD}
     environment:
       REDISCLI_AUTH: ${REDIS_PASSWORD}
+{%- endif %}
     healthcheck:
       test:
         - CMD

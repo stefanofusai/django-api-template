@@ -52,3 +52,10 @@ def test_drifted_file_reports_problem() -> None:
     assert len(problems) == 2
     assert "canonical {'17.6'}" in problems[0]
     assert problems[1] == "  compose/dev.yaml: {'17.5'}"
+
+
+def test_files_list_covers_ci_services_compose() -> None:
+    assert (
+        Path("{{cookiecutter.project_slug}}/.docker/compose/ci-services.yaml")
+        in check_postgres_image.FILES
+    )
