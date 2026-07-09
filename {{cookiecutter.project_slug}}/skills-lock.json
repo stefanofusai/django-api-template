@@ -1,41 +1,41 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "django-access-review": {
       "source": "getsentry/skills",
       "sourceType": "github",
       "skillPath": "skills/django-access-review/SKILL.md",
-      "computedHash": "f113820ea68a0a8d5b36b36a293da6caed8cb6f2d7115cfc12d63c448e1b7613"
+      "computedHash": "75a58e3cf7bd7f3b65402c36424623e3f43ea1e8905b07494eaaae0d97a85dd9"
     },
     "django-celery-expert": {
       "source": "vintasoftware/django-ai-plugins",
       "sourceType": "github",
       "skillPath": "plugins/django-celery-expert/skills/SKILL.md",
-      "computedHash": "31eb59e33c4251087afc81387abf26502814885921b93c9c9afa06090c3495ca"
+      "computedHash": "091f6d9928cb0fcf39707d70c5bb2c3695684b94aa2ae2e9accd25661321bbb9"
     },
     "django-expert": {
       "source": "vintasoftware/django-ai-plugins",
       "sourceType": "github",
       "skillPath": "plugins/django-expert/skills/SKILL.md",
-      "computedHash": "a6b8c224017570496d688a526fcbea74025a01cc90d9afb0977bfcc1f76af306"
+      "computedHash": "a4919acb26157e182b2d5da524f85efa8c837eaeff3596cbeadf8ec6b61702bb"
     },
     "django-perf-review": {
       "source": "getsentry/skills",
       "sourceType": "github",
       "skillPath": "skills/django-perf-review/SKILL.md",
-      "computedHash": "8f30431b3c007e2dfe7fea44f3805e2dff0f633c078512d33f9b7ebb4c71c19b"
+      "computedHash": "d45298cb3c2b06777a28a2cadbcbb4eacc1e987ade230f4f94947ad927c92033"
     },
     "django-safe-migration": {
       "source": "vintasoftware/django-ai-plugins",
       "sourceType": "github",
       "skillPath": "plugins/django-safe-migration/skills/django-safe-migration/SKILL.md",
-      "computedHash": "3d2cbf26efad43372917a71b27a1b1bee16e0be58dfed0ea3184d59c957eaa56"
+      "computedHash": "8662eda5fc3028856af3b8d44001634015b8522bc34ce4ad026531804860633a"
     },
     "postgres": {
       "source": "planetscale/database-skills",
       "sourceType": "github",
       "skillPath": "skills/postgres/SKILL.md",
-      "computedHash": "2acf9fae4fcdb6c392923708b67234828f8a9f10b10dfa5d228eaab6e9108245"
+      "computedHash": "f64f17253d3b74da106027701fc2f0ea385d4cdaf28ff80115265b9fd307c358"
     }
   }
 }

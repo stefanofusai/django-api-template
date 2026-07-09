@@ -112,3 +112,9 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: skills-lock
+        name: vendored agent skills match skills-lock.json hashes
+        entry: python scripts/check_skills_lock.py
+        language: system
+        pass_filenames: false
+        always_run: true
