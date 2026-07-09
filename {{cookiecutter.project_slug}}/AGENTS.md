@@ -137,9 +137,14 @@
 - Do not add empty optional values to `.env.example`; document optional AWS variables as commented examples.
 - Keep operational constants fixed in code unless there is a real deployment need to configure them.
 - Keep Django Ninja routers resource-oriented. Mount resource routers at their resource prefix and keep route-local paths relative.
+{%- if cookiecutter.use_example_api == "yes" %}
 - The example notes resource uses `apps.notes.controllers.NotesController`, a
   django-ninja-extra class-based controller; `/api/health` and `/api/ready`
   remain plain function-based routers on `internal_api`.
+{%- else %}
+- `/api/health` and `/api/ready` remain plain function-based routers on
+  `internal_api`.
+{%- endif %}
 {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "token" %}
 - Domain error raise sites use `ninja_extra.exceptions.APIException`
   subclasses, such as `apps.api.exceptions.InvalidTokenError`, rather than
@@ -149,7 +154,7 @@
 
 ## Testing
 
-- Organize tests by app, then by type: `tests/<app>/{integration,unit}/` (for example `tests/api/integration/`, `tests/core/unit/`, `tests/notes/integration/`). `tests/conftest.py` applies the `integration`/`unit` marker from the `integration`/`unit` path segment, so a new app's tests just need those subdirectories. Shared helpers stay at the `tests/` root (`conftest.py`, `factories.py`, `utils.py`).
+- Organize tests by app, then by type: `tests/<app>/{integration,unit}/` (for example `tests/api/integration/`, `tests/core/unit/`, `tests/notes/integration/`). `tests/conftest.py` applies the `integration`/`unit` marker from the `integration`/`unit` path segment, so a new app's tests just need those subdirectories. Shared helpers stay at the `tests/` root (`conftest.py`, `factories.py`{% if cookiecutter.use_example_api == "yes" %}, `utils.py`{% endif %}).
 - Prefix autouse fixtures with `_` (they are ambient infrastructure, never
   requested by name — see `_clear_cache`, `_zeal`, and `_broker_ready_default`
   in `tests/conftest.py`). Autouse fixtures the whole suite needs belong in
