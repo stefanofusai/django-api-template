@@ -43,10 +43,11 @@ def test_export_openapi_schema_uses_stable_operation_ids() -> None:
         "notes_get_note",
         "notes_list_notes",
         "notes_update_note",
-{%- if cookiecutter.api_auth == "token" %}
-        "tokens_create_token",
-        "tokens_list_tokens",
-        "tokens_revoke_token",
+{%- if cookiecutter.api_auth == "jwt" %}
+        "token_blacklist",
+        "token_obtain_pair",
+        "token_refresh",
+        "token_verify",
 {%- endif %}
     }
 {%- endif %}

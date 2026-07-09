@@ -28,10 +28,13 @@ class UUIDModel(models.Model):
         abstract = True
 
 
-class User(AbstractUser):
+class User(UUIDModel, AbstractUser):
     email = models.EmailField(_("email address"), unique=True)
 
     class Meta:
         ordering = ("username",)
         verbose_name = AbstractUser.Meta.verbose_name
         verbose_name_plural = AbstractUser.Meta.verbose_name_plural
+
+    def __str__(self) -> str:
+        return self.get_username()
