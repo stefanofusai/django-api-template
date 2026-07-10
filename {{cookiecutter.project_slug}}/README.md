@@ -584,11 +584,25 @@ Install docker-rollout once on each host:
 
 ```shell
 mkdir -p ~/.docker/cli-plugins
-curl -fsSL https://raw.githubusercontent.com/wowu/docker-rollout/v0.13/docker-rollout \
-  -o ~/.docker/cli-plugins/docker-rollout
-chmod +x ~/.docker/cli-plugins/docker-rollout
+(
+  set -eu
+  docker_rollout_commit=39b8066d56cc1edc76d1ae898db46623cc93bc24
+  docker_rollout_sha256=fa0df004de84747142cb627c55210aaa914bbae76666e7b95a2ac46805d81a84
+  docker_rollout_tmp=$(mktemp)
+  trap 'rm -f "$docker_rollout_tmp"' EXIT HUP INT TERM
+  curl -fsSL \
+    "https://raw.githubusercontent.com/wowu/docker-rollout/$docker_rollout_commit/docker-rollout" \
+    -o "$docker_rollout_tmp"
+  printf '%s  %s\n' "$docker_rollout_sha256" "$docker_rollout_tmp" | \
+    sha256sum -c -
+  install "$docker_rollout_tmp" ~/.docker/cli-plugins/docker-rollout
+  chmod +x ~/.docker/cli-plugins/docker-rollout
+)
 docker rollout --help
 ```
+
+Treat the commit and SHA-256 digest as one integrity pin: verify the exact
+upstream bytes and update both values together when upgrading docker-rollout.
 
 Deploy from the project root:
 

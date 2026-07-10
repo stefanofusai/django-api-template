@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+umask 077
 
 # Deploys a published release by repointing APP_VERSION in .env, pulling the
 # image, and replacing the running containers. Rollback IS this script run
@@ -36,19 +37,21 @@ command -v docker-rollout >/dev/null 2>&1 || {
 }
 {%- endif %}
 
-env_tmp=".env.tmp.$$"
+env_tmp=$(mktemp .env.tmp.XXXXXX)
 trap 'rm -f "$env_tmp"' EXIT HUP INT TERM
 
 awk -v app_version="$APP_VERSION" '
-    BEGIN { replaced = 0 }
-    !replaced && /^APP_VERSION=/ {
-        print "APP_VERSION=" app_version
-        replaced = 1
+    BEGIN { written = 0 }
+    /^APP_VERSION=/ {
+        if (!written) {
+            print "APP_VERSION=" app_version
+            written = 1
+        }
         next
     }
     { print }
     END {
-        if (!replaced) {
+        if (!written) {
             print "APP_VERSION=" app_version
         }
     }
