@@ -65,6 +65,14 @@ jobs:
         run: |
           docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/health
           docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/ready
+      - name: Probe through Traefik
+        run: |
+          if docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env config --services | grep -qx traefik; then
+            curl -fsS http://localhost/api/health
+            curl -fsS http://127.0.0.1:8082/api/ready
+            test "$(curl -sS -o /dev/null -w '%{http_code}' http://localhost/admin/login/)" = 301
+            test "$(curl -sS -o /dev/null -w '%{http_code}' http://localhost/api/ready)" = 403
+          fi
       - name: Check service states
         run: |
           docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env ps

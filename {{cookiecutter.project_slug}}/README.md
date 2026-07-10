@@ -363,15 +363,21 @@ service publishes no ports, so `FORWARDED_ALLOW_IPS=*` is safe: only services
 on the Compose network can reach it. Port 80 serves probes and lets Django
 redirect non-probe HTTP requests; port 443 serves normal traffic.
 
-During `docker rollout`, Traefik actively checks `/api/health`, retries short
+During `docker rollout`, Traefik actively checks `/api/ready`, retries short
 backend selection races, waits briefly before stopping the old API container,
 then delivers SIGTERM: gunicorn stops accepting connections and finishes
 in-flight requests for up to `GUNICORN_GRACEFUL_TIMEOUT` seconds while Traefik
 has already removed the backend from rotation. Those pieces cover both sides of
 replacement: the new backend is not relied on until its HTTP health check
 passes, and the old backend keeps serving until gunicorn finishes draining.
-Traefik deliberately uses `/api/health` for container liveness; route external
-readiness decisions through `/api/ready`, which also checks backing services.
+Docker deliberately keeps `/api/health` as its container liveness check, so a
+shared dependency outage removes the API from routing without causing a restart
+loop. The normal HTTP and HTTPS entrypoints protect `/api/ready` with an
+exact-path IP allow-list and are not the operator interface. Traefik publishes a
+separate readiness entrypoint only on host loopback; run the operator probe on
+the host (or over SSH) with
+`curl -fsS http://127.0.0.1:8082/api/ready`. Traefik's direct backend check
+bypasses public routing and continues to reach the readiness handler.
 {%- elif cookiecutter.use_traefik == "yes" and cookiecutter.traefik_tls == "external" %}
 The production stack includes Traefik. Traefik serves TLS from
 `.docker/certs/cert.pem` and `.docker/certs/key.pem`, routes only to healthy
@@ -380,21 +386,32 @@ service publishes no ports, so `FORWARDED_ALLOW_IPS=*` is safe: only services
 on the Compose network can reach it. Port 80 serves probes and lets Django
 redirect non-probe HTTP requests; port 443 serves normal traffic.
 
-During `docker rollout`, Traefik actively checks `/api/health`, retries short
+During `docker rollout`, Traefik actively checks `/api/ready`, retries short
 backend selection races, waits briefly before stopping the old API container,
 then delivers SIGTERM: gunicorn stops accepting connections and finishes
 in-flight requests for up to `GUNICORN_GRACEFUL_TIMEOUT` seconds while Traefik
 has already removed the backend from rotation. Those pieces cover both sides of
 replacement: the new backend is not relied on until its HTTP health check
 passes, and the old backend keeps serving until gunicorn finishes draining.
-Traefik deliberately uses `/api/health` for container liveness; route external
-readiness decisions through `/api/ready`, which also checks backing services.
+Docker deliberately keeps `/api/health` as its container liveness check, so a
+shared dependency outage removes the API from routing without causing a restart
+loop. The normal HTTP and HTTPS entrypoints protect `/api/ready` with an
+exact-path IP allow-list and are not the operator interface. Traefik publishes a
+separate readiness entrypoint only on host loopback; run the operator probe on
+the host (or over SSH) with
+`curl -fsS http://127.0.0.1:8082/api/ready`. Traefik's direct backend check
+bypasses public routing and continues to reach the readiness handler.
 {%- else %}
 {%- if cookiecutter.behind_proxy == "yes" %}
 Bring your own ingress. The production `api` service publishes
 `127.0.0.1:8000:8000`; put your proxy on the host in front of that loopback
 listener. The proxy must forward `Host` and overwrite client-supplied
-`X-Forwarded-Proto` so Django can enforce HTTPS without redirect loops.
+`X-Forwarded-Proto` so Django can enforce HTTPS without redirect loops. Use
+`/api/ready` for load-balancer routing and `/api/health` for process liveness.
+The application does not authenticate probes, so configure an equivalent
+private, operator-only readiness route while denying public `/api/ready`
+requests and allowing the ingress's own backend health checks. The bundled
+loopback port 8082 is not present when you bring your own ingress.
 {%- else %}
 The production `api` service publishes `127.0.0.1:8000:8000` for plain-HTTP
 private-network use with no trusted proxy in front. In this mode Django does

@@ -50,6 +50,23 @@ services:
       - traefik.enable=true
       - traefik.http.middlewares.api-retry.retry.attempts=3
       - traefik.http.middlewares.api-retry.retry.initialinterval=100ms
+      - traefik.http.middlewares.ready-allowlist.ipallowlist.sourcerange=127.0.0.0/8,::1/128
+      - traefik.http.routers.api-ready-private.entrypoints=ready
+      - traefik.http.routers.api-ready-private.rule=Path(`/api/ready`)
+      - traefik.http.routers.api-ready-private.service=api
+      - traefik.http.routers.api-ready-web.entrypoints=web
+      - traefik.http.routers.api-ready-web.middlewares=ready-allowlist
+      - traefik.http.routers.api-ready-web.priority=100
+      - traefik.http.routers.api-ready-web.rule=Path(`/api/ready`)
+      - traefik.http.routers.api-ready-websecure.entrypoints=websecure
+      - traefik.http.routers.api-ready-websecure.middlewares=ready-allowlist
+      - traefik.http.routers.api-ready-websecure.priority=100
+      - traefik.http.routers.api-ready-websecure.rule=Path(`/api/ready`)
+{%- if cookiecutter.traefik_tls == "letsencrypt" %}
+      - traefik.http.routers.api-ready-websecure.tls.certresolver=letsencrypt
+{%- else %}
+      - traefik.http.routers.api-ready-websecure.tls=true
+{%- endif %}
       - traefik.http.routers.api-web.entrypoints=web
       - traefik.http.routers.api-web.middlewares=api-retry
       - traefik.http.routers.api-web.rule=PathPrefix(`/`)
@@ -63,7 +80,7 @@ services:
 {%- endif %}
       - traefik.http.services.api.loadbalancer.healthcheck.hostname=localhost
       - traefik.http.services.api.loadbalancer.healthcheck.interval=1s
-      - traefik.http.services.api.loadbalancer.healthcheck.path=/api/health
+      - traefik.http.services.api.loadbalancer.healthcheck.path=/api/ready
       - traefik.http.services.api.loadbalancer.healthcheck.timeout=1s
       - traefik.http.services.api.loadbalancer.server.port=8000
 {%- else %}
@@ -200,6 +217,7 @@ services:
       - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
       - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
 {%- endif %}
+      - --entrypoints.ready.address=:8082
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
       - --ping=true
@@ -222,6 +240,7 @@ services:
     image: traefik:v3.7.6
     logging: *default-logging
     ports:
+      - "127.0.0.1:8082:8082"
       - "80:80"
       - "443:443"
     restart: unless-stopped

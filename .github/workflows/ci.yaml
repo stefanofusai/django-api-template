@@ -331,7 +331,9 @@ jobs:
         working-directory: /tmp/smoke/my-project
         run: |
           curl -fsS http://localhost/api/health
-          curl -fsS http://localhost/api/ready
+          curl -fsS http://127.0.0.1:8082/api/ready
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://localhost/admin/login/)" = 301
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://localhost/api/ready)" = 403
       - name: Probe host port
         if: contains(fromJSON('["external-backing", "minimal"]'), matrix.variant)
         working-directory: /tmp/smoke/my-project

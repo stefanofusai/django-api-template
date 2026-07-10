@@ -61,3 +61,6 @@ docker compose -f .docker/compose/prod.yaml --env-file=.env pull
 docker rollout -f .docker/compose/prod.yaml --env-file=.env api
 {%- endif %}
 docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --wait
+docker compose -f .docker/compose/prod.yaml --env-file=.env exec -T api \
+    curl -fsS -m 3 -o /dev/null \
+    http://127.0.0.1:8000/api/ready

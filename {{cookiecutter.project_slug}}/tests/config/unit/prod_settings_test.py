@@ -7,6 +7,25 @@ if TYPE_CHECKING:
     from faker import Faker
 
 
+def test_ci_settings_preserves_locmem_cache_configuration(faker: Faker) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {"CACHE_URL": "locmemcache://", "DJANGO_ENV": "ci"},
+        (
+            "import config.settings as s; "
+            "cache = s.CACHES['default']; "
+            "print(cache['BACKEND']); "
+            "print(cache.get('OPTIONS', {}))"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == [
+        "django.core.cache.backends.locmem.LocMemCache",
+        "{}",
+    ]
+
+
 def test_prod_settings_configures_database_timeouts(faker: Faker) -> None:
     result = _run_prod_settings_script(
         faker,
@@ -52,7 +71,49 @@ def test_prod_settings_configures_proxy_security_settings(faker: Faker) -> None:
         "True",
     ]
 
-{% else %}
+{% endif %}
+def test_prod_settings_configures_redis_cache_timeouts(faker: Faker) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {},
+        (
+            "import config.settings as s; "
+            "cache = s.CACHES['default']; "
+            "print(cache['BACKEND']); "
+            "print(cache['OPTIONS']['SOCKET_CONNECT_TIMEOUT']); "
+            "print(cache['OPTIONS']['SOCKET_TIMEOUT'])"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == [
+        "django_redis.cache.RedisCache",
+        "1",
+        "1",
+    ]
+
+
+def test_prod_settings_honors_database_timeout_overrides_when_configured(
+    faker: Faker,
+) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {
+            "DATABASE_CONNECT_TIMEOUT": "7",
+            "DATABASE_STATEMENT_TIMEOUT": "45000",
+        },
+        (
+            "import config.settings as s; "
+            "options = s.DATABASES['default']['OPTIONS']; "
+            "print(options['connect_timeout']); "
+            "print(options['options'])"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == ["7", "-c statement_timeout=45000"]
+
+{% if cookiecutter.use_traefik == "no" and cookiecutter.behind_proxy == "no" %}
 def test_prod_settings_leaves_proxy_security_settings_disabled_without_proxy(
     faker: Faker,
 ) -> None:
@@ -85,27 +146,6 @@ def test_prod_settings_leaves_proxy_security_settings_disabled_without_proxy(
     ]
 
 {% endif %}
-def test_prod_settings_honors_database_timeout_overrides_when_configured(
-    faker: Faker,
-) -> None:
-    result = _run_prod_settings_script(
-        faker,
-        {
-            "DATABASE_CONNECT_TIMEOUT": "7",
-            "DATABASE_STATEMENT_TIMEOUT": "45000",
-        },
-        (
-            "import config.settings as s; "
-            "options = s.DATABASES['default']['OPTIONS']; "
-            "print(options['connect_timeout']); "
-            "print(options['options'])"
-        ),
-    )
-
-    assert result.returncode == 0, result.stderr
-    assert result.stdout.splitlines() == ["7", "-c statement_timeout=45000"]
-
-
 def test_prod_settings_preserves_database_url_options_when_setting_timeouts(
     faker: Faker,
 ) -> None:
