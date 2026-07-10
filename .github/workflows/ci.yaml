@@ -326,6 +326,17 @@ jobs:
         run: |
           docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/health
           docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env exec api curl -fsS http://127.0.0.1:8000/api/ready
+      - name: Verify Docker socket isolation
+        if: matrix.variant == 'default'
+        working-directory: /tmp/smoke/my-project
+        run: |
+          proxy_id="$(docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env ps -q docker-socket-proxy)"
+          traefik_id="$(docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env ps -q traefik)"
+          test -z "$(docker inspect --format='{{range .Mounts}}{{println .Source .Destination}}{{end}}' "$traefik_id" | grep /var/run/docker.sock || true)"
+          test "$(docker inspect --format='{{json .HostConfig.PortBindings}}' "$proxy_id")" = '{}'
+          docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env exec docker-socket-proxy wget -O /dev/null -q 'http://127.0.0.1:2375/containers/json?all=1'
+          denial="$(docker compose -f .docker/compose/prod.yaml -f .docker/compose/ci-services.yaml --env-file=.env exec docker-socket-proxy wget -O /dev/null -S --post-data='' http://127.0.0.1:2375/containers/nonexistent/stop 2>&1 || true)"
+          printf '%s\n' "$denial" | grep -q '403 Forbidden'
       - name: Probe through Traefik
         if: matrix.variant == 'default'
         working-directory: /tmp/smoke/my-project

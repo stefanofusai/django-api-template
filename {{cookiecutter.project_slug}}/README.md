@@ -373,6 +373,14 @@ application uses the rightmost trusted client position in `X-Forwarded-For`,
 which relies on Traefik overwriting client-supplied forwarding headers.
 {%- endif %}
 
+Traefik reaches the Docker API through a dedicated socket proxy instead of
+mounting the host socket. Only the proxy joins the internal control network and
+mounts `/var/run/docker.sock`; its port 2375 is never published. The proxy
+allows read-only access to containers, events, networks, ping, and version.
+Docker POST requests and every unrelated API section remain disabled. Keep that
+list narrow when adding integrations, and update the proxy's version tag and
+digest together when reviewing Dependabot's Compose image updates.
+
 During `docker rollout`, Traefik actively checks `/api/ready`, retries short
 backend selection races, waits briefly before stopping the old API container,
 then delivers SIGTERM: gunicorn stops accepting connections and finishes
@@ -401,6 +409,14 @@ For anonymous API throttling, bundled Traefik counts as one trusted proxy. The
 application uses the rightmost trusted client position in `X-Forwarded-For`,
 which relies on Traefik overwriting client-supplied forwarding headers.
 {%- endif %}
+
+Traefik reaches the Docker API through a dedicated socket proxy instead of
+mounting the host socket. Only the proxy joins the internal control network and
+mounts `/var/run/docker.sock`; its port 2375 is never published. The proxy
+allows read-only access to containers, events, networks, ping, and version.
+Docker POST requests and every unrelated API section remain disabled. Keep that
+list narrow when adding integrations, and update the proxy's version tag and
+digest together when reviewing Dependabot's Compose image updates.
 
 During `docker rollout`, Traefik actively checks `/api/ready`, retries short
 backend selection races, waits briefly before stopping the old API container,
