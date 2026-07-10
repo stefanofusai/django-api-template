@@ -48,6 +48,21 @@ def test_deploy_script_canonicalizes_duplicate_app_versions(
     assert (tmp_path / "docker.log").read_text().splitlines() == _docker_calls()
 
 
+def test_deploy_script_exits_nonzero_when_readiness_fails(tmp_path: Path) -> None:
+    (tmp_path / ".env").write_text(
+        "DATABASE_URL=postgres://db.example.test/app\nAPP_VERSION=v0.1.0\n"
+    )
+
+    result = _run_deploy_script(
+        tmp_path,
+        "v1.2.3",
+        readiness_exit_code=READINESS_FAILURE,
+    )
+
+    assert result.returncode == READINESS_FAILURE
+    assert (tmp_path / "docker.log").read_text().splitlines() == _docker_calls()
+
+
 @pytest.mark.parametrize(
     "failure_phase",
     [
@@ -84,21 +99,6 @@ def test_deploy_script_exits_on_each_failed_docker_phase(
     ]
     expected_calls = _docker_calls()[: phases.index(failure_phase) + 1]
     assert (tmp_path / "docker.log").read_text().splitlines() == expected_calls
-
-
-def test_deploy_script_exits_nonzero_when_readiness_fails(tmp_path: Path) -> None:
-    (tmp_path / ".env").write_text(
-        "DATABASE_URL=postgres://db.example.test/app\nAPP_VERSION=v0.1.0\n"
-    )
-
-    result = _run_deploy_script(
-        tmp_path,
-        "v1.2.3",
-        readiness_exit_code=READINESS_FAILURE,
-    )
-
-    assert result.returncode == READINESS_FAILURE
-    assert (tmp_path / "docker.log").read_text().splitlines() == _docker_calls()
 
 
 def test_deploy_script_help_does_not_require_environment(tmp_path: Path) -> None:
@@ -141,20 +141,6 @@ def test_deploy_script_rejects_non_exact_version_tags(
     assert not (tmp_path / "docker.log").exists()
 
 
-{% if cookiecutter.use_traefik == "yes" -%}
-def test_deploy_script_requires_docker_rollout(tmp_path: Path) -> None:
-    (tmp_path / ".env").write_text("APP_VERSION=v0.1.0\n")
-
-    result = _run_deploy_script(tmp_path, "v1.2.3", include_rollout=False)
-
-    assert result.returncode == USAGE_ERROR
-    assert result.stderr == (
-        "docker-rollout is required for Traefik zero-downtime deploys\n"
-    )
-    assert not (tmp_path / "docker.log").exists()
-
-
-{% endif -%}
 def test_deploy_script_removes_temporary_file_when_rewrite_fails(
     tmp_path: Path,
 ) -> None:
@@ -172,6 +158,22 @@ def test_deploy_script_removes_temporary_file_when_rewrite_fails(
     assert env_path.read_text() == original
     assert list(tmp_path.glob(".env.tmp.*")) == []
     assert not (tmp_path / "docker.log").exists()
+
+
+{% if cookiecutter.use_traefik == "yes" -%}
+def test_deploy_script_requires_docker_rollout(tmp_path: Path) -> None:
+    (tmp_path / ".env").write_text("APP_VERSION=v0.1.0\n")
+
+    result = _run_deploy_script(tmp_path, "v1.2.3", include_rollout=False)
+
+    assert result.returncode == USAGE_ERROR
+    assert result.stderr == (
+        "docker-rollout is required for Traefik zero-downtime deploys\n"
+    )
+    assert not (tmp_path / "docker.log").exists()
+
+
+{% endif -%}
 
 
 def test_deploy_script_rewrites_environment_with_private_mode(
@@ -224,12 +226,14 @@ def _make_executable(path: Path, content: str) -> None:
     path.chmod(path.stat().st_mode | stat.S_IXUSR)
 
 
-def _run_deploy_script(  # noqa: PLR0913
+def _run_deploy_script({% if cookiecutter.use_traefik == "yes" %}  # noqa: PLR0913{% endif %}
     tmp_path: Path,
     *arguments: str,
     awk_exit_code: int | None = None,
     docker_failure_phase: str = "",
+{%- if cookiecutter.use_traefik == "yes" %}
     include_rollout: bool = True,
+{%- endif %}
     permissive_umask: bool = False,
     readiness_exit_code: int = 0,
 ) -> subprocess.CompletedProcess[str]:
@@ -256,8 +260,11 @@ def _run_deploy_script(  # noqa: PLR0913
             "esac\n"
         ),
     )
+{%- if cookiecutter.use_traefik == "yes" %}
     if include_rollout:
         _make_executable(bin_dir / "docker-rollout", "#!/bin/sh\nexit 0\n")
+
+{%- endif %}
 
     if awk_exit_code is not None:
         _make_executable(

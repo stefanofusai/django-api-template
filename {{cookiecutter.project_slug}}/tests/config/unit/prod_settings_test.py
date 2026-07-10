@@ -153,6 +153,29 @@ def test_prod_settings_leaves_proxy_security_settings_disabled_without_proxy(
     ]
 
 {% endif %}
+def test_prod_settings_place_whitenoise_directly_after_security_middleware(
+    faker: Faker,
+) -> None:
+    env = os.environ | _base_prod_env(faker)
+    env["PYTHONPATH"] = "src"
+    script = (
+        "import config.settings as s; "
+        "security = s.MIDDLEWARE.index('django.middleware.security.SecurityMiddleware'); "
+        "whitenoise = s.MIDDLEWARE.index('whitenoise.middleware.WhiteNoiseMiddleware'); "
+        "raise SystemExit(0 if whitenoise == security + 1 else 1)"
+    )
+
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        check=False,
+        env=env,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
 def test_prod_settings_preserves_database_url_options_when_setting_timeouts(
     faker: Faker,
 ) -> None:
@@ -184,56 +207,6 @@ def test_prod_settings_preserves_database_url_options_when_setting_timeouts(
     ]
 
 
-def test_prod_settings_place_whitenoise_directly_after_security_middleware(
-    faker: Faker,
-) -> None:
-    env = os.environ | _base_prod_env(faker)
-    env["PYTHONPATH"] = "src"
-    script = (
-        "import config.settings as s; "
-        "security = s.MIDDLEWARE.index('django.middleware.security.SecurityMiddleware'); "
-        "whitenoise = s.MIDDLEWARE.index('whitenoise.middleware.WhiteNoiseMiddleware'); "
-        "raise SystemExit(0 if whitenoise == security + 1 else 1)"
-    )
-
-    result = subprocess.run(
-        [sys.executable, "-c", script],
-        capture_output=True,
-        check=False,
-        env=env,
-        text=True,
-    )
-
-    assert result.returncode == 0, result.stderr
-
-
-def test_prod_settings_reject_insecure_secret_key_when_scaffold_value_is_kept(
-    faker: Faker,
-) -> None:
-    result = _import_prod_settings(
-        faker,
-        {"SECRET_KEY": "django-insecure-mock-secret-key"},
-    )
-
-    assert result.returncode != 0
-    assert (
-        "SECRET_KEY must be replaced with a securely generated value in production."
-        in result.stderr
-    )
-
-
-def test_prod_settings_reject_example_allowed_host_when_example_domain_is_configured(
-    faker: Faker,
-) -> None:
-    result = _import_prod_settings(
-        faker,
-        {"ALLOWED_HOSTS": "localhost,127.0.0.1,example.com"},
-    )
-
-    assert result.returncode != 0
-    assert "ALLOWED_HOSTS must not contain example.com in production." in result.stderr
-
-
 def test_prod_settings_reject_default_database_password_when_scaffold_value_is_kept(
     faker: Faker,
 ) -> None:
@@ -253,20 +226,50 @@ def test_prod_settings_reject_default_database_password_when_scaffold_value_is_k
     )
 
 
-{% if cookiecutter.use_cors == "yes" -%}
-def test_prod_settings_reject_missing_cors_allowed_origins_when_cors_is_enabled(
+{% if cookiecutter.redis == "compose" -%}
+def test_prod_settings_reject_default_redis_password_when_scaffold_value_is_kept(
     faker: Faker,
 ) -> None:
     result = _import_prod_settings(
         faker,
-        {"CORS_ALLOWED_ORIGINS": ""},
+        {"REDIS_PASSWORD": "{{ cookiecutter.project_slug.replace('-', '_') }}"},
     )
 
     assert result.returncode != 0
-    assert "CORS_ALLOWED_ORIGINS must not be empty in production." in result.stderr
+    assert (
+        "The default Redis password must be replaced with a securely "
+        "generated value in production." in result.stderr
+    )
 
 
 {% endif -%}
+def test_prod_settings_reject_example_allowed_host_when_example_domain_is_configured(
+    faker: Faker,
+) -> None:
+    result = _import_prod_settings(
+        faker,
+        {"ALLOWED_HOSTS": "localhost,127.0.0.1,example.com"},
+    )
+
+    assert result.returncode != 0
+    assert "ALLOWED_HOSTS must not contain example.com in production." in result.stderr
+
+
+def test_prod_settings_reject_insecure_secret_key_when_scaffold_value_is_kept(
+    faker: Faker,
+) -> None:
+    result = _import_prod_settings(
+        faker,
+        {"SECRET_KEY": "django-insecure-mock-secret-key"},
+    )
+
+    assert result.returncode != 0
+    assert (
+        "SECRET_KEY must be replaced with a securely generated value in production."
+        in result.stderr
+    )
+
+
 {% if cookiecutter.redis == "compose" -%}
 {% if cookiecutter.use_celery != "none" -%}
 def test_prod_settings_reject_mismatched_broker_password_when_redis_is_compose(
@@ -294,21 +297,6 @@ def test_prod_settings_reject_mismatched_cache_password_when_redis_is_compose(
     assert "CACHE_URL password must match REDIS_PASSWORD." in result.stderr
 
 
-def test_prod_settings_reject_default_redis_password_when_scaffold_value_is_kept(
-    faker: Faker,
-) -> None:
-    result = _import_prod_settings(
-        faker,
-        {"REDIS_PASSWORD": "{{ cookiecutter.project_slug.replace('-', '_') }}"},
-    )
-
-    assert result.returncode != 0
-    assert (
-        "The default Redis password must be replaced with a securely "
-        "generated value in production." in result.stderr
-    )
-
-
 {% endif -%}
 {% if cookiecutter.postgres == "compose" -%}
 def test_prod_settings_reject_mismatched_database_password_when_postgres_is_compose(
@@ -321,6 +309,20 @@ def test_prod_settings_reject_mismatched_database_password_when_postgres_is_comp
 
     assert result.returncode != 0
     assert "DATABASE_URL password must match POSTGRES_PASSWORD." in result.stderr
+
+
+{% endif -%}
+{% if cookiecutter.use_cors == "yes" -%}
+def test_prod_settings_reject_missing_cors_allowed_origins_when_cors_is_enabled(
+    faker: Faker,
+) -> None:
+    result = _import_prod_settings(
+        faker,
+        {"CORS_ALLOWED_ORIGINS": ""},
+    )
+
+    assert result.returncode != 0
+    assert "CORS_ALLOWED_ORIGINS must not be empty in production." in result.stderr
 
 
 {% endif -%}
