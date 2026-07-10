@@ -39,7 +39,10 @@ def test_prod_settings_configures_database_timeouts(faker: Faker) -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout.splitlines() == ["5", "-c statement_timeout=15000"]
+    assert result.stdout.splitlines() == [
+        "5",
+        "-c lock_timeout=5000 -c statement_timeout=15000",
+    ]
 
 {% if cookiecutter.use_traefik == "yes" or cookiecutter.behind_proxy == "yes" %}
 def test_prod_settings_configures_proxy_security_settings(faker: Faker) -> None:
@@ -100,6 +103,7 @@ def test_prod_settings_honors_database_timeout_overrides_when_configured(
         faker,
         {
             "DATABASE_CONNECT_TIMEOUT": "7",
+            "DATABASE_LOCK_TIMEOUT": "8000",
             "DATABASE_STATEMENT_TIMEOUT": "45000",
         },
         (
@@ -111,7 +115,10 @@ def test_prod_settings_honors_database_timeout_overrides_when_configured(
     )
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout.splitlines() == ["7", "-c statement_timeout=45000"]
+    assert result.stdout.splitlines() == [
+        "7",
+        "-c lock_timeout=8000 -c statement_timeout=45000",
+    ]
 
 {% if cookiecutter.use_traefik == "no" and cookiecutter.behind_proxy == "no" %}
 def test_prod_settings_leaves_proxy_security_settings_disabled_without_proxy(
@@ -172,7 +179,7 @@ def test_prod_settings_preserves_database_url_options_when_setting_timeouts(
     assert result.returncode == 0, result.stderr
     assert result.stdout.splitlines() == [
         "10",
-        "-c statement_timeout=45000",
+        "-c lock_timeout=5000 -c statement_timeout=45000",
         "require",
     ]
 

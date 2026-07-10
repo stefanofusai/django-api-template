@@ -165,6 +165,10 @@ target local PostgreSQL and Redis containers:
   worker process.
 {%- endif %}
 - `DATABASE_URL` points Django at the `postgres` service.
+- `DATABASE_CONNECT_TIMEOUT`, `DATABASE_LOCK_TIMEOUT`, and
+  `DATABASE_STATEMENT_TIMEOUT` optionally tune database connections. Production
+  migrations inherit the lock timeout while disabling only the total statement
+  timeout.
 - `GUNICORN_*` values are required by the production web entrypoint.
 {%- if cookiecutter.api_throttling == "basic" and cookiecutter.use_traefik == "no" and cookiecutter.behind_proxy == "yes" %}
 - `TRUSTED_PROXY_COUNT` defaults to one and sets how many trusted proxies sit
@@ -349,6 +353,14 @@ backward-incompatible migration has an approved deploy plan, add
 `django_migration_linter.IgnoreMigration()` to that migration's `operations`
 list to mark the exception explicitly. Private GHCR packages require
 `docker login ghcr.io` on the host with a token that can read packages.
+
+Production migrations intentionally disable the total statement timeout so a
+safe long-running migration can finish, but they limit lock acquisition to five
+seconds by default through `DATABASE_LOCK_TIMEOUT`. A lock-timeout failure
+aborts API startup without interrupting the transaction holding the lock; retry
+the deployment after that transaction finishes. Do not set the timeout to `0`
+outside planned maintenance because zero permits an indefinitely blocked
+deployment.
 
 Run management commands against the running production stack through the
 wrapper script. The template deliberately ships no registration endpoints, so

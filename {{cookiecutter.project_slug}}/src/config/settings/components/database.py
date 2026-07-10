@@ -9,7 +9,10 @@ DEFAULT_DATABASE_OPTIONS = DEFAULT_DATABASE.setdefault("OPTIONS", {})
 DEFAULT_DATABASE_OPTIONS.setdefault(
     "connect_timeout", env.int("DATABASE_CONNECT_TIMEOUT", default=5)
 )
+DATABASE_LOCK_TIMEOUT = env.int("DATABASE_LOCK_TIMEOUT", default=5_000)
+DATABASE_STATEMENT_TIMEOUT = env.int("DATABASE_STATEMENT_TIMEOUT", default=15_000)
 DEFAULT_DATABASE_OPTIONS["options"] = (
-    f"-c statement_timeout={env.int('DATABASE_STATEMENT_TIMEOUT', default=15_000)}"
+    f"-c lock_timeout={DATABASE_LOCK_TIMEOUT} "
+    f"-c statement_timeout={DATABASE_STATEMENT_TIMEOUT}"
 )
 DATABASES = {"default": DEFAULT_DATABASE}
