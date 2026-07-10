@@ -175,8 +175,12 @@ jobs:
             extra-args: project_name='My  Project'
           - case: bad-slug-length
             extra-args: project_slug=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-          - case: bad-username
-            extra-args: github_username=-bad-
+          - case: bad-username-consecutive-hyphens
+            extra-args: github_username=bad--username
+          - case: bad-username-leading-hyphen
+            extra-args: github_username=-bad
+          - case: bad-username-trailing-hyphen
+            extra-args: github_username=bad-
     steps:
       - name: Check out repository
         uses: actions/checkout@v6.0.3

@@ -90,6 +90,24 @@ def test_pre_gen_accepts_default_author_email() -> None:
     module.main()
 
 
+@pytest.mark.parametrize(
+    "github_username",
+    [
+        pytest.param("a", id="one-character"),
+        pytest.param("a" * 39, id="39-characters"),
+        pytest.param("a-b9", id="internal-hyphen"),
+        pytest.param("MixedCase9", id="mixed-alphanumeric-case"),
+    ],
+)
+def test_pre_gen_accepts_valid_github_username(github_username: str) -> None:
+    module = _load_hook_module(
+        PRE_GEN_HOOK_PATH,
+        TEST_CONTEXT | {"github_username": github_username},
+    )
+
+    module.main()
+
+
 def test_pre_gen_rejects_author_email_with_double_quote() -> None:
     module = _load_hook_module(
         PRE_GEN_HOOK_PATH,
@@ -100,6 +118,29 @@ def test_pre_gen_rejects_author_email_with_double_quote() -> None:
         module.main()
 
     assert "author_email" in str(raised.value)
+
+
+@pytest.mark.parametrize(
+    "github_username",
+    [
+        pytest.param("a" * 40, id="40-characters"),
+        pytest.param("-ab", id="leading-hyphen"),
+        pytest.param("ab-", id="trailing-hyphen"),
+        pytest.param("a--b", id="consecutive-hyphens"),
+    ],
+)
+def test_pre_gen_rejects_invalid_github_username(github_username: str) -> None:
+    module = _load_hook_module(
+        PRE_GEN_HOOK_PATH,
+        TEST_CONTEXT | {"github_username": github_username},
+    )
+
+    with pytest.raises(SystemExit) as raised:
+        module.main()
+
+    message = str(raised.value)
+    assert "github_username" in message
+    assert "single hyphen separators" in message
 
 
 def test_prune_celery_skill_metadata_removes_only_celery_skill() -> None:

@@ -11,7 +11,9 @@ DOMAIN_NAME_PATTERN = re.compile(
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 FORBIDDEN_CHARS_PATTERN = re.compile(r'["\\\n\r]')
 GITHUB_USERNAME = {{ cookiecutter.github_username | tojson }}
-GITHUB_USERNAME_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$")
+GITHUB_USERNAME_PATTERN = re.compile(
+    r"^(?=.{1,39}$)[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$"
+)
 MAX_SLUG_LENGTH = 50
 PROJECT_SLUG = {{ cookiecutter.project_slug | tojson }}
 SLUG_PATTERN = re.compile(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*$")
@@ -61,8 +63,10 @@ def main() -> None:
 
     if not GITHUB_USERNAME_PATTERN.fullmatch(GITHUB_USERNAME):
         sys.exit(
-            "github_username must be a valid GitHub username because it is "
-            "written into dependabot.yml."
+            "github_username must be 1 to 39 characters, start and end with "
+            "a letter or digit, and contain only letters, digits, and single "
+            "hyphen separators because it is written into Dependabot and "
+            "GHCR configuration."
         )
 
 
