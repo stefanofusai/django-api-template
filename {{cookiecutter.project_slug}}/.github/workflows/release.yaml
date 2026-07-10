@@ -8,14 +8,37 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  dependency-audit:
+    name: Dependency audit
+    uses: ./.github/workflows/dependency-audit.yaml
+  deployment-checks:
+    name: Deployment checks
+    uses: ./.github/workflows/deployment-checks.yaml
+  docker-checks:
+    name: Docker checks
+    uses: ./.github/workflows/docker-checks.yaml
+  migration-checks:
+    name: Migration checks
+    uses: ./.github/workflows/migration-checks.yaml
+  pre-commit:
+    name: Pre-commit
+    uses: ./.github/workflows/pre-commit.yaml
   tests:
     name: Tests
     uses: ./.github/workflows/tests.yaml
   publish-release-image:
     name: Publish release image
-    needs: tests
+    needs:
+      - dependency-audit
+      - deployment-checks
+      - docker-checks
+      - migration-checks
+      - pre-commit
+      - tests
     permissions:
+      attestations: write
       contents: read
+      id-token: write
       packages: write
     runs-on: ubuntu-latest
     steps:
@@ -43,6 +66,7 @@ jobs:
         id: image
         run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
       - name: Build and push release image
+        id: build
         uses: docker/build-push-action@v7.2.0
         with:
           context: .
@@ -52,3 +76,10 @@ jobs:
           cache-from: type=gha,scope=prod
           tags: |
             ${{ steps.image.outputs.name }}:${{ github.ref_name }}
+      - name: Attest release image provenance
+        uses: actions/attest@v4.1.1
+        with:
+          create-storage-record: false
+          push-to-registry: true
+          subject-digest: ${{ steps.build.outputs.digest }}
+          subject-name: ${{ steps.image.outputs.name }}

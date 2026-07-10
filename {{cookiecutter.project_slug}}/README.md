@@ -316,9 +316,30 @@ docker compose -f .docker/compose/prod.yaml --env-file=.env up -d --wait
 
 For release-based deploys, bump `[project] version` in `pyproject.toml`,
 commit, tag `v<version>`, and push the tag. Only strict `vX.Y.Z` tags trigger
-the release workflow. It runs the full test suite before publishing
-`ghcr.io/<owner>/<repo>:v<version>` and refuses tags that do not match the
-project version, keeping image tags aligned with Sentry release names.
+the release workflow. It runs the dependency audit, deployment checks, Docker
+checks, migration checks, pre-commit, and the full test suite before publishing
+`ghcr.io/<owner>/<repo>:v<version>`. It refuses tags that do not match the
+project version, keeping image tags aligned with Sentry release names, and
+attests the exact digest pushed to GHCR.
+
+Before deploying an immutable version tag, authenticate to GHCR and verify its
+provenance against this repository:
+
+```shell
+docker login ghcr.io
+gh attestation verify \
+  oci://ghcr.io/{{ cookiecutter.github_username | lower }}/{{ cookiecutter.project_slug }}:v<version> \
+  --repo={{ cookiecutter.github_username }}/{{ cookiecutter.project_slug }}
+```
+
+GitHub provides artifact attestations for public repositories on current plans;
+private and internal repositories require GitHub Enterprise Cloud. Do not make
+a repository or package public solely to enable attestations. If the repository
+plan cannot create them, the release workflow must fail and its image must not
+be deployed.
+
+Deploy only when the image tag, project version, and attestation agree. A tag
+or image whose attestation fails verification is not a valid release.
 
 The production Compose file pulls
 `ghcr.io/{{ cookiecutter.github_username | lower }}/{{ cookiecutter.project_slug }}`

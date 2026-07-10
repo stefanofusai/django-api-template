@@ -99,6 +99,18 @@
 - When adding, renaming, or removing generated-project workflow jobs, update
   repository branch protection required status checks to match each job's
   rendered `name`.
+- Keep the release workflow dependent on every reusable production gate before
+  publishing. The tag-only release gates are not branch-protection checks; the
+  direct pull-request and push workflows keep the required status names
+  `Audit dependencies`, `Build Docker images`, `Check deployment settings`,
+  `Check migrations`, `Pre-commit`, `Pytest`, and
+  `Smoke test Docker Compose`.
+- Give each reusable workflow a stable, file-specific concurrency group;
+  `github.workflow` resolves to the caller and would make parallel release
+  gates cancel one another.
+- Keep release provenance bound to the exact digest pushed to GHCR, with only
+  read-only contents plus attestations, identity-token, and package write
+  permissions.
 
 ## Django And Configuration
 
