@@ -75,12 +75,12 @@ Compose deployment defaults, and CI gates for the baked project.
 
 - Docker Compose >= 5.3.0 for `pre_start` lifecycle hooks
 - Python 3.14
-- [uv](https://docs.astral.sh/uv/)
+- [uv 0.11.19](https://docs.astral.sh/uv/)
 
 ## Usage
 
 ```shell
-uvx cookiecutter gh:stefanofusai/django-api-template
+uvx --from=cookiecutter==2.7.1 cookiecutter gh:stefanofusai/django-api-template
 ```
 
 ## Variables

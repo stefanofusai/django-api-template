@@ -108,13 +108,19 @@ repos:
         always_run: true
       - id: root-tests
         name: root guard-script unit tests
-        entry: uvx pytest tests
+        entry: uv run --locked pytest tests
         language: system
         pass_filenames: false
         always_run: true
       - id: skills-lock
         name: vendored agent skills match skills-lock.json hashes
         entry: python scripts/check_skills_lock.py
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: toolchain-pins
+        name: root and generated toolchain pins agree
+        entry: python scripts/check_toolchain_pins.py
         language: system
         pass_filenames: false
         always_run: true

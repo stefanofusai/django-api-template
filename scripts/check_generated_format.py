@@ -78,7 +78,9 @@ def main() -> int:
 def _bake(name: str, knobs: list[str], tmp_dir: str) -> Optional[Path]:
     result = subprocess.run(
         [
-            "uvx",
+            "uv",
+            "run",
+            "--locked",
             "cookiecutter",
             str(REPO_ROOT),
             "-o",

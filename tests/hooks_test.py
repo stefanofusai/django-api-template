@@ -1,6 +1,7 @@
 import contextlib
 import json
 import re
+import subprocess
 import tempfile
 import types
 from pathlib import Path
@@ -82,6 +83,43 @@ def test_parse_compose_version_returns_none_without_digits() -> None:
     module = _load_hook_module()
 
     assert module._parse_compose_version("no digits here") is None
+
+
+def test_post_gen_accepts_required_uv_with_build_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load_hook_module()
+    calls = []
+    monkeypatch.setattr(module.shutil, "which", lambda executable: f"/bin/{executable}")
+
+    def run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        stdout = "uv 0.11.19 (7b2cff1c3 2026-06-03)\n" if "--version" in command else ""
+
+        return subprocess.CompletedProcess(command, 0, stdout=stdout)
+
+    monkeypatch.setattr(module.subprocess, "run", run)
+
+    module._lock_with_uv()
+
+    assert calls == [["uv", "--version"], ["uv", "lock"]]
+
+
+def test_post_gen_rejects_incompatible_uv(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = _load_hook_module()
+    monkeypatch.setattr(module.shutil, "which", lambda executable: f"/bin/{executable}")
+    monkeypatch.setattr(
+        module.subprocess,
+        "run",
+        lambda *args, **kwargs: module.subprocess.CompletedProcess(
+            args[0],
+            0,
+            stdout="uv 0.11.18\n",
+        ),
+    )
+
+    with pytest.raises(SystemExit, match=r"uv 0\.11\.19 is required"):
+        module._lock_with_uv()
 
 
 def test_pre_gen_accepts_default_author_email() -> None:

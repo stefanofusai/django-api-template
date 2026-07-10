@@ -132,7 +132,7 @@ jobs:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ runner.os }}-${{ hashFiles('{{cookiecutter.project_slug}}/.pre-commit-config.yaml') }}
       - name: Bake project
-        run: uvx cookiecutter . -o /tmp/bake --no-input ${{ matrix.extra-args }}
+        run: uv run --locked cookiecutter . -o /tmp/bake --no-input ${{ matrix.extra-args }}
       - name: Assert lockfile exists
         working-directory: /tmp/bake/${{ matrix.slug }}
         run: test -f uv.lock
@@ -194,7 +194,7 @@ jobs:
         uses: astral-sh/setup-uv@v8.2.0
       - name: Verify invalid input is rejected
         run: |
-          if uvx cookiecutter . -o /tmp/bake --no-input ${{ matrix.extra-args }}; then
+          if uv run --locked cookiecutter . -o /tmp/bake --no-input ${{ matrix.extra-args }}; then
             echo "expected bake to fail" && exit 1
           fi
           if find /tmp/bake -mindepth 1 -maxdepth 1 -type d | grep .; then
@@ -215,7 +215,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
       - name: Bake project
-        run: uvx cookiecutter . -o /tmp/bake --no-input
+        run: uv run --locked cookiecutter . -o /tmp/bake --no-input
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.1.0
       - name: Build production image
@@ -272,7 +272,7 @@ jobs:
       - name: Show Docker Compose version
         run: docker compose version
       - name: Bake project
-        run: uvx cookiecutter . -o /tmp/smoke --no-input ${{ matrix.extra-args }}
+        run: uv run --locked cookiecutter . -o /tmp/smoke --no-input ${{ matrix.extra-args }}
       - name: Prepare default production env file
         if: matrix.variant == 'default'
         working-directory: /tmp/smoke/my-project
@@ -396,4 +396,4 @@ jobs:
           path: ~/.cache/pre-commit
           key: pre-commit-root-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Run pre-commit
-        run: uvx pre-commit run --all-files
+        run: uv run --locked pre-commit run --all-files

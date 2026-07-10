@@ -29,9 +29,10 @@ USE_EXAMPLE_API = {{cookiecutter.use_example_api | tojson}}
 USE_S3_MEDIA = {{cookiecutter.use_s3_media | tojson}}
 USE_SENTRY = {{cookiecutter.use_sentry | tojson}}
 USE_TRAEFIK = {{cookiecutter.use_traefik | tojson}}
+UV_VERSION = "0.11.19"
 UV_LOCK_WARNING = (
     "WARNING: uv.lock was not generated; CI, the ty hook, and uv-audit use "
-    "--locked and will fail until you run uv lock"
+    f"--locked and will fail until you install uv {UV_VERSION} and run uv lock"
 )
 
 REMOVED_DIRS = [
@@ -166,13 +167,7 @@ def main() -> None:
     else:
         print(GIT_INIT_WARNING)
 
-    if shutil.which("uv"):
-        try:
-            subprocess.run(["uv", "lock"], check=True)
-        except subprocess.CalledProcessError:
-            print(UV_LOCK_WARNING)
-    else:
-        print(UV_LOCK_WARNING)
+    _lock_with_uv()
 
     _warn_on_unsupported_compose()
 
@@ -189,6 +184,41 @@ def main() -> None:
 
 
 # Utils
+
+
+def _lock_with_uv() -> None:
+    if not shutil.which("uv"):
+        print(UV_LOCK_WARNING)
+        return
+
+    try:
+        version_result = subprocess.run(
+            ["uv", "--version"],
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise SystemExit(
+            f"post_gen_project: uv {UV_VERSION} is required; install that "
+            "version and regenerate the project"
+        ) from error
+
+    if version_result.stdout.split()[:2] != ["uv", UV_VERSION]:
+        raise SystemExit(
+            f"post_gen_project: uv {UV_VERSION} is required; install that "
+            "version and regenerate the project"
+        )
+
+    try:
+        subprocess.run(["uv", "lock"], check=True)
+
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise SystemExit(
+            f"post_gen_project: uv lock failed with required uv {UV_VERSION}; "
+            "resolve the reported error and regenerate the project"
+        ) from error
 
 
 def _parse_compose_version(output: str) -> tuple[int, int, int] | None:

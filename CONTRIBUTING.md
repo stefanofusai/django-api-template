@@ -9,7 +9,8 @@ generated Django application.
 Edit the template, then bake a project and run checks inside the bake:
 
 ```shell
-uvx cookiecutter . --no-input -o /tmp/bake
+uv sync --locked
+uv run --locked cookiecutter . -o /tmp/bake --no-input
 cd /tmp/bake/my-project
 cp .env.example .env
 docker compose -f .docker/compose/dev.yaml --env-file=.env up -d --wait postgres
@@ -23,7 +24,7 @@ Tests connect to the dev-compose Postgres on `localhost:5432` and honor a
 For template-level changes, also run the root pre-commit hooks:
 
 ```shell
-uvx pre-commit run --all-files
+uv run --locked pre-commit run --all-files
 ```
 
 CI bakes the template on every pull request, runs the baked test suite and
