@@ -49,6 +49,11 @@ def test_clear_expired_sessions_deletes_expired_rows_when_dispatched_eagerly(
 
     assert not Session.objects.filter(pk=expired.pk).exists()
     assert Session.objects.filter(pk=live.pk).exists()
+
+
+def test_clear_expired_sessions_uses_at_least_once_delivery_semantics() -> None:
+    assert clear_expired_sessions.acks_late is True
+    assert clear_expired_sessions.reject_on_worker_lost is True
 {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
 
 
@@ -88,4 +93,9 @@ def test_send_email_delivers_message_when_dispatched_eagerly(faker: Faker) -> No
     assert mail.outbox[0].from_email == settings.DEFAULT_FROM_EMAIL
     assert mail.outbox[0].subject == subject
     assert mail.outbox[0].to == [recipient]
+
+
+def test_send_email_uses_at_most_once_delivery_semantics() -> None:
+    assert send_email.acks_late is False
+    assert send_email.reject_on_worker_lost is False
 {%- endif %}

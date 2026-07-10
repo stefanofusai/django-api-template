@@ -208,6 +208,15 @@ messages with `django.core.mail.send_mail(...)`.
 {%- endif %}
 {%- endif %}
 
+{% if cookiecutter.email_provider != "none" and cookiecutter.use_celery != "none" -%}
+The bundled `send_email` task uses at-most-once delivery: Celery acknowledges
+the task before execution so a worker failure after sending cannot trigger
+broker redelivery. The message can therefore be lost if the worker or process
+fails before delivery completes. For durable, business-critical email, use a
+project-specific transactional outbox and a provider idempotency key where the
+provider supports one.
+{%- endif %}
+
 {% if cookiecutter.use_celery == "worker+beat" -%}
 Periodic task schedules are managed in Django Admin through
 django-celery-beat's `DatabaseScheduler`. Run exactly one `celery-beat`

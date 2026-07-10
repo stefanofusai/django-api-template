@@ -21,7 +21,7 @@ def flush_expired_tokens() -> None:
 {%- if cookiecutter.email_provider != "none" %}
 
 
-@shared_task
+@shared_task(acks_late=False, reject_on_worker_lost=False)
 def send_email(*, message: str, recipient_list: list[str], subject: str) -> None:
     send_mail(
         from_email=None, message=message, recipient_list=recipient_list, subject=subject

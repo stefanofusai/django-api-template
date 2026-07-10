@@ -139,8 +139,14 @@
 {%- endif %}
 {%- if cookiecutter.use_celery != "none" %}
 - Celery results are opt-in per task: use `@shared_task(ignore_result=False)`
-  when a task's result must be persisted; tasks are at-least-once
-  (`acks_late` + `reject_on_worker_lost`), so keep them idempotent.
+  when a task's result must be persisted. Tasks use at-least-once delivery
+  (`acks_late` + `reject_on_worker_lost`) by default, so keep them idempotent.
+{%- if cookiecutter.email_provider != "none" %}
+- `apps.core.tasks.send_email` deliberately overrides both settings for
+  at-most-once delivery because sending email is not idempotent. The task may
+  lose a message during worker failure; preserve the exception unless replacing
+  it with a transactional outbox and provider idempotency key.
+{%- endif %}
 {%- endif %}
 - Do not add empty optional values to `.env.example`; document optional AWS variables as commented examples.
 - Keep operational constants fixed in code unless there is a real deployment need to configure them.
