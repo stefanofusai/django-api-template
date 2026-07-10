@@ -54,7 +54,12 @@
   `check-github-workflows`, `CACHE_URL` before `DATABASE_URL`,
   `../../src:/app/src` before `media_data:/app/media`, and `docker` before
   `github-actions`.
-- Put blank lines around control-flow blocks and between their branches. Apply this to `if`/`elif`/`else`, `try`/`except`/`else`/`finally`, `for`, `while`, `with` context managers, and other multi-line control blocks.
+- Separate each multi-line control-flow statement from adjacent statements with
+  one blank line. Within compound control-flow statements, insert one blank
+  line immediately before every continuation clause, including `elif`, `else`,
+  `except`, and `finally`. Apply this to `if`, `try`, `for`, `while`, `with`,
+  and equivalent constructs. For example, leave a blank line between a `try`
+  suite and its first `except` clause.
 - At module scope, order declaration blocks as call-style markers such as
   `pytestmark`, then constants, then variables. Separate each block with a
   blank line, and keep constants blocks prefixed and suffixed by a blank line
