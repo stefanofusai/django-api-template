@@ -81,6 +81,52 @@ def test_ninja_extra_throttle_rates_default_to_empty_when_env_is_unset() -> None
     assert settings.NINJA_EXTRA["THROTTLE_RATES"] == {}
 
 
+def test_ninja_num_proxies_matches_deployment_topology() -> None:
+    assert settings.NINJA_NUM_PROXIES is not None
+    assert settings.NINJA_EXTRA["NUM_PROXIES"] == settings.NINJA_NUM_PROXIES
+    assert settings.NINJA_NUM_PROXIES == {% if cookiecutter.use_traefik == "yes" or cookiecutter.behind_proxy == "yes" %}1{% else %}0{% endif %}
+
+
+{% if cookiecutter.use_traefik == "no" and cookiecutter.behind_proxy == "yes" -%}
+def test_ninja_num_proxies_honors_trusted_proxy_count() -> None:
+    env = os.environ | {
+        "PYTHONPATH": "src",
+        "TRUSTED_PROXY_COUNT": "2",
+    }
+    script = (
+        "import json; import config.settings as s; "
+        "print(json.dumps([s.NINJA_NUM_PROXIES, s.NINJA_EXTRA['NUM_PROXIES']]))"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        check=False,
+        env=env,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == [2, 2]
+
+
+def test_ninja_num_proxies_rejects_negative_trusted_proxy_count() -> None:
+    env = os.environ | {
+        "PYTHONPATH": "src",
+        "TRUSTED_PROXY_COUNT": "-1",
+    }
+    result = subprocess.run(
+        [sys.executable, "-c", "import config.settings"],
+        capture_output=True,
+        check=False,
+        env=env,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "TRUSTED_PROXY_COUNT must not be negative." in result.stderr
+
+
+{% endif -%}
 def test_ninja_extra_throttle_rates_are_populated_when_env_is_set() -> None:
     env = os.environ | {
         "API_THROTTLE_ANON_RATE": "60/minute",

@@ -60,8 +60,15 @@ def test_authenticated_users_get_separate_counters(
 
 @override_settings(API_THROTTLE_ANON_RATE="2/min")
 def test_anonymous_ips_get_separate_counters(client: Client) -> None:
-    headers = {"X-Forwarded-For": "198.51.100.10"}
-    headers_1 = {"X-Forwarded-For": "198.51.100.11"}
+{%- if cookiecutter.use_traefik == "yes" or cookiecutter.behind_proxy == "yes" %}
+    headers = {"X-Forwarded-For": "203.0.113.10, 198.51.100.10"}
+    headers_1 = {"X-Forwarded-For": "203.0.113.10, 198.51.100.11"}
+{%- else %}
+    client = Client(REMOTE_ADDR="198.51.100.10")
+    client_1 = Client(REMOTE_ADDR="198.51.100.11")
+    headers: dict[str, str] = {}
+    headers_1: dict[str, str] = {}
+{%- endif %}
 
     assert client.get("/api/v1/notes", headers=headers).status_code in {
         HTTPStatus.UNAUTHORIZED,
@@ -75,10 +82,43 @@ def test_anonymous_ips_get_separate_counters(client: Client) -> None:
         client.get("/api/v1/notes", headers=headers).status_code
         == HTTPStatus.TOO_MANY_REQUESTS
     )
-    assert client.get("/api/v1/notes", headers=headers_1).status_code in {
+{%- if cookiecutter.use_traefik == "yes" or cookiecutter.behind_proxy == "yes" %}
+    response = client.get("/api/v1/notes", headers=headers_1)
+{%- else %}
+    response = client_1.get("/api/v1/notes", headers=headers_1)
+{%- endif %}
+
+    assert response.status_code in {
         HTTPStatus.UNAUTHORIZED,
         HTTPStatus.FORBIDDEN,
     }
+
+
+@override_settings(API_THROTTLE_ANON_RATE="2/min")
+def test_anonymous_requests_cannot_reset_budget_with_untrusted_xff(
+    client: Client,
+) -> None:
+{%- if cookiecutter.use_traefik == "yes" or cookiecutter.behind_proxy == "yes" %}
+    headers = {"X-Forwarded-For": "203.0.113.10, 198.51.100.10"}
+    spoofed_headers = {"X-Forwarded-For": "203.0.113.11, 198.51.100.10"}
+{%- else %}
+    client = Client(REMOTE_ADDR="198.51.100.10")
+    headers = {"X-Forwarded-For": "203.0.113.10"}
+    spoofed_headers = {"X-Forwarded-For": "203.0.113.11"}
+{%- endif %}
+
+    assert client.get("/api/v1/notes", headers=headers).status_code in {
+        HTTPStatus.UNAUTHORIZED,
+        HTTPStatus.FORBIDDEN,
+    }
+    assert client.get("/api/v1/notes", headers=headers).status_code in {
+        HTTPStatus.UNAUTHORIZED,
+        HTTPStatus.FORBIDDEN,
+    }
+    assert (
+        client.get("/api/v1/notes", headers=spoofed_headers).status_code
+        == HTTPStatus.TOO_MANY_REQUESTS
+    )
 
 
 {% if cookiecutter.api_auth == "jwt" -%}

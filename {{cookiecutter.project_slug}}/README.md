@@ -166,6 +166,10 @@ target local PostgreSQL and Redis containers:
 {%- endif %}
 - `DATABASE_URL` points Django at the `postgres` service.
 - `GUNICORN_*` values are required by the production web entrypoint.
+{%- if cookiecutter.api_throttling == "basic" and cookiecutter.use_traefik == "no" and cookiecutter.behind_proxy == "yes" %}
+- `TRUSTED_PROXY_COUNT` defaults to one and sets how many trusted proxies sit
+  between the client and application.
+{%- endif %}
 
 {% if cookiecutter.use_celery == "worker+beat" -%}
 The development Compose file starts `api`, `celery-beat`, `celery-worker`,
@@ -362,6 +366,12 @@ API containers, and overwrites client-supplied forwarded headers. The `api`
 service publishes no ports, so `FORWARDED_ALLOW_IPS=*` is safe: only services
 on the Compose network can reach it. Port 80 serves probes and lets Django
 redirect non-probe HTTP requests; port 443 serves normal traffic.
+{%- if cookiecutter.api_throttling == "basic" %}
+
+For anonymous API throttling, bundled Traefik counts as one trusted proxy. The
+application uses the rightmost trusted client position in `X-Forwarded-For`,
+which relies on Traefik overwriting client-supplied forwarding headers.
+{%- endif %}
 
 During `docker rollout`, Traefik actively checks `/api/ready`, retries short
 backend selection races, waits briefly before stopping the old API container,
@@ -385,6 +395,12 @@ API containers, and overwrites client-supplied forwarded headers. The `api`
 service publishes no ports, so `FORWARDED_ALLOW_IPS=*` is safe: only services
 on the Compose network can reach it. Port 80 serves probes and lets Django
 redirect non-probe HTTP requests; port 443 serves normal traffic.
+{%- if cookiecutter.api_throttling == "basic" %}
+
+For anonymous API throttling, bundled Traefik counts as one trusted proxy. The
+application uses the rightmost trusted client position in `X-Forwarded-For`,
+which relies on Traefik overwriting client-supplied forwarding headers.
+{%- endif %}
 
 During `docker rollout`, Traefik actively checks `/api/ready`, retries short
 backend selection races, waits briefly before stopping the old API container,
@@ -406,17 +422,29 @@ bypasses public routing and continues to reach the readiness handler.
 Bring your own ingress. The production `api` service publishes
 `127.0.0.1:8000:8000`; put your proxy on the host in front of that loopback
 listener. The proxy must forward `Host` and overwrite client-supplied
-`X-Forwarded-Proto` so Django can enforce HTTPS without redirect loops. Use
-`/api/ready` for load-balancer routing and `/api/health` for process liveness.
-The application does not authenticate probes, so configure an equivalent
-private, operator-only readiness route while denying public `/api/ready`
-requests and allowing the ingress's own backend health checks. The bundled
-loopback port 8082 is not present when you bring your own ingress.
+`X-Forwarded-Proto` so Django can enforce HTTPS without redirect loops.
+{%- if cookiecutter.api_throttling == "basic" %}
+
+Set `TRUSTED_PROXY_COUNT` to the number of trusted proxies between the client and
+application; it defaults to one. Anonymous API throttling trusts the client
+position selected from `X-Forwarded-For`, so this is safe only when every
+ingress overwrites or correctly appends forwarding headers.
+{%- endif %}
+Use `/api/ready` for load-balancer routing and `/api/health` for process
+liveness. The application does not authenticate probes, so configure an
+equivalent private, operator-only readiness route while denying public
+`/api/ready` requests and allowing the ingress's own backend health checks. The
+bundled loopback port 8082 is not present when you bring your own ingress.
 {%- else %}
 The production `api` service publishes `127.0.0.1:8000:8000` for plain-HTTP
 private-network use with no trusted proxy in front. In this mode Django does
 not trust `X-Forwarded-Proto`, set HSTS, redirect HTTP to HTTPS, or mark
 cookies `Secure`; do not expose this listener directly to the public internet.
+{%- if cookiecutter.api_throttling == "basic" %}
+
+Anonymous API throttling uses the socket peer (`REMOTE_ADDR`) and ignores
+`X-Forwarded-For` for client identity.
+{%- endif %}
 {%- endif %}
 {%- endif %}
 
