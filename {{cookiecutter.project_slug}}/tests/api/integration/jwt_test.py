@@ -3,8 +3,10 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
+from django.test import override_settings
 
 if TYPE_CHECKING:
+    from django.test import Client
     from faker import Faker
     from ninja.testing import TestClient
 
@@ -97,23 +99,6 @@ def test_refresh_token_returns_new_access_token(
     assert response.data["access"] != pair_response.data["access"]
 
 
-def test_token_pair_returns_access_and_refresh_tokens(
-    user: User,
-    valid_password: str,
-    v1_api_client: TestClient,
-) -> None:
-    _set_password(user, valid_password)
-
-    response = v1_api_client.post(
-        "/token/pair",
-        json={"password": valid_password, "username": user.username},
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.data["access"]
-    assert response.data["refresh"]
-
-
 def test_token_pair_access_token_authenticates_notes_request(
     user: User,
     valid_password: str,
@@ -131,6 +116,67 @@ def test_token_pair_access_token_authenticates_notes_request(
     )
 
     assert response.status_code == HTTPStatus.OK
+
+
+@override_settings(AXES_FAILURE_LIMIT=2)
+def test_token_pair_locks_out_after_configured_failures(
+    client: Client,
+    user: User,
+    valid_password: str,
+) -> None:
+    _set_password(user, valid_password)
+    remote_addr = "192.0.2.1"
+    wrong_credentials = {
+        "password": f"wrong-{valid_password}",
+        "username": user.username,
+    }
+
+    first_failure = client.post(
+        "/api/v1/token/pair",
+        data=wrong_credentials,
+        content_type="application/json",
+        REMOTE_ADDR=remote_addr,
+    )
+    lockout = client.post(
+        "/api/v1/token/pair",
+        data=wrong_credentials,
+        content_type="application/json",
+        REMOTE_ADDR=remote_addr,
+    )
+    correct_credentials = client.post(
+        "/api/v1/token/pair",
+        data={"password": valid_password, "username": user.username},
+        content_type="application/json",
+        REMOTE_ADDR=remote_addr,
+    )
+    different_identity = client.post(
+        "/api/v1/token/pair",
+        data={"password": valid_password, "username": user.username},
+        content_type="application/json",
+        REMOTE_ADDR="192.0.2.2",
+    )
+
+    assert first_failure.status_code == HTTPStatus.UNAUTHORIZED
+    assert lockout.status_code == HTTPStatus.TOO_MANY_REQUESTS
+    assert correct_credentials.status_code == HTTPStatus.TOO_MANY_REQUESTS
+    assert different_identity.status_code == HTTPStatus.OK
+
+
+def test_token_pair_returns_access_and_refresh_tokens(
+    user: User,
+    valid_password: str,
+    v1_api_client: TestClient,
+) -> None:
+    _set_password(user, valid_password)
+
+    response = v1_api_client.post(
+        "/token/pair",
+        json={"password": valid_password, "username": user.username},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.data["access"]
+    assert response.data["refresh"]
 
 
 # Utils

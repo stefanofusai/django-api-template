@@ -15,7 +15,7 @@ dependencies = [
 {%- if cookiecutter.use_celery != "none" %}
     "celery[redis]==5.6.3",
 {%- endif %}
-    "django[argon2]==6.0.6",
+    "django[argon2]==6.0.7",
 {%- if cookiecutter.email_provider == "resend" %}
     "django-anymail[resend]==15.0",
 {%- endif %}
