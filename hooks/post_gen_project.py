@@ -58,6 +58,7 @@ REMOVED_PATHS = [
     *(
         [
             ".docker/scripts/postgres-backup.sh",
+            "tests/config/unit/postgres_backup_script_test.py",
         ]
         if POSTGRES != "compose"
         else []
@@ -106,6 +107,7 @@ REMOVED_PATHS = [
     *(
         [
             ".docker/scripts/media-backup.sh",
+            "tests/config/unit/media_backup_script_test.py",
         ]
         if USE_S3_MEDIA == "yes"
         else []

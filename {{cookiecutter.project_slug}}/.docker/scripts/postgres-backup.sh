@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+umask 077
 
 # Dumps the bundled Compose Postgres with pg_dump custom format, restores a
 # dump into the live bundled Compose Postgres, or verifies an existing dump in a

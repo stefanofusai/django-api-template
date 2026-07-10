@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+umask 077
 
 # Archives the bundled Compose media volume through a throwaway tar container,
 # restores an archive into the live media volume, or verifies an existing archive
@@ -134,6 +135,11 @@ case $COMMAND in
         ARCHIVE=${1:?$USAGE}
         if [ ! -f "$ARCHIVE" ]; then
             echo "no such archive: $ARCHIVE" >&2
+            exit 2
+        fi
+
+        if ! tar -tzf "$ARCHIVE" >/dev/null; then
+            echo "archive cannot be read by tar: $ARCHIVE" >&2
             exit 2
         fi
 
