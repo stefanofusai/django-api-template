@@ -98,13 +98,11 @@ def _has_authorization_header(request: HttpRequest) -> bool:
 
 
 def _should_throttle_public_api_anonymous_request(request: HttpRequest) -> bool:
-    return all(
-        (
-            settings.API_THROTTLE_ANON_RATE is not None,
-            not getattr(request.user, "is_authenticated", False),
-            request.method != "OPTIONS",
-            request.path_info.startswith("/api/v1/"),
-        )
+    return (
+        settings.API_THROTTLE_ANON_RATE is not None
+        and request.method != "OPTIONS"
+        and request.path_info.startswith("/api/v1/")
+        and not getattr(request.user, "is_authenticated", False)
     )
 
 
