@@ -40,7 +40,15 @@ REMOVED_DIRS = [
     *(["src/apps/notes", "tests/notes"] if USE_EXAMPLE_API == "no" else []),
 ]
 REMOVED_PATHS = [
-    *(["tests/utils.py"] if USE_EXAMPLE_API == "no" else []),
+    *(
+        [
+            "src/apps/api/pagination.py",
+            "tests/api/unit/pagination_test.py",
+            "tests/utils.py",
+        ]
+        if USE_EXAMPLE_API == "no"
+        else []
+    ),
     *(
         [
             "src/apps/api/throttling.py",

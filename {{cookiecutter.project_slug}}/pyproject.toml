@@ -32,7 +32,9 @@ dependencies = [
     "django-environ==0.13.0",
     "django-extra-checks==0.17.0",
     "django-ninja==1.6.2",
+{%- if cookiecutter.api_throttling == "basic" or cookiecutter.use_example_api == "yes" %}
     "django-ninja-extra==0.31.5",
+{%- endif %}
 {%- if cookiecutter.use_example_api == "yes" and cookiecutter.api_auth == "jwt" %}
     "django-ninja-jwt==5.4.4",
 {%- endif %}

@@ -11,6 +11,12 @@ if TYPE_CHECKING:
     from faker import Faker
 
 
+def test_pyproject_has_ninja_extra_only_for_enabled_features() -> None:
+    dependencies = project_metadata["dependencies"]
+
+    assert ("django-ninja-extra==0.31.5" in dependencies) is {{ cookiecutter.api_throttling == "basic" or cookiecutter.use_example_api == "yes" }}
+
+
 def test_pyproject_loads_project_metadata_when_tomllib_is_available() -> None:
     assert isinstance(pyproject, dict)
     assert project_metadata == pyproject["project"]

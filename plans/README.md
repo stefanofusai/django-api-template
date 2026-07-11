@@ -33,7 +33,7 @@ order.
 | 011 | Short-circuit the throttle guard before resolving the session user | P2 | S | - | DONE |
 | 012 | Give template development a strict pinned pyproject and lockfile | P2 | M | - | DONE |
 | 013 | Give every notes pagination order a deterministic tiebreaker | P2 | M | - | DONE |
-| 014 | Remove django-ninja-extra from feature-minimal bakes | P2 | S | 012 | BLOCKED — generated uv-audit requires Django 6.0.7 security pin |
+| 014 | Remove django-ninja-extra from feature-minimal bakes | P2 | S | 012 | DONE |
 | 015 | Cover supported option interactions through rendered helpers | P2 | M | 012 | BLOCKED — generated uv-audit requires Django 6.0.7 security pin |
 | 016 | Assert production settings values, not only import survival | P2 | M | - | BLOCKED — generated uv-audit requires Django 6.0.7 security pin |
 | 017 | Automate updates for pins inside the Jinja template | P2 | M | 012 | BLOCKED — real App branch/PR exercise requires forbidden external state |

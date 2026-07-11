@@ -63,6 +63,36 @@ def test_missing_removal_entries_exit_with_actionable_message() -> None:
     assert "missing-dir" in message
 
 
+@pytest.mark.parametrize(
+    ("api_throttling", "use_example_api", "pagination_removed"),
+    [
+        pytest.param("basic", "no", True, id="throttling-only"),
+        pytest.param("basic", "yes", False, id="throttling-and-example"),
+        pytest.param("none", "no", True, id="minimal"),
+        pytest.param("none", "yes", False, id="example-only"),
+    ],
+)
+def test_pagination_removal_follows_example_api(
+    api_throttling: str,
+    use_example_api: str,
+    pagination_removed: bool,
+) -> None:
+    module = _load_hook_module(
+        context=TEST_CONTEXT
+        | {
+            "api_throttling": api_throttling,
+            "use_example_api": use_example_api,
+        }
+    )
+
+    pagination_paths = {
+        "src/apps/api/pagination.py",
+        "tests/api/unit/pagination_test.py",
+    }
+
+    assert pagination_paths.issubset(module.REMOVED_PATHS) is pagination_removed
+
+
 def test_parse_compose_version_extracts_three_part_version() -> None:
     module = _load_hook_module()
 
