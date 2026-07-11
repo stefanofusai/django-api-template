@@ -274,10 +274,11 @@ cron or another scheduler, to keep the `token_blacklist` tables bounded.
 {%- endif %}
 
 API docs and the OpenAPI schema are public in development and staff-only in
-production (`API_DOCS_DECORATOR`). The API itself ships unauthenticated: when
+production (`API_DOCS_DECORATOR`).{% if cookiecutter.use_example_api == "no" %} The API itself ships unauthenticated: when
 you add the first endpoint that needs protection, set a global auth class
 (`NinjaAPI(auth=...)`) or per-router auth; see
-<https://django-ninja.dev/guides/authentication/>.
+<https://django-ninja.dev/guides/authentication/>.{% else %} Health and readiness probes are public; the
+example notes API uses {% if cookiecutter.api_auth == "jwt" %}JWT{% else %}session{% endif %} authentication.{% endif %}
 {%- if cookiecutter.use_csp == "yes" %}
 
 Content Security Policy headers are enabled through Django's native CSP
@@ -520,11 +521,11 @@ uv run python -c "from django.core.management.utils import get_random_secret_key
 
 {% if cookiecutter.postgres == "compose" -%}
 Use the generated value for `SECRET_KEY`, and set a strong
-`POSTGRES_PASSWORD` and `REDIS_PASSWORD`. Keep `REDIS_PASSWORD` in sync with
+`POSTGRES_PASSWORD`.{% if cookiecutter.redis == "compose" %} Set a strong `REDIS_PASSWORD` and keep it in sync with
 the credentials embedded in `CACHE_URL`{% if cookiecutter.use_celery != "none" %} and `CELERY_BROKER_URL`{% endif %}. The production
-stack reads the same `.env` file as development, and production boot refuses
-`django-insecure-` keys, the shipped slug-default database password, or the
-shipped slug-default Redis password.
+boot refuses the shipped slug-default Redis password.{% endif %} The production stack reads the same `.env`
+file as development, and production boot refuses `django-insecure-` keys or
+the shipped slug-default database password.
 
 The bundled Postgres has no backup mechanism of its own: it is a single
 named Docker volume, and losing the host or the volume loses the data.

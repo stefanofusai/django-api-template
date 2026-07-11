@@ -36,10 +36,10 @@ order.
 | 014 | Remove django-ninja-extra from feature-minimal bakes | P2 | S | 012 | DONE |
 | 015 | Cover supported option interactions through rendered helpers | P2 | M | 012 | DONE |
 | 016 | Assert production settings values, not only import survival | P2 | M | - | DONE |
-| 017 | Automate updates for pins inside the Jinja template | P2 | M | 012 | BLOCKED — real App branch/PR exercise requires forbidden external state |
+| 017 | Automate updates for pins inside the Jinja template | P2 | M | 012 | REJECTED — Renovate is not desired |
 | 018 | Keep option coverage while removing redundant bootstrap work | P2 | M | 012, 015 | REJECTED — measured local improvement was 28.95%, below 30% threshold |
 | 019 | Guard Redis image pins and complex Compose predicates | P2 | S | - | DONE |
-| 020 | Provide one locked verification command and consistent generated docs | P3 | M | 012 | BLOCKED — generated audit and gitleaks gates fail on existing template content |
+| 020 | Provide one locked verification command and consistent generated docs | P3 | M | 012 | DONE |
 | 021 | Measure and decide the production Gunicorn worker model | P3 | M | - | BLOCKED — measured switch passes, but dropping default ASGI needs maintainer approval |
 | 022 | Design one opt-in generated API client workflow | P3 | M | - | DONE |
 | 023 | Design an approval-gated remote Compose deployment | P3 | L | 010 | BLOCKED — remote approval, attestation, containment, and rollback proofs require forbidden external state |

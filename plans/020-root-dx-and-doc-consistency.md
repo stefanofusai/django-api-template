@@ -36,7 +36,7 @@ branches also contradict themselves about authentication and Redis credentials.
 | Purpose | Command | Expected |
 |---|---|---|
 | Wrapper help | `rtk uv run --locked python scripts/verify_bake.py --help` | exit 0 |
-| Root typecheck | `rtk uv run --locked ty check scripts tests` | exit 0 |
+| Root typecheck | `rtk uv run --locked pre-commit run ty --all-files` | exit 0 |
 | Root checks | `rtk uv run --locked pre-commit run --all-files` | exit 0 |
 
 ## Scope
@@ -80,7 +80,7 @@ root lock. Configure Ty for plain root `scripts/` and `tests/`, excluding Jinja
 hooks/template source. Add a root pre-commit hook invoking the locked Ty binary.
 Fix only genuine root typing issues; do not blanket-ignore modules.
 
-**Verify**: `ty check scripts tests` and root pre-commit pass.
+**Verify**: the Ty pre-commit hook and full root pre-commit pass.
 
 ### Step 3: Make verification docs executable
 

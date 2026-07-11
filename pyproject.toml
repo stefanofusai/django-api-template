@@ -11,6 +11,9 @@ dev = [
     "pytest==9.1.1",
 ]
 
+[tool.ty.src]
+include = ["scripts", "tests"]
+
 [tool.pytest.ini_options]
 python_files = ["*_test.py"]
 testpaths = ["tests"]

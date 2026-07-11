@@ -148,13 +148,15 @@
   - `uv sync --locked`
   - `uv run --locked pytest tests`
   - `uv run --locked pre-commit run --all-files`
+- Run the canonical full bake verification with
+  `uv run --locked python scripts/verify_bake.py`.
 - For template behavior changes, bake a project in a temporary output directory
   and run the generated-project checks that match the change.
 - Freshly baked projects are expected to pass:
   - `docker compose -f .docker/compose/dev.yaml --env-file=.env up -d --wait postgres`
   - `uv run pytest`
   - `uv run pre-commit run --all-files`
-  - `docker compose -f .docker/compose/dev.yaml --env-file=.env up --build`
+  - `docker compose -f .docker/compose/dev.yaml --env-file=.env up -d --build --wait`
   - `curl -fsS http://localhost:8000/api/ready`
   - `docker compose -f .docker/compose/dev.yaml --env-file=.env down -v`
 - Prefix these with `rtk` when it is available.

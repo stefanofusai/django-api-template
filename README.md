@@ -162,6 +162,12 @@ git commit -m "feat: initial project scaffold"
 
 ## Verification
 
+Run the complete bake verification with one locked command:
+
+```shell
+uv run --locked python scripts/verify_bake.py
+```
+
 Freshly baked projects are expected to pass:
 
 ```shell

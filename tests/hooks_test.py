@@ -49,8 +49,8 @@ def test_every_removal_entry_exists_in_the_template_tree() -> None:
 
 def test_missing_removal_entries_exit_with_actionable_message() -> None:
     module = _load_hook_module()
-    module.REMOVED_PATHS = ["missing-file.txt"]
-    module.REMOVED_DIRS = ["missing-dir"]
+    setattr(module, "REMOVED_PATHS", ["missing-file.txt"])
+    setattr(module, "REMOVED_DIRS", ["missing-dir"])
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         with contextlib.chdir(tmp_dir):
