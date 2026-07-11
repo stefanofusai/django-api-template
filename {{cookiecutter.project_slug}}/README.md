@@ -577,7 +577,62 @@ Set `DATABASE_URL` to the external PostgreSQL-compatible endpoint and append
 development Compose stack and are ignored by production. Your provider owns
 backups, high availability, and upgrades.
 {%- endif %}
-{% if cookiecutter.use_s3_media == "no" %}
+{% if cookiecutter.use_s3_media == "yes" %}
+### S3 media recovery
+
+Object-storage durability does not protect against accidental deletion,
+compromised application credentials, ransomware, provider outages, or loss of
+an account or region. Define a media recovery point objective (RPO), recovery
+time objective (RTO), retention period, and whether recovery must survive an
+account or provider loss before production launch.
+
+At minimum, use least-privilege application credentials, retain prior object
+versions, enable audit logging, and maintain a tested independent copy when the
+chosen RPO requires one. On AWS S3, evaluate bucket versioning, lifecycle
+retention, replication to a separately controlled account/region, and MFA
+Delete or Object Lock. These features and their semantics are provider-specific;
+for another S3-compatible service, confirm equivalent controls rather than
+assuming AWS commands or guarantees apply.
+
+For a disposable AWS reference bucket, verify versioning and inspect retained
+versions without printing credentials:
+
+```shell
+SOURCE_BUCKET=media-source.example.test
+aws s3api get-bucket-versioning --bucket "$SOURCE_BUCKET"
+aws s3api list-object-versions --bucket "$SOURCE_BUCKET"
+```
+
+Practice recovery into a separate bucket or recovery prefix first—never start
+with destructive in-place restoration. Select a known prior `VERSION_ID`, copy
+it to the recovery location, and compare object size, checksums where available,
+content type, and application-specific metadata:
+
+```shell
+SOURCE_BUCKET=media-source.example.test
+RECOVERY_BUCKET=media-recovery.example.test
+OBJECT_KEY=uploads/example.bin
+VERSION_ID=<version-id>
+
+aws s3api get-object \
+  --bucket "$SOURCE_BUCKET" \
+  --key "$OBJECT_KEY" \
+  --version-id "$VERSION_ID" \
+  /tmp/recovered-object
+aws s3api put-object \
+  --body /tmp/recovered-object \
+  --bucket "$RECOVERY_BUCKET" \
+  --key "recovery/$OBJECT_KEY"
+aws s3api head-object \
+  --bucket "$RECOVERY_BUCKET" \
+  --key "recovery/$OBJECT_KEY"
+```
+
+Validate counts, representative downloads, metadata, and application reads
+from the recovery location before changing storage configuration or DNS. Record
+the drill date and measured RPO/RTO. Keep application write credentials unable
+to disable retention or delete the independent recovery copy.
+{%- else %}
 The bundled media volume has no backup mechanism of its own. Use
 `.docker/scripts/media-backup.sh` to archive files from the Compose media
 volume through a throwaway tar container and prune old archives. Schedule it

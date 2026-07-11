@@ -41,7 +41,7 @@ order.
 | 019 | Guard Redis image pins and complex Compose predicates | P2 | S | - | DONE |
 | 020 | Provide one locked verification command and consistent generated docs | P3 | M | 012 | DONE |
 | 021 | Measure and decide the production Gunicorn worker model | P3 | M | - | REJECTED — ASGI is an intentional architecture requirement |
-| 022 | Design one opt-in generated API client workflow | P3 | M | - | DONE |
+| 022 | Design one opt-in generated API client workflow | P3 | M | - | REJECTED — no client consumer or ecosystem is required |
 | 023 | Design an approval-gated remote Compose deployment | P3 | L | 010 | REJECTED — manual deployments are preferred for now |
 | 024 | Evaluate a safe update path for already-generated projects | P3 | M | 012 | REJECTED — Cruft reports success despite unresolved conflicts and reruns privileged hooks |
 | 025 | Decide whether authentication should exist without the example API | P3 | M | - | BLOCKED — prototype is sound, but generated uv-audit fails on Django 6.0.6 |

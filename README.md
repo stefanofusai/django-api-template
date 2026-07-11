@@ -28,7 +28,7 @@ Compose deployment defaults, and CI gates for the baked project.
 - Optional email stack: Resend API, SMTP, or no production email provider
 - Optional example `notes` resource demonstrating the model-to-tests vertical
   slice
-- Optional S3-compatible media storage
+- Optional S3-compatible media storage with a provider-neutral recovery contract
 - Optional Sentry integration
 - Optional Traefik ingress with Let's Encrypt or operator-provided TLS
 - `pg_dump` backup script and restore runbook for the bundled Postgres

@@ -28,6 +28,16 @@ def test_api_authentication_prose_matches_rendered_features(
     )
 
 
+@pytest.mark.parametrize("use_s3_media", ["no", "yes"])
+def test_media_recovery_prose_matches_storage_backend(use_s3_media: str) -> None:
+    rendered = _render(use_s3_media=use_s3_media)
+
+    assert ("### S3 media recovery" in rendered) is (use_s3_media == "yes")
+    assert ("The bundled media volume has no backup mechanism" in rendered) is (
+        use_s3_media == "no"
+    )
+
+
 @pytest.mark.parametrize(
     ("postgres", "redis"),
     [
