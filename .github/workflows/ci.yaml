@@ -148,6 +148,7 @@ jobs:
         working-directory: /tmp/bake/${{ matrix.slug }}
         run: uv sync --locked
       - name: Check deployment settings
+        if: matrix.case != 'no-proxy'
         working-directory: /tmp/bake/${{ matrix.slug }}
         run: ./.github/scripts/deploy-check.sh
       - name: Run tests

@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import sys
@@ -44,6 +45,52 @@ def test_prod_settings_configures_database_timeouts(faker: Faker) -> None:
         "-c lock_timeout=5000 -c statement_timeout=15000",
     ]
 
+{% if cookiecutter.use_s3_media == "no" %}
+def test_prod_settings_configures_local_media_storage(faker: Faker) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {},
+        (
+            "import json; import config.settings as s; "
+            "print(json.dumps({"
+            "'media_root': str(s.MEDIA_ROOT), "
+            "'storage': s.STORAGES['default']"
+            "}, default=str, sort_keys=True))"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    values = json.loads(result.stdout)
+    assert values == {
+        "media_root": values["storage"]["OPTIONS"]["location"],
+        "storage": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+            "OPTIONS": {"location": values["media_root"]},
+        },
+    }
+
+{% endif -%}
+{% if cookiecutter.email_provider == "none" %}
+def test_prod_settings_configures_no_email_provider(faker: Faker) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {},
+        (
+            "import json; import config.settings as s; "
+            "print(json.dumps({"
+            "'backend': s.EMAIL_BACKEND, "
+            "'default_from_email': getattr(s, 'DEFAULT_FROM_EMAIL', None)"
+            "}, sort_keys=True))"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {
+        "backend": "django.core.mail.backends.console.EmailBackend",
+        "default_from_email": None,
+    }
+
+{% endif -%}
 {% if cookiecutter.use_traefik == "yes" or cookiecutter.behind_proxy == "yes" %}
 def test_prod_settings_configures_proxy_security_settings(faker: Faker) -> None:
     result = _run_prod_settings_script(
@@ -52,6 +99,7 @@ def test_prod_settings_configures_proxy_security_settings(faker: Faker) -> None:
         (
             "import config.settings as s; "
             "print(s.CSRF_COOKIE_SECURE); "
+            "print(s.CSRF_TRUSTED_ORIGINS); "
             "print(s.SECURE_HSTS_INCLUDE_SUBDOMAINS); "
             "print(s.SECURE_HSTS_PRELOAD); "
             "print(s.SECURE_HSTS_SECONDS); "
@@ -65,6 +113,7 @@ def test_prod_settings_configures_proxy_security_settings(faker: Faker) -> None:
     assert result.returncode == 0, result.stderr
     assert result.stdout.splitlines() == [
         "True",
+        "['https://api.example.test']",
         "True",
         "True",
         "31536000",
@@ -94,6 +143,126 @@ def test_prod_settings_configures_redis_cache_timeouts(faker: Faker) -> None:
         "1",
         "1",
     ]
+
+{% if cookiecutter.email_provider == "resend" %}
+def test_prod_settings_configures_resend_email(faker: Faker) -> None:
+    resend_api_key = f"re_{faker.pystr(min_chars=24, max_chars=24)}"
+    result = _run_prod_settings_script(
+        faker,
+        {"RESEND_API_KEY": resend_api_key},
+        (
+            "import json; import config.settings as s; "
+            "print(json.dumps({"
+            "'anymail': s.ANYMAIL, "
+            "'backend': s.EMAIL_BACKEND, "
+            "'default_from_email': s.DEFAULT_FROM_EMAIL"
+            "}, sort_keys=True))"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {
+        "anymail": {"RESEND_API_KEY": resend_api_key},
+        "backend": "anymail.backends.resend.EmailBackend",
+        "default_from_email": "noreply@example.test",
+    }
+
+{% endif -%}
+{% if cookiecutter.use_s3_media == "yes" %}
+def test_prod_settings_configures_s3_media_storage(faker: Faker) -> None:
+    bucket_name = faker.slug()
+    result = _run_prod_settings_script(
+        faker,
+        {
+            "AWS_ACCESS_KEY_ID": "mock-access-key",
+            "AWS_S3_CUSTOM_DOMAIN": "media.example.test",
+            "AWS_S3_ENDPOINT_URL": "https://s3.example.test",
+            "AWS_S3_REGION_NAME": "eu-west-1",
+            "AWS_SECRET_ACCESS_KEY": "mock-secret-access-key",
+            "AWS_STORAGE_BUCKET_NAME": bucket_name,
+        },
+        (
+            "import json; import config.settings as s; "
+            "print(json.dumps(s.STORAGES['default'], sort_keys=True))"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": "mock-access-key",
+            "bucket_name": bucket_name,
+            "custom_domain": "media.example.test",
+            "default_acl": None,
+            "endpoint_url": "https://s3.example.test",
+            "file_overwrite": False,
+            "querystring_auth": True,
+            "querystring_expire": 900,
+            "region_name": "eu-west-1",
+            "secret_key": "mock-secret-access-key",
+        },
+    }
+
+{% endif -%}
+{% if cookiecutter.email_provider == "smtp" %}
+def test_prod_settings_configures_smtp_email(faker: Faker) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {
+            "EMAIL_HOST_PASSWORD": "mock-smtp-password",
+            "EMAIL_HOST_USER": "mock-smtp-user",
+            "EMAIL_PORT": "2525",
+            "EMAIL_USE_TLS": "false",
+        },
+        (
+            "import json; import config.settings as s; "
+            "print(json.dumps({"
+            "'backend': s.EMAIL_BACKEND, "
+            "'default_from_email': s.DEFAULT_FROM_EMAIL, "
+            "'host': s.EMAIL_HOST, "
+            "'password': s.EMAIL_HOST_PASSWORD, "
+            "'port': s.EMAIL_PORT, "
+            "'tls': s.EMAIL_USE_TLS, "
+            "'user': s.EMAIL_HOST_USER"
+            "}, sort_keys=True))"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {
+        "backend": "django.core.mail.backends.smtp.EmailBackend",
+        "default_from_email": "noreply@example.test",
+        "host": "smtp.example.test",
+        "password": "mock-smtp-password",
+        "port": 2525,
+        "tls": False,
+        "user": "mock-smtp-user",
+    }
+
+{% endif %}
+def test_prod_settings_configures_static_files_and_logging(faker: Faker) -> None:
+    result = _run_prod_settings_script(
+        faker,
+        {},
+        (
+            "import json; import config.settings as s; "
+            "print(json.dumps({"
+            "'content_type_nosniff': s.SECURE_CONTENT_TYPE_NOSNIFF, "
+            "'console_formatter': s.LOGGING['handlers']['console']['formatter'], "
+            "'staticfiles': s.STORAGES['staticfiles']"
+            "}, sort_keys=True))"
+        ),
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {
+        "console_formatter": "json",
+        "content_type_nosniff": True,
+        "staticfiles": {
+            "BACKEND": ("whitenoise.storage.CompressedManifestStaticFilesStorage")
+        },
+    }
 
 
 def test_prod_settings_honors_database_timeout_overrides_when_configured(
