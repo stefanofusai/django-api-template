@@ -16,7 +16,9 @@ PATTERN = re.compile(r"\bredis:(\d+\.\d+(?:\.\d+)?)\b")
 def check(canonical_tags: set[str], file_tags: dict[Path, set[str]]) -> list[str]:
     """Return actionable Redis image drift problems."""
     if len(canonical_tags) != 1:
-        return [f"expected exactly one redis tag in {CANONICAL}, found {canonical_tags}"]
+        return [
+            f"expected exactly one redis tag in {CANONICAL}, found {canonical_tags}"
+        ]
 
     mismatches = [
         (path, tags) for path, tags in file_tags.items() if tags != canonical_tags

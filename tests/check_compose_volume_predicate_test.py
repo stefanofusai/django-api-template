@@ -12,11 +12,56 @@ PROD_COMPOSE = ROOT / "{{cookiecutter.project_slug}}/.docker/compose/prod.yaml"
 @pytest.mark.parametrize(
     ("overrides", "expected"),
     [
-        ({"postgres": "external", "redis": "external", "traefik_tls": "external", "use_s3_media": "yes", "use_traefik": "no"}, set()),
-        ({"postgres": "external", "redis": "external", "traefik_tls": "external", "use_s3_media": "no", "use_traefik": "no"}, {"media_data"}),
-        ({"postgres": "compose", "redis": "external", "traefik_tls": "external", "use_s3_media": "yes", "use_traefik": "no"}, {"postgres_data"}),
-        ({"postgres": "external", "redis": "compose", "traefik_tls": "external", "use_s3_media": "yes", "use_traefik": "no"}, {"redis_data"}),
-        ({"postgres": "external", "redis": "external", "traefik_tls": "letsencrypt", "use_s3_media": "yes", "use_traefik": "yes"}, {"traefik_data"}),
+        (
+            {
+                "postgres": "external",
+                "redis": "external",
+                "traefik_tls": "external",
+                "use_s3_media": "yes",
+                "use_traefik": "no",
+            },
+            set(),
+        ),
+        (
+            {
+                "postgres": "external",
+                "redis": "external",
+                "traefik_tls": "external",
+                "use_s3_media": "no",
+                "use_traefik": "no",
+            },
+            {"media_data"},
+        ),
+        (
+            {
+                "postgres": "compose",
+                "redis": "external",
+                "traefik_tls": "external",
+                "use_s3_media": "yes",
+                "use_traefik": "no",
+            },
+            {"postgres_data"},
+        ),
+        (
+            {
+                "postgres": "external",
+                "redis": "compose",
+                "traefik_tls": "external",
+                "use_s3_media": "yes",
+                "use_traefik": "no",
+            },
+            {"redis_data"},
+        ),
+        (
+            {
+                "postgres": "external",
+                "redis": "external",
+                "traefik_tls": "letsencrypt",
+                "use_s3_media": "yes",
+                "use_traefik": "yes",
+            },
+            {"traefik_data"},
+        ),
     ],
 )
 def test_volume_predicate_renders_exact_named_volumes(
@@ -47,6 +92,8 @@ def _render(**overrides: str) -> str:
     }
     values |= overrides
     values["project_slug"] = "my-project"
-    return Environment(autoescape=False).from_string(PROD_COMPOSE.read_text()).render(
-        cookiecutter=values
+    return (
+        Environment(autoescape=False)
+        .from_string(PROD_COMPOSE.read_text())
+        .render(cookiecutter=values)
     )

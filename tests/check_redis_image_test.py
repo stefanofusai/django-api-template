@@ -14,13 +14,16 @@ SPEC.loader.exec_module(check_redis_image)
 
 
 def test_all_files_agree_on_one_tag() -> None:
-    assert check_redis_image.check(
-        canonical_tags={"8.8.0"},
-        file_tags={
-            Path("compose/ci-services.yaml"): {"8.8.0"},
-            Path("compose/dev.yaml"): {"8.8.0"},
-        },
-    ) == []
+    assert (
+        check_redis_image.check(
+            canonical_tags={"8.8.0"},
+            file_tags={
+                Path("compose/ci-services.yaml"): {"8.8.0"},
+                Path("compose/dev.yaml"): {"8.8.0"},
+            },
+        )
+        == []
+    )
 
 
 def test_canonical_file_with_no_tags_reports_problem() -> None:
