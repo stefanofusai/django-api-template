@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from apps.notes.models import Note
+
 if TYPE_CHECKING:
     from faker import Faker
     from ninja_extra.testing import TestClient
-
-    from apps.notes.models import Note
 
 pytestmark = pytest.mark.django_db
 
@@ -41,3 +41,7 @@ def test_get_note_returns_note_when_authenticated_owner(
 {% endif %}
     assert response.status_code == HTTPStatus.OK
     assert response.data["id"] == str(note.id)
+
+
+def test_note_default_ordering_has_unique_tiebreaker() -> None:
+    assert Note._meta.ordering == ("-created_at", "-id")  # noqa: SLF001

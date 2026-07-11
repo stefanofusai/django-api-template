@@ -30,16 +30,19 @@ def test_api_authentication_prose_matches_rendered_features(
 
 @pytest.mark.parametrize(
     ("postgres", "redis"),
-    [("compose", "compose"), ("compose", "external"), ("external", "compose"), ("external", "external")],
+    [
+        ("compose", "compose"),
+        ("compose", "external"),
+        ("external", "compose"),
+        ("external", "external"),
+    ],
 )
 def test_password_prose_matches_rendered_backing_services(
     postgres: str, redis: str
 ) -> None:
     rendered = _render(postgres=postgres, redis=redis)
 
-    assert ("set a strong\n`POSTGRES_PASSWORD`" in rendered) is (
-        postgres == "compose"
-    )
+    assert ("set a strong\n`POSTGRES_PASSWORD`" in rendered) is (postgres == "compose")
     assert ("Set a strong `REDIS_PASSWORD`" in rendered) is (redis == "compose")
 
 
@@ -53,6 +56,8 @@ def _render(**overrides: str) -> str:
     values |= overrides
     values["project_slug"] = "my-project"
 
-    return Environment(autoescape=False).from_string(README_TEMPLATE.read_text()).render(
-        cookiecutter=values
+    return (
+        Environment(autoescape=False)
+        .from_string(README_TEMPLATE.read_text())
+        .render(cookiecutter=values)
     )

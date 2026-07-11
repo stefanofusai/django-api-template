@@ -40,9 +40,9 @@ order.
 | 018 | Keep option coverage while removing redundant bootstrap work | P2 | M | 012, 015 | REJECTED — measured local improvement was 28.95%, below 30% threshold |
 | 019 | Guard Redis image pins and complex Compose predicates | P2 | S | - | DONE |
 | 020 | Provide one locked verification command and consistent generated docs | P3 | M | 012 | DONE |
-| 021 | Measure and decide the production Gunicorn worker model | P3 | M | - | BLOCKED — measured switch passes, but dropping default ASGI needs maintainer approval |
+| 021 | Measure and decide the production Gunicorn worker model | P3 | M | - | REJECTED — ASGI is an intentional architecture requirement |
 | 022 | Design one opt-in generated API client workflow | P3 | M | - | DONE |
-| 023 | Design an approval-gated remote Compose deployment | P3 | L | 010 | BLOCKED — remote approval, attestation, containment, and rollback proofs require forbidden external state |
+| 023 | Design an approval-gated remote Compose deployment | P3 | L | 010 | REJECTED — manual deployments are preferred for now |
 | 024 | Evaluate a safe update path for already-generated projects | P3 | M | 012 | REJECTED — Cruft reports success despite unresolved conflicts and reruns privileged hooks |
 | 025 | Decide whether authentication should exist without the example API | P3 | M | - | BLOCKED — prototype is sound, but generated uv-audit fails on Django 6.0.6 |
 | 026 | Define a disaster-recovery contract for S3 media | P3 | M | - | DONE |

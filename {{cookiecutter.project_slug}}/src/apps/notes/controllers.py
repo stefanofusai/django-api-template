@@ -32,6 +32,18 @@ from .models import Note
 from .schemas import NoteFilterSchema, NoteInSchema, NoteOutSchema
 
 
+class TotalOrdering(Ordering):
+    def get_ordering(
+        self, items: QuerySet[Note] | list[object], value: str | None
+    ) -> list[str]:
+        fields = super().get_ordering(items, value)
+
+        if fields and not any(field.lstrip("-") == "id" for field in fields):
+            fields.append("-id")
+
+        return fields
+
+
 @api_controller(
     "/notes",
     auth={% if cookiecutter.api_auth == "jwt" %}jwt_auth{% else %}django_auth{% endif %},
@@ -94,7 +106,7 @@ class NotesController(ControllerBase):
         },
     )
     @paginate(BoundedLimitOffsetPagination)
-    @ordering(Ordering, ordering_fields=["created_at", "title"])
+    @ordering(TotalOrdering, ordering_fields=["created_at", "title"])
     @searching(Searching, search_fields=["body", "title"])
     def list_notes(
         self, request: HttpRequest, filters: Query[NoteFilterSchema]

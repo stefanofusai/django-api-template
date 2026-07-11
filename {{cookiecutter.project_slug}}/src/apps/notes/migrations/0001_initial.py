@@ -45,7 +45,7 @@ class Migration(migrations.Migration):
             options={
                 "verbose_name": "note",
                 "verbose_name_plural": "notes",
-                "ordering": ("-created_at",),
+                "ordering": ("-created_at", "-id"),
                 "indexes": [
                     models.Index(
                         fields=["owner", "-created_at"],

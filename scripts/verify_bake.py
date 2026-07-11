@@ -15,7 +15,10 @@ def main() -> None:
     options = dict(args.option)
     project_slug = options.get(
         "project_slug",
-        options.get("project_name", "My Project").lower().replace(" ", "-").replace("_", "-"),
+        options.get("project_name", "My Project")
+        .lower()
+        .replace(" ", "-")
+        .replace("_", "-"),
     )
     project = output / project_slug
     compose = [

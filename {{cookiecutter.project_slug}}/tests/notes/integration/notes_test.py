@@ -165,6 +165,40 @@ def test_list_notes_returns_only_callers_notes_when_authenticated(
     assert str(note_owner_user_1.id) not in item_ids
 
 
+@pytest.mark.parametrize("ordering", [None, "title", "-title"])
+def test_list_notes_returns_disjoint_pages_when_ordering_values_tie(
+    authenticated_v1_api_client: AuthenticatedTestClient,
+    ordering: str | None,
+) -> None:
+    notes = [
+        Note.objects.create(
+            body="Same body",
+            owner=authenticated_v1_api_client.user,
+            title="Same title",
+        )
+        for _ in range(5)
+    ]
+    Note.objects.filter(id__in=[note.id for note in notes]).update(
+        created_at=timezone.now()
+    )
+    item_ids = []
+
+    for offset in (0, 2, 4):
+        query_params: dict[str, object] = {"limit": 2, "offset": offset}
+
+        if ordering is not None:
+            query_params["ordering"] = ordering
+
+        response = authenticated_v1_api_client.get("/notes", query_params=query_params)
+
+        assert response.status_code == HTTPStatus.OK
+        assert response.data["count"] == len(notes)
+        item_ids.extend(item["id"] for item in response.data["items"])
+
+    assert len(item_ids) == len(set(item_ids)) == len(notes)
+    assert set(item_ids) == {str(note.id) for note in notes}
+
+
 @pytest.mark.parametrize("note__title", ["Quarterly planning"])
 @pytest.mark.parametrize("note_1__title", ["Daily checklist"])
 def test_list_notes_filters_by_title_when_authenticated(
