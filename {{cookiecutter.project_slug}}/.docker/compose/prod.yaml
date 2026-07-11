@@ -317,7 +317,7 @@ networks:
   docker-socket-proxy:
     internal: true
 {%- endif %}
-{%- if cookiecutter.postgres == "compose" or cookiecutter.redis == "compose" or cookiecutter.use_traefik == "yes" and cookiecutter.traefik_tls == "letsencrypt" or cookiecutter.use_s3_media == "no" %}
+{%- if cookiecutter.postgres == "compose" or cookiecutter.redis == "compose" or (cookiecutter.use_traefik == "yes" and cookiecutter.traefik_tls == "letsencrypt") or cookiecutter.use_s3_media == "no" %}
 volumes:
 {%- if cookiecutter.use_s3_media == "no" %}
   media_data:

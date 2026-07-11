@@ -115,6 +115,12 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: redis-image-pin
+        name: redis image pins agree across compose files
+        entry: python scripts/check_redis_image.py
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: root-tests
         name: root guard-script unit tests
         entry: uv run --locked pytest tests
