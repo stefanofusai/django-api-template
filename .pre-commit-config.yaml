@@ -30,7 +30,7 @@ repos:
       - id: trailing-whitespace
   # Python
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.16
+    rev: v0.15.21
     hooks:
       - id: ruff-check
         args:
@@ -44,7 +44,7 @@ repos:
           - pyi
   # Markdown
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.48.0
+    rev: v0.49.0
     hooks:
       - id: markdownlint
         args:
@@ -72,7 +72,7 @@ repos:
               line-length: disable
   # GitHub Actions / JSON schema
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: 0.37.4
     hooks:
       - id: check-dependabot
       - id: check-github-workflows
