@@ -125,15 +125,15 @@ jobs:
             slug: my-project
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.0
         with:
           persist-credentials: false
       - name: Set up Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.14"
       - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
+        uses: astral-sh/setup-uv@v8.3.2
       - name: Cache pre-commit environments
         uses: actions/cache@v6.1.0
         with:
@@ -195,15 +195,15 @@ jobs:
             extra-args: github_username=bad-
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.0
         with:
           persist-credentials: false
       - name: Set up Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.14"
       - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
+        uses: astral-sh/setup-uv@v8.3.2
       - name: Verify invalid input is rejected
         run: |
           if uv run --locked cookiecutter . -o /tmp/bake --no-input ${{ matrix.extra-args }}; then
@@ -217,21 +217,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.0
         with:
           persist-credentials: false
       - name: Set up Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.14"
       - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
+        uses: astral-sh/setup-uv@v8.3.2
       - name: Bake project
         run: uv run --locked cookiecutter . -o /tmp/bake --no-input
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4.1.0
+        uses: docker/setup-buildx-action@v4.2.0
       - name: Build production image
-        uses: docker/build-push-action@v7.2.0
+        uses: docker/build-push-action@v7.3.0
         with:
           context: /tmp/bake/my-project
           file: /tmp/bake/my-project/.docker/Dockerfile
@@ -240,7 +240,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=prod
           build-args: UV_DEPENDENCY_GROUP=prod
       - name: Build development image
-        uses: docker/build-push-action@v7.2.0
+        uses: docker/build-push-action@v7.3.0
         with:
           context: /tmp/bake/my-project
           file: /tmp/bake/my-project/.docker/Dockerfile
@@ -265,15 +265,15 @@ jobs:
             extra-args: use_celery=none email_provider=none use_sentry=no use_s3_media=no use_traefik=no
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.0
         with:
           persist-credentials: false
       - name: Set up Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.14"
       - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
+        uses: astral-sh/setup-uv@v8.3.2
       - name: Install Docker Compose with pre_start support
         run: |
           mkdir -p ~/.docker/cli-plugins
@@ -351,15 +351,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.0
         with:
           persist-credentials: false
       - name: Set up Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v6.3.0
         with:
           python-version: "3.14"
       - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
+        uses: astral-sh/setup-uv@v8.3.2
       - name: Cache pre-commit environments
         uses: actions/cache@v6.1.0
         with:
