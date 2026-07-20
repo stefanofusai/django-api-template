@@ -55,7 +55,7 @@ repos:
           - --fix
       - id: ruff-format
   - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: v0.0.47
+    rev: v0.0.61
     hooks:
       - id: ty
         args:
@@ -118,7 +118,7 @@ repos:
         files: ^\.docker/Dockerfile$
   # Dependency management
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.19
+    rev: 0.11.29
     hooks:
       - id: uv-audit
         args:

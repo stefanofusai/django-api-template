@@ -87,6 +87,9 @@
 - Keep classes and functions grouped separately.
 - Put private helper utilities at the bottom of the file under a `# Utils`
   heading, alphabetized there.
+- Alphabetize exception classes in an `except` tuple when order has no semantic
+  significance. For example:
+  `except (KeyError, TypeError, ValidationError, ValueError) as error:`.
 - Respect semantic ordering constraints, such as Django model fields,
   inheritance dependencies, decorators, framework-required signatures,
   Cookiecutter rendering behavior, and import-time behavior.

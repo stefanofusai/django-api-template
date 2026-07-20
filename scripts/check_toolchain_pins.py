@@ -29,16 +29,19 @@ def check_contract(root: Path = ROOT, *, check_lock: bool = True) -> list[str]:
     root_pyproject_path = root / "pyproject.toml"
     root_pyproject = tomllib.loads(root_pyproject_path.read_text())
     required_version = root_pyproject["tool"]["uv"]["required-version"]
-    version_match = re.fullmatch(r"==(?P<version>\d+\.\d+\.\d+)", required_version)
+    version_match = re.fullmatch(
+        r">=(?P<minimum>\d+\.\d+\.\d+),<(?P<maximum>\d+\.\d+\.\d+)",
+        required_version,
+    )
 
-    if version_match is None:
+    if version_match is None or not _is_minor_series_range(version_match):
         failures.append(
-            f"pyproject.toml: expected an exact uv requirement, found "
+            "pyproject.toml: expected a bounded uv minor-series requirement, found "
             f"{required_version!r}"
         )
         return failures
 
-    uv_version = version_match.group("version")
+    uv_version = version_match.group("minimum")
     expected_dependencies = {
         "cookiecutter==2.7.1",
         "pre-commit==4.6.0",
@@ -73,12 +76,12 @@ def check_contract(root: Path = ROOT, *, check_lock: bool = True) -> list[str]:
     generated_pyproject_path = root / "{{cookiecutter.project_slug}}/pyproject.toml"
     generated_version = _single_match(
         generated_pyproject_path,
-        r'^required-version = "==(?P<version>[^\"]+)"$',
+        r'^required-version = "(?P<version>[^\"]+)"$',
     )
     _compare_version(
         failures,
         generated_pyproject_path.relative_to(root),
-        uv_version,
+        required_version,
         generated_version,
     )
 
@@ -173,6 +176,13 @@ def _compare_version(
 ) -> None:
     if actual != expected:
         failures.append(f"{path}: expected uv {expected}, found {actual}")
+
+
+def _is_minor_series_range(version_match: re.Match[str]) -> bool:
+    minimum = tuple(int(part) for part in version_match.group("minimum").split("."))
+    maximum = tuple(int(part) for part in version_match.group("maximum").split("."))
+
+    return maximum == (minimum[0], minimum[1] + 1, 0)
 
 
 def _single_match(path: Path, pattern: str) -> str:

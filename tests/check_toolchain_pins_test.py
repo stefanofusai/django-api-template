@@ -17,13 +17,13 @@ def test_drifted_toolchain_path_is_reported(tmp_path: Path) -> None:
         shutil.copy(source, destination)
 
     dockerfile = fixture_root / "{{cookiecutter.project_slug}}/.docker/Dockerfile"
-    dockerfile.write_text(dockerfile.read_text().replace("uv:0.11.19", "uv:0.11.18"))
+    dockerfile.write_text(dockerfile.read_text().replace("uv:0.11.29", "uv:0.11.28"))
 
     failures = check_toolchain_pins.check_contract(fixture_root, check_lock=False)
 
     assert failures == [
-        "{{cookiecutter.project_slug}}/.docker/Dockerfile: expected uv 0.11.19, "
-        "found 0.11.18"
+        "{{cookiecutter.project_slug}}/.docker/Dockerfile: expected uv 0.11.29, "
+        "found 0.11.28"
     ]
 
 
@@ -60,12 +60,37 @@ def test_post_gen_uv_drift_is_reported(tmp_path: Path) -> None:
 
     hook = fixture_root / "hooks/post_gen_project.py"
     hook.write_text(
-        hook.read_text().replace('UV_VERSION = "0.11.19"', 'UV_VERSION = "0.11.18"')
+        hook.read_text().replace('UV_VERSION = "0.11.29"', 'UV_VERSION = "0.11.28"')
     )
 
     failures = check_toolchain_pins.check_contract(fixture_root, check_lock=False)
 
-    assert failures == ["hooks/post_gen_project.py: expected uv 0.11.19, found 0.11.18"]
+    assert failures == ["hooks/post_gen_project.py: expected uv 0.11.29, found 0.11.28"]
+
+
+def test_unsupported_uv_requirement_is_reported(tmp_path: Path) -> None:
+    fixture_root = tmp_path / "template"
+
+    for relative_path in check_toolchain_pins.CONTRACT_PATHS:
+        source = ROOT / relative_path
+        destination = fixture_root / relative_path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(source, destination)
+
+    pyproject = fixture_root / "pyproject.toml"
+    pyproject.write_text(
+        pyproject.read_text().replace(
+            'required-version = ">=0.11.29,<0.12.0"',
+            'required-version = ">=0.11.29"',
+        )
+    )
+
+    failures = check_toolchain_pins.check_contract(fixture_root, check_lock=False)
+
+    assert failures == [
+        "pyproject.toml: expected a bounded uv minor-series requirement, found "
+        "'>=0.11.29'"
+    ]
 
 
 def test_stale_root_lock_is_reported(tmp_path: Path) -> None:
