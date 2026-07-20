@@ -29,7 +29,7 @@ USE_EXAMPLE_API = {{cookiecutter.use_example_api | tojson}}
 USE_S3_MEDIA = {{cookiecutter.use_s3_media | tojson}}
 USE_SENTRY = {{cookiecutter.use_sentry | tojson}}
 USE_TRAEFIK = {{cookiecutter.use_traefik | tojson}}
-UV_VERSION = "0.11.19"
+UV_VERSION = "0.11.29"
 UV_LOCK_WARNING = (
     "WARNING: uv.lock was not generated; CI, the ty hook, and uv-audit use "
     f"--locked and will fail until you install uv {UV_VERSION} and run uv lock"

@@ -124,7 +124,7 @@ def test_post_gen_accepts_required_uv_with_build_metadata(
 
     def run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
         calls.append(command)
-        stdout = "uv 0.11.19 (7b2cff1c3 2026-06-03)\n" if "--version" in command else ""
+        stdout = "uv 0.11.29 (7b2cff1c3 2026-06-03)\n" if "--version" in command else ""
 
         return subprocess.CompletedProcess(command, 0, stdout=stdout)
 
@@ -135,7 +135,11 @@ def test_post_gen_accepts_required_uv_with_build_metadata(
     assert calls == [["uv", "--version"], ["uv", "lock"]]
 
 
-def test_post_gen_rejects_incompatible_uv(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("uv_version", ["0.11.28", "0.11.30"])
+def test_post_gen_rejects_incompatible_uv(
+    monkeypatch: pytest.MonkeyPatch,
+    uv_version: str,
+) -> None:
     module = _load_hook_module()
     monkeypatch.setattr(module.shutil, "which", lambda executable: f"/bin/{executable}")
     monkeypatch.setattr(
@@ -144,11 +148,11 @@ def test_post_gen_rejects_incompatible_uv(monkeypatch: pytest.MonkeyPatch) -> No
         lambda *args, **kwargs: module.subprocess.CompletedProcess(
             args[0],
             0,
-            stdout="uv 0.11.18\n",
+            stdout=f"uv {uv_version}\n",
         ),
     )
 
-    with pytest.raises(SystemExit, match=r"uv 0\.11\.19 is required"):
+    with pytest.raises(SystemExit, match=r"uv 0\.11\.29 is required"):
         module._lock_with_uv()
 
 

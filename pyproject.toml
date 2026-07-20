@@ -2,7 +2,15 @@
 name = "django-api-template"
 version = "0.0.0"
 description = "Development toolchain for the django-api-template Cookiecutter repository."
+readme = "README.md"
 requires-python = ">=3.14,<3.15"
+license = "MIT"
+authors = [
+    { name = "Stefano Fusai", email = "stefanofusai@gmail.com" },
+]
+maintainers = [
+    { name = "Stefano Fusai", email = "stefanofusai@gmail.com" },
+]
 
 [dependency-groups]
 dev = [
@@ -21,4 +29,4 @@ testpaths = ["tests"]
 [tool.uv]
 default-groups = ["dev"]
 package = false
-required-version = "==0.11.19"
+required-version = ">=0.11.29,<0.12.0"

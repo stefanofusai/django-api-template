@@ -68,14 +68,15 @@ Compose deployment defaults, and CI gates for the baked project.
   deliberately not enabled by default.
 - The `src/` layout keeps import paths honest and avoids accidentally
   importing from the repository root.
-- uv exact pins and generated lockfiles make fresh bakes reproducible.
+- A bounded uv compatibility range supports patch updates, while exact uv
+  artifact pins and generated lockfiles keep fresh bakes reproducible.
 - Tests measure all of `src/` and fail below 100% coverage.
 
 ## Requirements
 
 - Docker Compose >= 5.3.0 for `pre_start` lifecycle hooks
 - Python 3.14
-- [uv 0.11.19](https://docs.astral.sh/uv/)
+- [uv >=0.11.29,<0.12.0](https://docs.astral.sh/uv/)
 
 ## Usage
 
@@ -143,9 +144,9 @@ Production section for the full deployment checklist.
 
 ## Post-Generation
 
-The post-generation hook initializes a Git repository and runs `uv lock` when uv
-is available. `uv.lock` is generated in the baked project instead of stored in
-the template because it embeds the project name.
+The post-generation hook initializes a Git repository and runs `uv lock` with
+exactly uv 0.11.29 when uv is available. `uv.lock` is generated in the baked
+project instead of stored in the template because it embeds the project name.
 
 After generation:
 

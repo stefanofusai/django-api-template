@@ -227,4 +227,4 @@ exclude = [".agents"]
 
 [tool.uv]
 default-groups = ["dev"]
-required-version = "==0.11.19"
+required-version = ">=0.11.29,<0.12.0"
